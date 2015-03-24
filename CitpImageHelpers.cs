@@ -66,9 +66,9 @@ namespace Imp.CitpSharp
 
 						for (int i = 0, j = 0; j < length; i += 3, j += 4)
 						{
-							dst[i] = src[j + 3];
-							dst[i + 1] = src[j + 2];
-							dst[i + 2] = src[j + 1];
+							dst[i] = src[j + 2];
+							dst[i + 1] = src[j + 1];
+							dst[i + 2] = src[j];
 						}
 					}
 				}
@@ -83,9 +83,9 @@ namespace Imp.CitpSharp
 
 						for (int i = 0, j = 0; j < length; i += 3, j += 4)
 						{
-							dst[i] = src[j + 1];
-							dst[i + 1] = src[j + 2];
-							dst[i + 2] = src[j + 3];
+							dst[i] = src[j];
+							dst[i + 1] = src[j + 1];
+							dst[i + 2] = src[j + 2];
 						}
 					}
 				}
