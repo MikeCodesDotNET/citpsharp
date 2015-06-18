@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 
 namespace Imp.CitpSharp
 {
@@ -79,15 +80,27 @@ namespace Imp.CitpSharp
 				if (_networkService.MessageQueue.TryDequeue(out message) == false)
 					throw new InvalidOperationException("Failed to dequeue message");
 
-
-				if (message.Item2 is GetElementLibraryInformationMessagePacket)
-					getElementLibraryInfomation(message.Item1, message.Item2 as GetElementLibraryInformationMessagePacket);
-				else if (message.Item2 is GetElementInformationMessagePacket)
-					getElementInformation(message.Item1, message.Item2 as GetElementInformationMessagePacket);
-				else if (message.Item2 is GetElementLibraryThumbnailMessagePacket)
-					getElementLibraryThumbnail(message.Item1, message.Item2 as GetElementLibraryThumbnailMessagePacket);
-				else if (message.Item2 is GetElementThumbnailMessagePacket)
-					getElementThumbnail(message.Item1, message.Item2 as GetElementThumbnailMessagePacket);
+				try
+				{
+					if (message.Item2 is GetElementLibraryInformationMessagePacket)
+						getElementLibraryInfomation(message.Item1, message.Item2 as GetElementLibraryInformationMessagePacket);
+					else if (message.Item2 is GetElementInformationMessagePacket)
+						getElementInformation(message.Item1, message.Item2 as GetElementInformationMessagePacket);
+					else if (message.Item2 is GetElementLibraryThumbnailMessagePacket)
+						getElementLibraryThumbnail(message.Item1, message.Item2 as GetElementLibraryThumbnailMessagePacket);
+					else if (message.Item2 is GetElementThumbnailMessagePacket)
+						getElementThumbnail(message.Item1, message.Item2 as GetElementThumbnailMessagePacket);
+				}
+				catch (InvalidOperationException ex)
+				{
+					_log.LogError("Failed to process message");
+					_log.LogException(ex);
+				}
+				catch (SocketException ex)
+				{
+					_log.LogError("Socket exception whilst processing message");
+					_log.LogException(ex);
+				}
 			}
 
 			_log.LogDebug("Finished processing messages");
