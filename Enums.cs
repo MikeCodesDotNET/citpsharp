@@ -36,7 +36,7 @@ namespace Imp.CitpSharp
 	}
 
 
-	public static class EnumHelper
+	public static class CitpEnumHelper
 	{
 		/// <summary>
 		/// Gets an attribute on an enum field value

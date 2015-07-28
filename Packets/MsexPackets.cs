@@ -36,7 +36,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 			writer.Write((byte)SupportedMsexVersions.Count);
 			foreach (var v in SupportedMsexVersions)
-				writer.Write(EnumHelper.GetAttributeOfType<CitpVersion>(Version).ToByteArray());
+				writer.Write(CitpEnumHelper.GetAttributeOfType<CitpVersion>(Version).ToByteArray());
 		}
 
 		protected override void deserializeFromStream(CitpBinaryReader reader)
@@ -115,7 +115,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 				writer.Write((byte)SupportedMsexVersions.Count);
 				foreach (var v in SupportedMsexVersions)
-					writer.Write(EnumHelper.GetAttributeOfType<CitpVersion>(Version).ToByteArray());
+					writer.Write(CitpEnumHelper.GetAttributeOfType<CitpVersion>(Version).ToByteArray());
 
 				ushort supportedLibraryTypes = 0;
 				foreach (var t in SupportedLibraryTypes)
@@ -124,11 +124,11 @@ namespace Imp.CitpSharp.Packets.Msex
 
 				writer.Write((byte)ThumbnailFormats.Count);
 				foreach (var f in ThumbnailFormats)
-					writer.Write(EnumHelper.GetAttributeOfType<CitpId>(f).Id);
+					writer.Write(CitpEnumHelper.GetAttributeOfType<CitpId>(f).Id);
 
 				writer.Write((byte)StreamFormats.Count);
 				foreach (var f in StreamFormats)
-					writer.Write(EnumHelper.GetAttributeOfType<CitpId>(f).Id);
+					writer.Write(CitpEnumHelper.GetAttributeOfType<CitpId>(f).Id);
 
 				writer.Write((byte)LayerDmxSources.Count);
 				foreach (var d in LayerDmxSources)
@@ -188,12 +188,12 @@ namespace Imp.CitpSharp.Packets.Msex
 				int thumbnailFormatsCount = reader.ReadByte();
 				ThumbnailFormats = new List<MsexImageFormat>(thumbnailFormatsCount);
 				for (int i = 0; i < thumbnailFormatsCount; ++i)
-					ThumbnailFormats.Add(EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()));
+					ThumbnailFormats.Add(CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()));
 
 				int streamFormatsCount = reader.ReadByte();
 				StreamFormats = new List<MsexImageFormat>(streamFormatsCount);
 				for (int i = 0; i < streamFormatsCount; ++i)
-					StreamFormats.Add(EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()));
+					StreamFormats.Add(CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()));
 
 				int dmxSourcesCount = reader.ReadByte();
 				LayerDmxSources = new List<DmxConnectionString>(dmxSourcesCount);
@@ -219,14 +219,14 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.serializeToStream(writer);
 
-			writer.Write(EnumHelper.GetAttributeOfType<CitpId>(ReceivedContentType).Id);
+			writer.Write(CitpEnumHelper.GetAttributeOfType<CitpId>(ReceivedContentType).Id);
 		}
 
 		protected override void deserializeFromStream(CitpBinaryReader reader)
 		{
 			base.deserializeFromStream(reader);
 
-			ReceivedContentType = EnumHelper.GetEnumFromIdString<MsexMessageType>(reader.ReadIdString());
+			ReceivedContentType = CitpEnumHelper.GetEnumFromIdString<MsexMessageType>(reader.ReadIdString());
 		}
 	}
 
@@ -1334,7 +1334,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 			if (Version == MsexVersion.Version1_0)
 			{
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
 				ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
@@ -1350,7 +1350,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
 				ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
@@ -1366,7 +1366,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
 				ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
@@ -1441,7 +1441,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryNumber = reader.ReadByte();
 
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
@@ -1454,7 +1454,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
@@ -1570,7 +1570,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 			if (Version == MsexVersion.Version1_0)
 			{
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
 				ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
@@ -1587,7 +1587,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
 				ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
@@ -1604,7 +1604,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
 				ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
@@ -1681,7 +1681,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryNumber = reader.ReadByte();
 				ElementNumber = reader.ReadByte();
 
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
@@ -1695,7 +1695,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 				ElementNumber = reader.ReadByte();
 
-				ThumbnailFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 
 				ThumbnailWidth = reader.ReadUInt16();
 				ThumbnailHeight = reader.ReadUInt16();
@@ -1835,7 +1835,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.deserializeFromStream(reader);
 
 			SourceIdentifier = reader.ReadUInt16();
-			FrameFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+			FrameFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 			FrameWidth = reader.ReadUInt16();
 			FrameHeight = reader.ReadUInt16();
 			Fps = reader.ReadByte();
@@ -1892,7 +1892,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				SourceIdentifier = reader.ReadUInt16();
-				FrameFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				FrameFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				FrameWidth = reader.ReadUInt16();
 				FrameHeight = reader.ReadUInt16();
 
@@ -1903,7 +1903,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			{
 				MediaServerUUID = new Guid(reader.ReadString(true));
 				SourceIdentifier = reader.ReadUInt16();
-				FrameFormat = EnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+				FrameFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				FrameWidth = reader.ReadUInt16();
 				FrameHeight = reader.ReadUInt16();
 

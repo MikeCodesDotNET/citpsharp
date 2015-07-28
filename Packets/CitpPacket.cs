@@ -166,7 +166,7 @@ namespace Imp.CitpSharp.Packets
 		static CitpLayerType? getLayerType(byte[] data)
 		{
 			string typeString = Encoding.UTF8.GetString(data, CITP_CONTENT_TYPE_POSITION, 4);
-			return EnumHelper.GetEnumFromIdString<CitpLayerType>(typeString);
+			return CitpEnumHelper.GetEnumFromIdString<CitpLayerType>(typeString);
 		}
 
 
@@ -242,7 +242,7 @@ namespace Imp.CitpSharp.Packets
 		public static PinfMessageType? GetMessageType(byte[] data)
 		{
 			string typeString = Encoding.UTF8.GetString(data, CITP_MESSAGE_TYPE_POSITION, 4);
-			return EnumHelper.GetEnumFromIdString<PinfMessageType>(typeString);
+			return CitpEnumHelper.GetEnumFromIdString<PinfMessageType>(typeString);
 		}
 
 		public CitpPinfPacket(PinfMessageType messageType)
@@ -265,7 +265,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.deserializeFromStream(reader);
 
-			if (MessageType != EnumHelper.GetEnumFromIdString<PinfMessageType>(reader.ReadIdString()))
+			if (MessageType != CitpEnumHelper.GetEnumFromIdString<PinfMessageType>(reader.ReadIdString()))
 				throw new InvalidOperationException("Incorrect message type");
 		}
 	}
@@ -277,7 +277,7 @@ namespace Imp.CitpSharp.Packets
 		public static SdmxMessageType? GetMessageType(byte[] data)
 		{
 			string typeString = Encoding.UTF8.GetString(data, CITP_MESSAGE_TYPE_POSITION, 4);
-			return EnumHelper.GetEnumFromIdString<SdmxMessageType>(typeString);
+			return CitpEnumHelper.GetEnumFromIdString<SdmxMessageType>(typeString);
 		}
 
 		public CitpSdmxPacket(SdmxMessageType messageType)
@@ -300,7 +300,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.deserializeFromStream(reader);
 
-			if (MessageType != EnumHelper.GetEnumFromIdString<SdmxMessageType>(reader.ReadIdString()))
+			if (MessageType != CitpEnumHelper.GetEnumFromIdString<SdmxMessageType>(reader.ReadIdString()))
 				throw new InvalidOperationException("Incorrect message type");
 		}
 	}
@@ -312,7 +312,7 @@ namespace Imp.CitpSharp.Packets
 		public static MsexMessageType? GetMessageType(byte[] data)
 		{
 			string typeString = Encoding.UTF8.GetString(data, CITP_MESSAGE_TYPE_POSITION, 4);
-			return EnumHelper.GetEnumFromIdString<MsexMessageType>(typeString);
+			return CitpEnumHelper.GetEnumFromIdString<MsexMessageType>(typeString);
 		}
 
 		public CitpMsexPacket(MsexMessageType messageType)
@@ -360,7 +360,7 @@ namespace Imp.CitpSharp.Packets
 			if (Version == MsexVersion.UnsupportedVersion)
 				throw new InvalidOperationException("Incorrect or invalid MSEX version");
 
-			if (MessageType != EnumHelper.GetEnumFromIdString<MsexMessageType>(reader.ReadIdString()))
+			if (MessageType != CitpEnumHelper.GetEnumFromIdString<MsexMessageType>(reader.ReadIdString()))
 				throw new InvalidOperationException("Incorrect or invalid message type");
 
 		}

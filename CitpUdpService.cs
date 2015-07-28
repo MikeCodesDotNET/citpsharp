@@ -19,7 +19,7 @@ using System.Net.Sockets;
 
 namespace Imp.CitpSharp
 {
-	class CitpUdpService : IDisposable
+	internal sealed class CitpUdpService : IDisposable
 	{
 		static readonly int CITP_UDP_PORT = 4809;
 		static readonly IPAddress CITP_MULTICAST_ORIGINAL_IP = IPAddress.Parse("224.0.0.180");
@@ -27,25 +27,21 @@ namespace Imp.CitpSharp
 		static readonly IPEndPoint CITP_MULTICAST_ORIGINAL_ENDPOINT = new IPEndPoint(CITP_MULTICAST_ORIGINAL_IP, CITP_UDP_PORT);
 		static readonly IPEndPoint CITP_MULTICAST_ENDPOINT = new IPEndPoint(CITP_MULTICAST_IP, CITP_UDP_PORT);
 
-		UdpClient _client;
-		bool _useOriginalMulticastIp;
-		IPAddress _nicIp;
+		readonly ICitpLogService _log;
+		readonly IPAddress _nicIp;
+		readonly bool _useOriginalMulticastIp;
 
-		public CitpUdpService(IPAddress nicIp, bool useOriginalMulticastIp)
+		UdpClient _client;
+
+		bool _isListenLoopRunning;
+
+
+		public CitpUdpService(ICitpLogService log, IPAddress nicIp, bool useOriginalMulticastIp)
 		{
+			_log = log;
+
 			_nicIp = nicIp;
 			_useOriginalMulticastIp = useOriginalMulticastIp;
-
-			_client = new UdpClient();
-			_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-			_client.Client.Bind(new IPEndPoint(_nicIp, CITP_UDP_PORT));
-
-			if (_useOriginalMulticastIp)
-				_client.JoinMulticastGroup(CITP_MULTICAST_ORIGINAL_IP);
-			else
-				_client.JoinMulticastGroup(CITP_MULTICAST_IP);
-
-			_client.BeginReceive(new AsyncCallback(packetReceived), null);
 		}
 
 		public void Dispose()
@@ -59,23 +55,107 @@ namespace Imp.CitpSharp
 
 		public event EventHandler<Tuple<IPAddress, byte[]>> PacketReceived;
 
-		public void Send(byte[] data)
+		public bool Start()
 		{
-			if (_useOriginalMulticastIp)
-				_client.Send(data, data.Length, CITP_MULTICAST_ORIGINAL_ENDPOINT);
-			else
-				_client.Send(data, data.Length, CITP_MULTICAST_ENDPOINT);
+			if (_client != null)
+			{
+				_client.Close();
+				_client = null;
+			}
+
+			_client = new UdpClient();
+			_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+
+			try
+			{
+				_client.Client.Bind(new IPEndPoint(_nicIp, CITP_UDP_PORT));
+
+				if (_useOriginalMulticastIp)
+					_client.JoinMulticastGroup(CITP_MULTICAST_ORIGINAL_IP);
+				else
+					_client.JoinMulticastGroup(CITP_MULTICAST_IP);
+
+			}
+			catch (SocketException ex)
+			{
+				_log.LogError("Failed to setup UDP socket");
+				_log.LogException(ex);
+
+				_client.Close();
+				_client = null;
+
+				return false;
+			}
+
+			listen();
+
+			return true;
 		}
 
-		void packetReceived(IAsyncResult res)
+		public bool Send(byte[] data)
 		{
-			IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, CITP_UDP_PORT);
-			byte[] data = _client.EndReceive(res, ref endpoint);
+			if (_client == null)
+				return false;
 
-			if (PacketReceived != null)
-				PacketReceived(this, Tuple.Create(endpoint.Address, data));
+			try
+			{
+				if (_useOriginalMulticastIp)
+					_client.Send(data, data.Length, CITP_MULTICAST_ORIGINAL_ENDPOINT);
+				else
+					_client.Send(data, data.Length, CITP_MULTICAST_ENDPOINT);
+			}
+			catch (ObjectDisposedException)
+			{
+				return false;
+			}
+			catch (SocketException ex)
+			{
+				_log.LogError("Failed to send data via UDP");
+				_log.LogException(ex);
+				return false;
+			}
 
-			_client.BeginReceive(new AsyncCallback(packetReceived), null);
+			return true;
+		}
+
+		async void listen()
+		{
+			if (_isListenLoopRunning == true)
+				return;
+
+			try
+			{
+				_isListenLoopRunning = true;
+
+				while (_client != null)
+				{
+					UdpReceiveResult result;
+
+					try
+					{
+						result = await _client.ReceiveAsync();
+					}
+					catch (ObjectDisposedException)
+					{
+						return;
+					}
+					catch (SocketException ex)
+					{
+						_log.LogError("Udp socket exception");
+						_log.LogException(ex);
+						continue;
+					}
+
+					IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, CITP_UDP_PORT);
+
+					if (PacketReceived != null)
+						PacketReceived(this, Tuple.Create(endpoint.Address, result.Buffer));
+				}
+			}
+			finally
+			{
+				_isListenLoopRunning = false;
+			}
 		}
 	}
 }

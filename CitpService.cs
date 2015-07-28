@@ -51,7 +51,12 @@ namespace Imp.CitpSharp
 
 			_serverInfo = serverInfo;
 
-			_networkService = new CitpNetworkService(nicAddress, useOriginalMulticastIp, _serverInfo, _log);
+			_networkService = new CitpNetworkService(_log, nicAddress, useOriginalMulticastIp, _serverInfo);
+		}
+
+		public bool Start()
+		{
+			return _networkService.Start();
 		}
 
 		public void Dispose()
@@ -113,11 +118,6 @@ namespace Imp.CitpSharp
 			}
 
 			_log.LogDebug("Finished processing messages");
-		}
-
-		public void Stop()
-		{
-
 		}
 
 		public string Status { get; set; }

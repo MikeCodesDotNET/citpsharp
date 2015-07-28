@@ -46,7 +46,7 @@ namespace Imp.CitpSharp
 
 
 
-	class CitpTcpListenService : IDisposable
+	internal sealed class CitpTcpListenService : IDisposable
 	{
 		public event EventHandler<Tuple<IPEndPoint, byte[]>> PacketReceieved;
 		public event EventHandler<ConnectedClient> ClientConnect;
@@ -76,7 +76,7 @@ namespace Imp.CitpSharp
 				Close();
 		}
 
-		public void StartListening()
+		public bool StartListening()
 		{
 			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
@@ -88,13 +88,15 @@ namespace Imp.CitpSharp
 			{
 				_log.LogError(String.Format("Failed to start listening on TCP port {0}", _ipLocal.Port));
 				_log.LogException(ex);
-				return;
+				return false;
 			}
 
 			_socket.Listen(4);
 
 			// Assign delegate that will be invoked when client connect.
 			_socket.BeginAccept(new AsyncCallback(onClientConnection), null);
+
+			return true;
 		}
 
 		public void Close()

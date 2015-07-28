@@ -28,11 +28,14 @@ namespace Imp.CitpSharp
 	/// <summary>
 	/// Class which manages the TCP and UDP services, maintains a list of CITP peers and handles messages related to peer discovery
 	/// </summary>
-	class CitpNetworkService : IDisposable
+	internal sealed class CitpNetworkService : IDisposable
 	{
 		static readonly int CITP_PEER_EXPIRY_TIME = 10;
 
 		readonly ICitpLogService _log;
+		readonly IPAddress _nicAddress;
+
+		bool _useOriginalMulticastIp;
 
 		int _tcpListenPort;
 		
@@ -41,18 +44,34 @@ namespace Imp.CitpSharp
 
 		ICitpMediaServerInfo _serverInfo;
 
-		IPAddress _nicAddress;
+		
 
 
-		CitpNetworkService(IPAddress nicAddress, bool useOriginalMulticastIp, ICitpLogService log)
+		CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp)
 		{
-			_log = log;
 			_nicAddress = nicAddress;
+			_useOriginalMulticastIp = useOriginalMulticastIp;
+			_log = log;
+		}
 
-			_udpService = new CitpUdpService(_nicAddress, useOriginalMulticastIp);
+
+		public CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp, 
+			ICitpMediaServerInfo serverInfo)
+			: this(log, nicAddress, useOriginalMulticastIp)
+		{
+			_serverInfo = serverInfo;
+		}
+
+
+		public bool Start()
+		{
+			_udpService = new CitpUdpService(_log, _nicAddress, _useOriginalMulticastIp);
 			_udpService.PacketReceived += udpService_PacketReceived;
 
+			bool udpResult = _udpService.Start();
 
+			if (udpResult == false)
+				return false;
 
 			_tcpListenPort = getAvailableTcpPort();
 
@@ -61,17 +80,12 @@ namespace Imp.CitpSharp
 			_tcpListenService.ClientDisconnect += tcpListenService_ClientDisconnect;
 			_tcpListenService.PacketReceieved += tcpListenService_PacketReceived;
 
-			_tcpListenService.StartListening();
-		}
+			bool tcpResult = _tcpListenService.StartListening();
 
+			if (tcpResult == false)
+				return false;
 
-		public CitpNetworkService(IPAddress nicAddress, 
-			bool useOriginalMulticastIp, 
-			ICitpMediaServerInfo serverInfo,
-			ICitpLogService log)
-			: this(nicAddress, useOriginalMulticastIp, log)
-		{
-			_serverInfo = serverInfo;
+			return true;
 		}
 
 		public void Dispose()

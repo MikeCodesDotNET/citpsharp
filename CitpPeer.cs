@@ -18,7 +18,7 @@ using System.Net;
 
 namespace Imp.CitpSharp
 {
-	class CitpPeer : IEquatable<IPEndPoint>
+	internal class CitpPeer : IEquatable<IPEndPoint>
 	{
 		public CitpPeer(IPAddress ip, string name)
 		{
