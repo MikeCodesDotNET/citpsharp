@@ -28,11 +28,11 @@ namespace Imp.CitpSharp
 	/// <summary>
 	/// Class which manages the TCP and UDP services, maintains a list of CITP peers and handles messages related to peer discovery
 	/// </summary>
-	class CitpNetworkService
+	class CitpNetworkService : IDisposable
 	{
 		static readonly int CITP_PEER_EXPIRY_TIME = 10;
 
-		ICitpLogService _log;
+		readonly ICitpLogService _log;
 
 		int _tcpListenPort;
 		
@@ -72,6 +72,21 @@ namespace Imp.CitpSharp
 			: this(nicAddress, useOriginalMulticastIp, log)
 		{
 			_serverInfo = serverInfo;
+		}
+
+		public void Dispose()
+		{
+			if (_tcpListenService != null)
+			{
+				_tcpListenService.Dispose();
+				_tcpListenService = null;
+			}
+
+			if (_udpService != null)
+			{
+				_udpService.Dispose();
+				_udpService = null;
+			}
 		}
 
 

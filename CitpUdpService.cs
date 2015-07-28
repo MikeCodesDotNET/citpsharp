@@ -19,7 +19,7 @@ using System.Net.Sockets;
 
 namespace Imp.CitpSharp
 {
-	class CitpUdpService
+	class CitpUdpService : IDisposable
 	{
 		static readonly int CITP_UDP_PORT = 4809;
 		static readonly IPAddress CITP_MULTICAST_ORIGINAL_IP = IPAddress.Parse("224.0.0.180");
@@ -46,6 +46,15 @@ namespace Imp.CitpSharp
 				_client.JoinMulticastGroup(CITP_MULTICAST_IP);
 
 			_client.BeginReceive(new AsyncCallback(packetReceived), null);
+		}
+
+		public void Dispose()
+		{
+			if (_client != null)
+			{
+				_client.Close();
+				_client = null;
+			}
 		}
 
 		public event EventHandler<Tuple<IPAddress, byte[]>> PacketReceived;

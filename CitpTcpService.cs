@@ -46,7 +46,7 @@ namespace Imp.CitpSharp
 
 
 
-	class CitpTcpListenService
+	class CitpTcpListenService : IDisposable
 	{
 		public event EventHandler<Tuple<IPEndPoint, byte[]>> PacketReceieved;
 		public event EventHandler<ConnectedClient> ClientConnect;
@@ -68,6 +68,12 @@ namespace Imp.CitpSharp
 		{
 			_log = log;
 			_ipLocal = new IPEndPoint(nicAddress, port);
+		}
+
+		public void Dispose()
+		{
+			if (_socket != null)
+				Close();
 		}
 
 		public void StartListening()
@@ -104,6 +110,7 @@ namespace Imp.CitpSharp
 						connectedClient.Stop();
 
 					_socket.Close();
+					_socket.Dispose();
 					_socket = null;
 				}
 			}

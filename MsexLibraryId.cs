@@ -55,7 +55,7 @@ namespace Imp.CitpSharp
 
 		public override string ToString()
 		{
-			return String.Format("{{0},{1},{2},{3}}");
+			return String.Format("{{{0},{1},{2},{3}}}", Level, SubLevel1, SubLevel2, SubLevel3);
 		}
 
 		public byte[] ToByteArray()

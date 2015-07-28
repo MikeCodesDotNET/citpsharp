@@ -156,11 +156,9 @@ namespace Imp.CitpSharp.Packets
 			}
 
 
-			using (MemoryStream ms = new MemoryStream(data))
-			using (CitpBinaryReader reader = new CitpBinaryReader(ms))
-			{
+
+			using (CitpBinaryReader reader = new CitpBinaryReader(new MemoryStream(data)))
 				packet.deserializeFromStream(reader);
-			}
 
 			return packet;
 		}
@@ -176,15 +174,15 @@ namespace Imp.CitpSharp.Packets
 		{
 			byte[] data;
 
-			using (MemoryStream ms = new MemoryStream())
-			using (CitpBinaryWriter writer = new CitpBinaryWriter(ms))
+
+			using (CitpBinaryWriter writer = new CitpBinaryWriter(new MemoryStream()))
 			{
 				// Leave space for the header to be written in later
 				writer.Write(new byte[CITP_HEADER_LENGTH]);
 
-				this.serializeToStream(writer);
+				serializeToStream(writer);
 
-				data = ms.ToArray();
+				data = ((MemoryStream)writer.BaseStream).ToArray();
 			}
 
 			writeInHeader(data);

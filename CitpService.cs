@@ -26,7 +26,7 @@ using System.Net.Sockets;
 
 namespace Imp.CitpSharp
 {
-	public class CitpService
+	public sealed class CitpService : IDisposable
 	{
 		static readonly int CITP_PLOC_FREQUENCY = 1000;
 		static readonly int CITP_LSTA_FREQUENCY = 250;
@@ -52,6 +52,15 @@ namespace Imp.CitpSharp
 			_serverInfo = serverInfo;
 
 			_networkService = new CitpNetworkService(nicAddress, useOriginalMulticastIp, _serverInfo, _log);
+		}
+
+		public void Dispose()
+		{
+			if (_networkService != null)
+			{
+				_networkService.Dispose();
+				_networkService = null;
+			}
 		}
 
 		/// <summary>
