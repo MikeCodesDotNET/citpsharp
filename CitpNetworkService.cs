@@ -110,8 +110,10 @@ namespace Imp.CitpSharp
 			get { return _tcpListenPort; }
 		}
 
+
+
 		List<CitpPeer> _peers = new List<CitpPeer>();
-		public List<CitpPeer> Peers
+		public IReadOnlyList<CitpPeer> Peers
 		{
 			get { return _peers; }
 		}
@@ -218,26 +220,25 @@ namespace Imp.CitpSharp
 
 		async void tcpListenService_ClientConnect(object sender, ICitpTcpClient e)
 		{
-			//var peer = Peers.FirstOrDefault(p => new IPEndPoint(p.Ip, p.RemoteTcpPort.Value) == e.ClientSocket.RemoteEndPoint);
+			var peer = _peers.FirstOrDefault(p => e.RemoteEndPoint.Address.Equals(p.Ip));
 
-			//if (peer != null)
-			//	throw new InvalidOperationException(String.Format("Peer on {0} is already connected", e.ToString()));
+			if (peer != null)
+				peer.SetConnected(e.RemoteEndPoint.Port);
+			else
+				_peers.Add(new CitpPeer(e.RemoteEndPoint));
 
-			var peerNamePacket = createPeerNamePacket();
-			await e.Send(peerNamePacket.ToByteArray());
-
-			var serverInfoPacket = createServerInfoPacket(MsexVersion.Version1_0);
-			await e.Send(serverInfoPacket.ToByteArray());
+			await e.Send(createPeerNamePacket().ToByteArray());
+			await e.Send(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray());
 		}
 
 		void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
 		{
-			var peer = Peers.FirstOrDefault(p => p.Equals(e));
+			var peer = Peers.FirstOrDefault(p => e.Equals(p.RemoteEndPoint));
 
 			if (peer == null)
-				throw new InvalidOperationException(String.Format("No peer registered on {0}", e.ToString()));
+				throw new InvalidOperationException(String.Format("Unregistered peer disconnected from TCP,  remote endpoint {0}", e));
 
-			peer.IsConnected = false;
+			peer.SetDisconnected();
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
@@ -249,7 +250,7 @@ namespace Imp.CitpSharp
 			{
 				packet = CitpPacket.FromByteArray(e.Item2);
 			}
-			catch (Exception ex)
+			catch (InvalidOperationException ex)
 			{
 				_log.LogError(String.Format("Error: Failed to deserialize TCP packet from {0}", e.Item1.ToString()));
 				_log.LogException(ex);
@@ -262,21 +263,16 @@ namespace Imp.CitpSharp
 				return;
 			}
 
-			var peer = Peers.FirstOrDefault(p => p.Equals(e.Item1));
+			var peer = _peers.FirstOrDefault(p => e.Item1.Equals(p.RemoteEndPoint));
 
 			if (peer == null)
 				throw new InvalidOperationException("Message received via TCP from unrecognised peer.");
 
-			if (packet is ClientInformationMessagePacket)
-			{
-				await receivedClientInformationMessage(packet as ClientInformationMessagePacket, peer);
-			}
-			else
-			{
-				
 
+			if (packet is ClientInformationMessagePacket)
+				await receivedClientInformationMessage(packet as ClientInformationMessagePacket, peer);
+			else
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
-			}
 		}
 
 		void udpService_PacketReceived(object sender, Tuple<IPAddress, byte[]> e)
@@ -332,24 +328,21 @@ namespace Imp.CitpSharp
 			return unusedPort;
 		}
 
-		void receivedPeerNameMessage(PeerNameMessagePacket message, IPEndPoint remoteEndpoint)
+		void receivedPeerNameMessage(PeerNameMessagePacket message, IPEndPoint remoteEndPoint)
 		{
-			var peer = Peers.FirstOrDefault(p => p.Ip.Equals(remoteEndpoint.Address) && p.Name == message.Name);
+			var peer = _peers.FirstOrDefault(p => remoteEndPoint.Address.Equals(p.Ip));
 
 			if (peer == null)
-			{
-				peer = new CitpPeer(remoteEndpoint.Address, message.Name);
-				Peers.Add(peer);
-			}
+				throw new InvalidOperationException("Received peer name message for unconnected peer");
 
-			peer.RemoteTcpPort = remoteEndpoint.Port;
-			peer.IsConnected = true;
+			peer.Name = message.Name;
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
 		void receivedPeerLocationMessage(PeerLocationMessagePacket message, IPAddress remoteIp)
 		{
-			if (remoteIp.Equals(_nicAddress) && message.Name == _serverInfo.PeerName)
+			// Filter out this CITP peer
+			if (remoteIp.Equals(_nicAddress) && message.Name == _serverInfo.PeerName && message.ListeningTcpPort == _tcpListenPort)
 				return;
 
 			var peer = Peers.FirstOrDefault(p => p.Ip.Equals(remoteIp) && p.Name == message.Name);
@@ -357,7 +350,7 @@ namespace Imp.CitpSharp
 			if (peer == null)
 			{
 				peer = new CitpPeer(remoteIp, message.Name);
-				Peers.Add(peer);
+				_peers.Add(peer);
 			}
 
 			peer.Type = message.Type;
@@ -377,7 +370,7 @@ namespace Imp.CitpSharp
 
 		void removeInactivePeers()
 		{
-			Peers.RemoveAll(p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CITP_PEER_EXPIRY_TIME);
+			_peers.RemoveAll(p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CITP_PEER_EXPIRY_TIME);
 		}
 
 		async Task sendDataToPeer(CitpPeer peer, byte[] data)

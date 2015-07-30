@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -220,6 +221,10 @@ namespace Imp.CitpSharp
 							parseCitpPackets(amountRead, buffer);
 						}
 					}
+					catch (IOException)
+					{
+						_log.LogInfo("Client timed out");
+					}
 					finally
 					{
 						_stream.Dispose();
@@ -239,6 +244,10 @@ namespace Imp.CitpSharp
 				try
 				{
 					await _stream.WriteAsync(data, 0, data.Length);
+				}
+				catch (IOException)
+				{
+					return false;
 				}
 				catch (SocketException)
 				{

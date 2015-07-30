@@ -150,7 +150,7 @@ namespace Imp.CitpSharp
 					IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, CITP_UDP_PORT);
 
 					if (PacketReceived != null)
-						PacketReceived(this, Tuple.Create(endpoint.Address, result.Buffer));
+						PacketReceived(this, Tuple.Create(result.RemoteEndPoint.Address, result.Buffer));
 				}
 			}
 			finally
