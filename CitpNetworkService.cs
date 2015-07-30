@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 
 namespace Imp.CitpSharp
 {
@@ -40,7 +41,7 @@ namespace Imp.CitpSharp
 		int _tcpListenPort;
 		
 		CitpUdpService _udpService;
-		CitpTcpListenService _tcpListenService;
+		CitpTcpService _tcpListenService;
 
 		ICitpMediaServerInfo _serverInfo;
 
@@ -75,9 +76,9 @@ namespace Imp.CitpSharp
 
 			_tcpListenPort = getAvailableTcpPort();
 
-			_tcpListenService = new CitpTcpListenService(_nicAddress, _tcpListenPort, _log);
-			_tcpListenService.ClientConnect += tcpListenService_ClientConnect;
-			_tcpListenService.ClientDisconnect += tcpListenService_ClientDisconnect;
+			_tcpListenService = new CitpTcpService(_log, _nicAddress, _tcpListenPort);
+			_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
+			_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
 			_tcpListenService.PacketReceieved += tcpListenService_PacketReceived;
 
 			bool tcpResult = _tcpListenService.StartListening();
@@ -130,7 +131,7 @@ namespace Imp.CitpSharp
 
 
 
-		public void SendPacket(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
+		public async Task SendPacket(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
 		{
 			if (peer.IsConnected == false)
 				throw new InvalidOperationException("Cannot send packet, peer is not connected");
@@ -154,10 +155,10 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			sendDataToPeer(peer, packet.ToByteArray());
+			await sendDataToPeer(peer, packet.ToByteArray());
 		}
 
-		public void SendPacketToAllConnectedPeers(CitpPacket packet)
+		public async Task SendPacketToAllConnectedPeers(CitpPacket packet)
 		{
 			var connectedPeers = Peers.Where(p => p.IsConnected == true).ToList();
 
@@ -186,18 +187,19 @@ namespace Imp.CitpSharp
 						msexPacket.Version = version;
 						byte[] data = msexPacket.ToByteArray();
 
-						peersWithVersion.ForEach(p => sendDataToPeer(p, data));
+						foreach (var peer in peersWithVersion)
+							await sendDataToPeer(peer, data);
 					}
 				}
 			}
 			else
 			{
 				foreach (var peer in connectedPeers)
-					SendPacket(packet, peer);
+					await SendPacket(packet, peer);
 			}
 		}
 
-		public void SendMulticastPacket(CitpPacket packet, int requestResponseIndex = 0)
+		public async Task SendMulticastPacket(CitpPacket packet, int requestResponseIndex = 0)
 		{
 			// TODO: Deal with packet splitting
 
@@ -207,14 +209,14 @@ namespace Imp.CitpSharp
 
 			byte[] data = packet.ToByteArray();
 
-			_udpService.Send(data);
+			await _udpService.Send(data);
 		}
 
-		
 
 
 
-		void tcpListenService_ClientConnect(object sender, ConnectedClient e)
+
+		async void tcpListenService_ClientConnect(object sender, ICitpTcpClient e)
 		{
 			//var peer = Peers.FirstOrDefault(p => new IPEndPoint(p.Ip, p.RemoteTcpPort.Value) == e.ClientSocket.RemoteEndPoint);
 
@@ -222,10 +224,10 @@ namespace Imp.CitpSharp
 			//	throw new InvalidOperationException(String.Format("Peer on {0} is already connected", e.ToString()));
 
 			var peerNamePacket = createPeerNamePacket();
-			e.Send(peerNamePacket.ToByteArray());
+			await e.Send(peerNamePacket.ToByteArray());
 
 			var serverInfoPacket = createServerInfoPacket(MsexVersion.Version1_0);
-			e.Send(serverInfoPacket.ToByteArray());
+			await e.Send(serverInfoPacket.ToByteArray());
 		}
 
 		void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
@@ -239,7 +241,7 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		void tcpListenService_PacketReceived(object sender, Tuple<IPEndPoint, byte[]> e)
+		async void tcpListenService_PacketReceived(object sender, Tuple<IPEndPoint, byte[]> e)
 		{
 			CitpPacket packet = null;
 
@@ -267,7 +269,7 @@ namespace Imp.CitpSharp
 
 			if (packet is ClientInformationMessagePacket)
 			{
-				receivedClientInformationMessage(packet as ClientInformationMessagePacket, peer);
+				await receivedClientInformationMessage(packet as ClientInformationMessagePacket, peer);
 			}
 			else
 			{
@@ -363,13 +365,13 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		void receivedClientInformationMessage(ClientInformationMessagePacket message, CitpPeer peer)
+		async Task receivedClientInformationMessage(ClientInformationMessagePacket message, CitpPeer peer)
 		{
 			if (message.SupportedMsexVersions.Contains(MsexVersion.Version1_2))
 			{
 				peer.MsexVersion = MsexVersion.Version1_2;
 				var packet = createServerInfoPacket(MsexVersion.Version1_2);
-				SendPacket(packet, peer, message.RequestResponseIndex);
+				await SendPacket(packet, peer, message.RequestResponseIndex);
 			}
 		}
 
@@ -378,13 +380,21 @@ namespace Imp.CitpSharp
 			Peers.RemoveAll(p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CITP_PEER_EXPIRY_TIME);
 		}
 
-		void sendDataToPeer(CitpPeer peer, byte[] data)
+		async Task sendDataToPeer(CitpPeer peer, byte[] data)
 		{
-			ConnectedClient client;
+			ICitpTcpClient client;
 			if (_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client))
-				client.Send(data);
+			{
+				bool result = await client.Send(data);
+
+				if (result == false)
+					throw new InvalidOperationException("Failed to send packet");
+
+			}
 			else
+			{
 				throw new InvalidOperationException("Cannot send packet, peer is not connected.");
+			}
 		}
 
 		PeerNameMessagePacket createPeerNamePacket()

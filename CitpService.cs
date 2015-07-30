@@ -23,6 +23,7 @@ using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Imp.CitpSharp
 {
@@ -71,19 +72,19 @@ namespace Imp.CitpSharp
 		/// <summary>
 		/// Processes all outstanding CITP messages.
 		/// </summary>
-		public void SendAndReceiveMessages()
+		public async Task SendAndReceiveMessages()
 		{
 			_log.LogDebug("Started processing messages");
 
 			if (_peerLocationMessageLastSent == null || (DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CITP_PLOC_FREQUENCY)
 			{
-				sendPeerLocationPacket();
+				await sendPeerLocationPacket();
 				_peerLocationMessageLastSent = DateTime.Now;
 			}
 
 			if (_layerStatusMessageLastSent == null || (DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CITP_LSTA_FREQUENCY)
 			{
-				sendLayerStatusPacket();
+				await sendLayerStatusPacket();
 				_layerStatusMessageLastSent = DateTime.Now;
 			}
 
@@ -97,13 +98,13 @@ namespace Imp.CitpSharp
 				try
 				{
 					if (message.Item2 is GetElementLibraryInformationMessagePacket)
-						getElementLibraryInfomation(message.Item1, message.Item2 as GetElementLibraryInformationMessagePacket);
+						await getElementLibraryInfomation(message.Item1, message.Item2 as GetElementLibraryInformationMessagePacket);
 					else if (message.Item2 is GetElementInformationMessagePacket)
-						getElementInformation(message.Item1, message.Item2 as GetElementInformationMessagePacket);
+						await getElementInformation(message.Item1, message.Item2 as GetElementInformationMessagePacket);
 					else if (message.Item2 is GetElementLibraryThumbnailMessagePacket)
-						getElementLibraryThumbnail(message.Item1, message.Item2 as GetElementLibraryThumbnailMessagePacket);
+						await getElementLibraryThumbnail(message.Item1, message.Item2 as GetElementLibraryThumbnailMessagePacket);
 					else if (message.Item2 is GetElementThumbnailMessagePacket)
-						getElementThumbnail(message.Item1, message.Item2 as GetElementThumbnailMessagePacket);
+						await getElementThumbnail(message.Item1, message.Item2 as GetElementThumbnailMessagePacket);
 				}
 				catch (InvalidOperationException ex)
 				{
@@ -124,7 +125,7 @@ namespace Imp.CitpSharp
 
 
 		// TODO: Move to network service
-		void sendPeerLocationPacket()
+		async Task sendPeerLocationPacket()
 		{
 			var packet = new PeerLocationMessagePacket
 			{
@@ -135,10 +136,10 @@ namespace Imp.CitpSharp
 				State = Status
 			};
 
-			_networkService.SendMulticastPacket(packet);
+			await _networkService.SendMulticastPacket(packet);
 		}
 
-		void sendLayerStatusPacket()
+		async Task sendLayerStatusPacket()
 		{
 			var layers = _serverInfo.Layers.Select((l, i) =>
 			{
@@ -159,18 +160,18 @@ namespace Imp.CitpSharp
 			});
 
 			var packet = new LayerStatusMessagePacket { LayerStatuses = layers.ToList() };
-			_networkService.SendPacketToAllConnectedPeers(packet);
+			await _networkService.SendPacketToAllConnectedPeers(packet);
 		}
 
-		void sendElementLibraryUpdatedPackets()
+		async Task sendElementLibraryUpdatedPackets()
 		{
 			foreach (var packet in _serverInfo.GetLibraryUpdateMessages())
-				_networkService.SendPacketToAllConnectedPeers(packet);
+				await _networkService.SendPacketToAllConnectedPeers(packet);
 		}
 
 
 
-		void getElementLibraryInfomation(CitpPeer peer, GetElementLibraryInformationMessagePacket requestPacket)
+		async Task getElementLibraryInfomation(CitpPeer peer, GetElementLibraryInformationMessagePacket requestPacket)
 		{
 			List<ElementLibraryInformation> libraries;
 
@@ -179,10 +180,10 @@ namespace Imp.CitpSharp
 				requestPacket.RequestedLibraryNumbers);
 
 			var packet = new ElementLibraryInformationMessagePacket { LibraryType = requestPacket.LibraryType, Elements = libraries };
-			_networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
+			await _networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
-		void getElementInformation(CitpPeer peer, GetElementInformationMessagePacket requestPacket)
+		async Task getElementInformation(CitpPeer peer, GetElementInformationMessagePacket requestPacket)
 		{
 			CitpPacket packet;
 
@@ -226,10 +227,10 @@ namespace Imp.CitpSharp
 				packet = genericPacket;
 			}
 			
-			_networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
+			await _networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
-		void getElementLibraryThumbnail(CitpPeer peer, GetElementLibraryThumbnailMessagePacket requestPacket)
+		async Task getElementLibraryThumbnail(CitpPeer peer, GetElementLibraryThumbnailMessagePacket requestPacket)
 		{
 			List<MsexId> msexIds;
 
@@ -258,10 +259,10 @@ namespace Imp.CitpSharp
 			});
 
 			foreach (var packet in packets)
-				_networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
+				await _networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
-		void getElementThumbnail(CitpPeer peer, GetElementThumbnailMessagePacket requestPacket)
+		async Task getElementThumbnail(CitpPeer peer, GetElementThumbnailMessagePacket requestPacket)
 		{
 			List<Tuple<byte, Image>> thumbs;
 
@@ -294,7 +295,7 @@ namespace Imp.CitpSharp
 			});
 
 			foreach (var packet in packets)
-				_networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
+				await _networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
 		}
 	}
 }

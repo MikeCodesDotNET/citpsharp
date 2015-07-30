@@ -16,6 +16,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Imp.CitpSharp
 {
@@ -92,7 +93,7 @@ namespace Imp.CitpSharp
 			return true;
 		}
 
-		public bool Send(byte[] data)
+		public async Task<bool> Send(byte[] data)
 		{
 			if (_client == null)
 				return false;
@@ -100,9 +101,9 @@ namespace Imp.CitpSharp
 			try
 			{
 				if (_useOriginalMulticastIp)
-					_client.Send(data, data.Length, CITP_MULTICAST_ORIGINAL_ENDPOINT);
+					await _client.SendAsync(data, data.Length, CITP_MULTICAST_ORIGINAL_ENDPOINT);
 				else
-					_client.Send(data, data.Length, CITP_MULTICAST_ENDPOINT);
+					await _client.SendAsync(data, data.Length, CITP_MULTICAST_ENDPOINT);
 			}
 			catch (ObjectDisposedException)
 			{
