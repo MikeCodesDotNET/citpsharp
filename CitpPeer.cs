@@ -59,7 +59,7 @@ namespace Imp.CitpSharp
 		public string State;
 		
 		public DateTime LastUpdateReceived;
-		public MsexVersion MsexVersion = MsexVersion.Version1_0;
+		public MsexVersion? MsexVersion;
 		public Guid? MediaServerUuid;
 
 		public IPEndPoint RemoteEndPoint
@@ -111,7 +111,7 @@ namespace Imp.CitpSharp
 				^ State.GetHashCode()
 				^ IsConnected.GetHashCode()
 				^ LastUpdateReceived.GetHashCode()
-				^ MsexVersion.GetHashCode()
+				^ (MsexVersion != null ? MsexVersion.GetHashCode() : MsexVersion.GetHashCode())
 				^ (MediaServerUuid != null ? MediaServerUuid.GetHashCode() : 0);
 		}
 

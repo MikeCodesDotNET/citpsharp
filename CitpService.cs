@@ -97,6 +97,21 @@ namespace Imp.CitpSharp
 
 				try
 				{
+					if (message.Item2.LayerType == CitpLayerType.MediaServerExtensionsLayer)
+					{
+						var msexPacket = message.Item2 as CitpMsexPacket;
+
+						if (message.Item1.MsexVersion.HasValue == false)
+						{
+							message.Item1.MsexVersion = msexPacket.Version;
+						}
+						else if (message.Item1.MsexVersion < msexPacket.Version)
+						{
+							_log.LogWarning("Received packet from peer with higher msex version than previously discovered for this client. Updating peer version");
+							message.Item1.MsexVersion = msexPacket.Version;
+						}
+					}
+
 					if (message.Item2 is GetElementLibraryInformationMessagePacket)
 						await getElementLibraryInfomation(message.Item1, message.Item2 as GetElementLibraryInformationMessagePacket);
 					else if (message.Item2 is GetElementInformationMessagePacket)

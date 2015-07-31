@@ -225,6 +225,22 @@ namespace Imp.CitpSharp
 		{
 			return new byte[] { MajorVersion, MinorVersion };
 		}
+
+		public static bool operator ==(CitpVersion a, CitpVersion b)
+		{
+			if (System.Object.ReferenceEquals(a, b))
+				return true;
+
+			if ((a == null) || (b == null))
+				return false;
+
+			return a.MajorVersion == b.MajorVersion && a.MinorVersion == b.MinorVersion;
+		}
+
+		public static bool operator !=(CitpVersion a, CitpVersion b)
+		{
+			return !(a == b);
+		}
 	}
 
 	public enum MsexVersion

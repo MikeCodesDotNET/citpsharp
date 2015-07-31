@@ -146,6 +146,9 @@ namespace Imp.CitpSharp
 			{
 				var msexPacket = packet as CitpMsexPacket;
 
+				if (peer.MsexVersion.HasValue == false)
+					throw new InvalidOperationException("Peer MSEX version is unknown");
+
 				if (msexPacket.Version.HasValue)
 				{
 					if (msexPacket.Version.Value > peer.MsexVersion)
