@@ -45,7 +45,7 @@ namespace Imp.CitpSharp
 
 		public CitpService(IPAddress nicAddress, 
 			bool useOriginalMulticastIp,
-			ICitpMediaServerInfo serverInfo, bool isEnableStreaming,
+			ICitpMediaServerInfo serverInfo, bool isStreamingEnabled,
 			ICitpLogService log = null)
 		{
 			if (log == null)
@@ -57,8 +57,10 @@ namespace Imp.CitpSharp
 
 			_networkService = new CitpNetworkService(_log, nicAddress, useOriginalMulticastIp, _serverInfo);
 
-			if (isEnableStreaming)
-				_streamingService = new CitpStreamingService(_log, _serverInfo);
+			IsStreamingEnabled = isStreamingEnabled;
+
+			if (isStreamingEnabled)
+				_streamingService = new CitpStreamingService(_log, _serverInfo, _networkService);
 		}
 
 		public bool Start()
@@ -73,13 +75,13 @@ namespace Imp.CitpSharp
 				_networkService.Dispose();
 				_networkService = null;
 			}
-
-			if (_streamingService != null)
-			{
-				_streamingService.Dispose();
-				_streamingService = null;
-			}
 		}
+
+
+		public string Status { get; set; }
+
+		public bool IsStreamingEnabled { get; private set; }
+
 
 		/// <summary>
 		/// Processes all outstanding CITP messages.
@@ -132,6 +134,10 @@ namespace Imp.CitpSharp
 						await getElementLibraryThumbnail(message.Item1, message.Item2 as GetElementLibraryThumbnailMessagePacket);
 					else if (message.Item2 is GetElementThumbnailMessagePacket)
 						await getElementThumbnail(message.Item1, message.Item2 as GetElementThumbnailMessagePacket);
+					else if (message.Item2 is GetVideoSourcesMessagePacket)
+						await getVideoSources(message.Item1, message.Item2 as GetVideoSourcesMessagePacket);
+					else if (message.Item2 is RequestStreamMessagePacket)
+						_streamingService.AddStreamRequest(message.Item1.MsexVersion, message.Item2 as RequestStreamMessagePacket);
 				}
 				catch (InvalidOperationException ex)
 				{
@@ -148,7 +154,10 @@ namespace Imp.CitpSharp
 			_log.LogDebug("Finished processing messages");
 		}
 
-		public string Status { get; set; }
+		public async Task ProcessVideoStreams()
+		{
+			await _streamingService.ProcessStreamRequests();
+		}
 
 
 		// TODO: Move to network service
@@ -325,6 +334,13 @@ namespace Imp.CitpSharp
 
 			foreach (var packet in packets)
 				await _networkService.SendPacket(packet, peer, requestPacket.RequestResponseIndex);
+		}
+
+
+		async Task getVideoSources(CitpPeer peer, GetVideoSourcesMessagePacket requestPacket)
+		{
+			var packet = new VideoSourcesMessagePacket{ Sources = _serverInfo.VideoSources.Values.ToList() };
+			await _networkService.SendPacket(packet, peer);
 		}
 	}
 }

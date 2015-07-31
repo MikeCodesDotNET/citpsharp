@@ -54,7 +54,7 @@ namespace Imp.CitpSharp
 		List<Tuple<MsexId, Image>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
 		List<Tuple<byte, Image>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
 
-		Image GetVideoSourceFrame(int sourceId, MsexImageFormat format, Size dimensions);
+		Image GetVideoSourceFrame(int sourceId, int frameWidth, int frameHeight);
 	}
 
 	public interface ICitpLayer
