@@ -46,11 +46,13 @@
     <Compile Include="CitpNetworkService.cs" />
     <Compile Include="CitpPeer.cs" />
     <Compile Include="CitpService.cs" />
+    <Compile Include="CitpStreamingService.cs" />
     <Compile Include="CitpTcpService.cs" />
     <Compile Include="CitpUdpService.cs" />
-    <Compile Include="DmxConnectionString.cs" />
-    <Compile Include="Enums.cs" />
-    <Compile Include="Helpers.cs" />
+    <Compile Include="CitpInfoClasses.cs" />
+    <Compile Include="CitpDmxConnectionString.cs" />
+    <Compile Include="CitpEnums.cs" />
+    <Compile Include="CitpHelpers.cs" />
     <Compile Include="ICitpLogService.cs" />
     <Compile Include="ICitpMediaServerInfo.cs" />
     <Compile Include="MsexLibraryId.cs" />

@@ -30,32 +30,36 @@ namespace Imp.CitpSharp
 		int ProductVersionBugfix { get; }
 		Guid Uuid { get; }
 
-		List<MsexVersion> SupportedMsexVersions { get; }
+		IReadOnlyList<MsexVersion> SupportedMsexVersions { get; }
 
-		List<MsexLibraryType> SupportedLibraryTypes { get; }
+		IReadOnlyList<MsexLibraryType> SupportedLibraryTypes { get; }
 		
-		List<MsexImageFormat> SupportedThumbnailFormats { get; }
-		List<MsexImageFormat> SupportedStreamFormats { get; }
+		IReadOnlyList<MsexImageFormat> SupportedThumbnailFormats { get; }
+		IReadOnlyList<MsexImageFormat> SupportedStreamFormats { get; }
 
-		List<ICitpLayer> Layers { get; }
+		IReadOnlyList<ICitpLayer> Layers { get; }
+
+		IReadOnlyDictionary<int, CitpVideoSourceInformation> VideoSources { get; }
 
 		bool HasLibraryBeenUpdated { get; }
 
-		List<ElementLibraryUpdatedMessagePacket> GetLibraryUpdateMessages();
+		List<CitpElementLibraryUpdatedInformation> GetLibraryUpdateMessages();
 
-		List<ElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType, MsexLibraryId? parentLibraryId, List<byte> libraryIndices);
+		List<CitpElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType, MsexLibraryId? parentLibraryId, List<byte> libraryIndices);
 
-		List<MediaInformation> GetMediaElementInformation(MsexId libraryId, List<byte> elementNumbers);
-		List<EffectInformation> GetEffectElementInformation(MsexId libraryId, List<byte> elementNumbers);
-		List<GenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId, List<byte> elementNumbers);
+		List<CitpMediaInformation> GetMediaElementInformation(MsexId libraryId, List<byte> elementNumbers);
+		List<CitpEffectInformation> GetEffectElementInformation(MsexId libraryId, List<byte> elementNumbers);
+		List<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId, List<byte> elementNumbers);
 
 		List<Tuple<MsexId, Image>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
 		List<Tuple<byte, Image>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
+
+		Image GetVideoSourceFrame(int sourceId, MsexImageFormat format, Size dimensions);
 	}
 
 	public interface ICitpLayer
 	{
-		DmxConnectionString DmxSource { get; }
+		CitpDmxConnectionString DmxSource { get; }
 
 		int PhysicalOutput { get; }
 		MsexLibraryType MediaLibraryType { get; }
@@ -67,36 +71,5 @@ namespace Imp.CitpSharp
 		uint MediaNumFrames { get; }
 		int MediaFps { get; }
 		MsexLayerStatusFlags LayerStatusFlags { get; }
-	}
-
-	//public class CitpMediaServerRemote
-	//{
-	//	List<CitpVideoSource> _videoSources = new List<CitpVideoSource>();
-	//	List<CitpVideoSource> VideoSources
-	//	{
-	//		get { return _videoSources; }
-	//	}
-
-		
-	//}
-
-	//public class CitpVideoSource
-	//{
-	//	public CitpVideoSource(CitpPeer peer, int id)
-	//	{
-	//		Peer = peer;
-	//		Id = id;
-	//	}
-
-	//	public CitpPeer Peer { get; private set; }
-	//	public int Id { get; private set; }
-
-	//	public string Name { get; set; }
-	//	public int PhysicalOutput { get; set; }
-	//	public int LayerNumber { get; set; }
-	//	public bool HasFX { get; set; }
-	//	public Size Size { get; set; }
-	//}
-
-	
+	}	
 }

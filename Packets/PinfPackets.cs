@@ -17,7 +17,7 @@ using System;
 
 namespace Imp.CitpSharp.Packets.Pinf
 {
-	public class PeerNameMessagePacket : CitpPinfPacket
+	internal class PeerNameMessagePacket : CitpPinfPacket
 	{
 		public PeerNameMessagePacket()
 			: base(PinfMessageType.PeerNameMessage)
@@ -42,7 +42,7 @@ namespace Imp.CitpSharp.Packets.Pinf
 		}
 	}
 
-	public class PeerLocationMessagePacket : CitpPinfPacket
+	internal class PeerLocationMessagePacket : CitpPinfPacket
 	{
 		public PeerLocationMessagePacket()
 			: base(PinfMessageType.PeerLocationMessage)

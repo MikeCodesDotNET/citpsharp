@@ -21,7 +21,7 @@ using System.IO;
 
 namespace Imp.CitpSharp
 {
-	public static class CitpImageHelpers
+	internal static class CitpImageHelpers
 	{
 		static public byte[] ToByteArray(this Image image, MsexImageFormat format, MsexVersion? version)
 		{

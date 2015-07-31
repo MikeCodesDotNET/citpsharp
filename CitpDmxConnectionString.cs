@@ -18,11 +18,11 @@ using System.Text;
 
 namespace Imp.CitpSharp
 {
-	public struct DmxConnectionString
+	public struct CitpDmxConnectionString
 	{
-		static public DmxConnectionString FromString(string s)
+		static public CitpDmxConnectionString FromString(string s)
 		{
-			var dmxString = new DmxConnectionString();
+			var dmxString = new CitpDmxConnectionString();
 
 			string[] tokens = s.Split('/');
 
@@ -106,13 +106,13 @@ namespace Imp.CitpSharp
 			if (obj == null)
 				return false;
 
-			if (!(obj is DmxConnectionString))
+			if (!(obj is CitpDmxConnectionString))
 				return false;
 
-			 return Equals((DmxConnectionString)obj);
+			return Equals((CitpDmxConnectionString)obj);
 		}
 
-		public bool Equals(DmxConnectionString obj)
+		public bool Equals(CitpDmxConnectionString obj)
 		{
 			switch (Protocol)
 			{
@@ -146,12 +146,12 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public static bool operator ==(DmxConnectionString a, DmxConnectionString b)
+		public static bool operator ==(CitpDmxConnectionString a, CitpDmxConnectionString b)
 		{
 			return a.Equals(b);
 		}
 
-		public static bool operator !=(DmxConnectionString a, DmxConnectionString b)
+		public static bool operator !=(CitpDmxConnectionString a, CitpDmxConnectionString b)
 		{
 			return !(a == b);
 		}

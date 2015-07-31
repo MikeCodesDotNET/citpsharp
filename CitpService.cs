@@ -32,17 +32,20 @@ namespace Imp.CitpSharp
 		static readonly int CITP_PLOC_FREQUENCY = 1000;
 		static readonly int CITP_LSTA_FREQUENCY = 250;
 
-		ICitpLogService _log;
+		readonly ICitpLogService _log;
+		readonly ICitpMediaServerInfo _serverInfo;
 
 		CitpNetworkService _networkService;
+		CitpStreamingService _streamingService;
+
 		DateTime _peerLocationMessageLastSent;
 		DateTime _layerStatusMessageLastSent;
-		ICitpMediaServerInfo _serverInfo;
+		
 
 
 		public CitpService(IPAddress nicAddress, 
 			bool useOriginalMulticastIp,
-			ICitpMediaServerInfo serverInfo,
+			ICitpMediaServerInfo serverInfo, bool isEnableStreaming,
 			ICitpLogService log = null)
 		{
 			if (log == null)
@@ -53,6 +56,9 @@ namespace Imp.CitpSharp
 			_serverInfo = serverInfo;
 
 			_networkService = new CitpNetworkService(_log, nicAddress, useOriginalMulticastIp, _serverInfo);
+
+			if (isEnableStreaming)
+				_streamingService = new CitpStreamingService(_log, _serverInfo);
 		}
 
 		public bool Start()
@@ -66,6 +72,12 @@ namespace Imp.CitpSharp
 			{
 				_networkService.Dispose();
 				_networkService = null;
+			}
+
+			if (_streamingService != null)
+			{
+				_streamingService.Dispose();
+				_streamingService = null;
 			}
 		}
 
@@ -107,7 +119,7 @@ namespace Imp.CitpSharp
 						}
 						else if (message.Item1.MsexVersion < msexPacket.Version)
 						{
-							_log.LogWarning("Received packet from peer with higher msex version than previously discovered for this client. Updating peer version");
+							_log.LogWarning("Received packet from peer with higher MSEX version than previously discovered for this client. Updating peer version");
 							message.Item1.MsexVersion = msexPacket.Version;
 						}
 					}
@@ -180,15 +192,17 @@ namespace Imp.CitpSharp
 
 		async Task sendElementLibraryUpdatedPackets()
 		{
-			foreach (var packet in _serverInfo.GetLibraryUpdateMessages())
-				await _networkService.SendPacketToAllConnectedPeers(packet);
+			foreach (var message in _serverInfo.GetLibraryUpdateMessages())
+			{
+				await _networkService.SendPacketToAllConnectedPeers(message.ToPacket());
+			}
 		}
 
 
 
 		async Task getElementLibraryInfomation(CitpPeer peer, GetElementLibraryInformationMessagePacket requestPacket)
 		{
-			List<ElementLibraryInformation> libraries;
+			List<CitpElementLibraryInformation> libraries;
 
 			libraries = _serverInfo.GetElementLibraryInformation(requestPacket.LibraryType, 
 				requestPacket.Version != MsexVersion.Version1_0 ? requestPacket.LibraryParentId : (MsexLibraryId?)null, 

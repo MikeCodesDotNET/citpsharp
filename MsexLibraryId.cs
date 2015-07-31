@@ -74,14 +74,20 @@ namespace Imp.CitpSharp
 			return Equals((MsexLibraryId)obj);
 		}
 
-		public bool Equals(MsexLibraryId obj)
+		public bool Equals(MsexLibraryId other)
 		{
-			return obj.Level == Level && obj.SubLevel1 == SubLevel1 && obj.SubLevel2 == SubLevel2 && obj.SubLevel3 == SubLevel3;
+			return other.Level == Level 
+				&& other.SubLevel1 == SubLevel1 
+				&& other.SubLevel2 == SubLevel2 
+				&& other.SubLevel3 == SubLevel3;
 		}
 
 		public override int GetHashCode()
 		{
-			return Level.GetHashCode() ^ SubLevel1.GetHashCode() ^ SubLevel2.GetHashCode() ^ SubLevel3.GetHashCode();
+			return Level.GetHashCode() 
+				^ SubLevel1.GetHashCode() 
+				^ SubLevel2.GetHashCode() 
+				^ SubLevel3.GetHashCode();
 		}
 
 		public static bool operator ==(MsexLibraryId a, MsexLibraryId b)
@@ -91,7 +97,7 @@ namespace Imp.CitpSharp
 
 		public static bool operator !=(MsexLibraryId a, MsexLibraryId b)
 		{
-			return !(a == b);
+			return !(a.Equals(b));
 		}
 	}
 }

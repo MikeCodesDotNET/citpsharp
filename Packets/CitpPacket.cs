@@ -19,7 +19,7 @@ using System.Text;
 
 namespace Imp.CitpSharp.Packets
 {
-	public abstract class CitpPacket
+	internal abstract class CitpPacket
 	{
 		static readonly byte[] CITP_COOKIE = Encoding.UTF8.GetBytes("CITP");
 		static readonly byte CITP_VERSION_MAJOR = 1;
@@ -235,7 +235,7 @@ namespace Imp.CitpSharp.Packets
 		}
 	}
 
-	public abstract class CitpPinfPacket : CitpPacket
+	internal abstract class CitpPinfPacket : CitpPacket
 	{
 		public static readonly int CITP_MESSAGE_TYPE_POSITION = 20;
 
@@ -270,7 +270,7 @@ namespace Imp.CitpSharp.Packets
 		}
 	}
 
-	public abstract class CitpSdmxPacket : CitpPacket
+	internal abstract class CitpSdmxPacket : CitpPacket
 	{
 		public static readonly int CITP_MESSAGE_TYPE_POSITION = 20;
 
@@ -305,7 +305,7 @@ namespace Imp.CitpSharp.Packets
 		}
 	}
 
-	public abstract class CitpMsexPacket : CitpPacket
+	internal abstract class CitpMsexPacket : CitpPacket
 	{
 		public static readonly int CITP_MESSAGE_TYPE_POSITION = 22;
 

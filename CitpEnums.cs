@@ -20,7 +20,7 @@ using System.Text;
 
 namespace Imp.CitpSharp
 {
-	public class CitpId : Attribute
+	internal class CitpId : Attribute
 	{
 		public CitpId(string id)
 		{
@@ -36,7 +36,7 @@ namespace Imp.CitpSharp
 	}
 
 
-	public static class CitpEnumHelper
+	internal static class CitpEnumHelper
 	{
 		/// <summary>
 		/// Gets an attribute on an enum field value
@@ -74,7 +74,7 @@ namespace Imp.CitpSharp
 		}		
 	}
 
-	public enum CitpLayerType : uint
+	internal enum CitpLayerType : uint
 	{
 		[CitpId("PINF")]
 		PeerInformationLayer,
@@ -90,7 +90,7 @@ namespace Imp.CitpSharp
 		MediaServerExtensionsLayer
 	}
 
-	public enum PinfMessageType : uint
+	internal enum PinfMessageType : uint
 	{
 		[CitpId("PNam")]
 		PeerNameMessage,
@@ -98,7 +98,7 @@ namespace Imp.CitpSharp
 		PeerLocationMessage
 	}
 
-	public enum SdmxMessageType : uint
+	internal enum SdmxMessageType : uint
 	{
 		[CitpId("Capa")]
 		CapabilitiesMessage,
@@ -116,7 +116,7 @@ namespace Imp.CitpSharp
 		SetExternalUniverseSourceMessage
 	}
 
-	public enum FptcMessageType : uint
+	internal enum FptcMessageType : uint
 	{
 		[CitpId("Ptch")]
 		PatchMessage,
@@ -126,7 +126,7 @@ namespace Imp.CitpSharp
 		SendPatchMessage
 	}
 
-	public enum FselMessageType : uint
+	internal enum FselMessageType : uint
 	{
 		[CitpId("Sele")]
 		SelectMessage,
@@ -134,7 +134,7 @@ namespace Imp.CitpSharp
 		DeselectMessage
 	}
 
-	public enum FinfMessageType : uint
+	internal enum FinfMessageType : uint
 	{
 		[CitpId("SFra")]
 		SendFramesMessage,
@@ -148,7 +148,7 @@ namespace Imp.CitpSharp
 		LiveStatusMessage
 	}
 
-	public enum MsexMessageType : uint
+	internal enum MsexMessageType : uint
 	{
 		[CitpId("CInf")]
 		ClientInformationMessage,
@@ -190,7 +190,7 @@ namespace Imp.CitpSharp
 		StreamFrameMessage
 	}
 
-	public enum CitpPeerType
+	internal enum CitpPeerType
 	{
 		LightingConsole,
 		MediaServer,
@@ -199,7 +199,7 @@ namespace Imp.CitpSharp
 		Unknown
 	}
 
-	public enum SdmxCapability : ushort
+	internal enum SdmxCapability : ushort
 	{
 		ChannelList = 1,
 		ExternalSource = 2,
@@ -210,7 +210,7 @@ namespace Imp.CitpSharp
 		MANetExternalSources = 104
 	}
 
-	public class CitpVersion : Attribute
+	internal class CitpVersion : Attribute, IEquatable<CitpVersion>
 	{
 		public CitpVersion(byte majorVersion, byte minorVersion)
 		{
@@ -226,20 +226,27 @@ namespace Imp.CitpSharp
 			return new byte[] { MajorVersion, MinorVersion };
 		}
 
-		public static bool operator ==(CitpVersion a, CitpVersion b)
+		public override bool Equals(object obj)
 		{
-			if (System.Object.ReferenceEquals(a, b))
-				return true;
-
-			if ((a == null) || (b == null))
+			var m = obj as CitpElementLibraryInformation;
+			if ((object)m == null)
 				return false;
 
-			return a.MajorVersion == b.MajorVersion && a.MinorVersion == b.MinorVersion;
+			return Equals(m);
 		}
 
-		public static bool operator !=(CitpVersion a, CitpVersion b)
+		public bool Equals(CitpVersion other)
 		{
-			return !(a == b);
+			if (other == null)
+				return false;
+
+			return MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion;
+		}
+
+		public override int GetHashCode()
+		{
+			return MajorVersion.GetHashCode()
+				^ MinorVersion.GetHashCode();
 		}
 	}
 
@@ -290,7 +297,7 @@ namespace Imp.CitpSharp
 	}
 
 	[Flags]
-	public enum ElementLibraryUpdatedFlags : byte
+	public enum MsexElementLibraryUpdatedFlags : byte
 	{
 		ExistingElementsUpdated = 0x01,
 		ElementsAddedOrRemoved = 0x02,

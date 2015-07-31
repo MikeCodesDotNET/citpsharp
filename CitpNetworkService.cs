@@ -35,15 +35,15 @@ namespace Imp.CitpSharp
 
 		readonly ICitpLogService _log;
 		readonly IPAddress _nicAddress;
-
-		bool _useOriginalMulticastIp;
+		readonly bool _useOriginalMulticastIp;
+		readonly ICitpMediaServerInfo _serverInfo;
 
 		int _tcpListenPort;
 		
 		CitpUdpService _udpService;
 		CitpTcpService _tcpListenService;
 
-		ICitpMediaServerInfo _serverInfo;
+		
 
 		
 
@@ -411,10 +411,10 @@ namespace Imp.CitpSharp
 				ProductVersionMajor = Convert.ToByte(_serverInfo.ProductVersionMajor),
 				ProductVersionMinor = Convert.ToByte(_serverInfo.ProductVersionMinor),
 				ProductVersionBugfix = Convert.ToByte(_serverInfo.ProductVersionBugfix),
-				SupportedMsexVersions = _serverInfo.SupportedMsexVersions,
-				SupportedLibraryTypes = _serverInfo.SupportedLibraryTypes,
-				ThumbnailFormats = _serverInfo.SupportedThumbnailFormats,
-				StreamFormats = _serverInfo.SupportedStreamFormats,
+				SupportedMsexVersions = _serverInfo.SupportedMsexVersions.ToList(),
+				SupportedLibraryTypes = _serverInfo.SupportedLibraryTypes.ToList(),
+				ThumbnailFormats = _serverInfo.SupportedThumbnailFormats.ToList(),
+				StreamFormats = _serverInfo.SupportedStreamFormats.ToList(),
 				LayerDmxSources = _serverInfo.Layers.Select(l => l.DmxSource).ToList()
 			};
 		}

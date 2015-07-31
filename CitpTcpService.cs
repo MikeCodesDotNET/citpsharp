@@ -80,6 +80,9 @@ namespace Imp.CitpSharp
 		{
 			if (_listener != null)
 				Close();
+
+			if (_cancelTokenSource != null)
+				_cancelTokenSource.Dispose();
 		}
 
 		public bool StartListening()

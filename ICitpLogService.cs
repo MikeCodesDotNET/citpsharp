@@ -35,7 +35,7 @@ namespace Imp.CitpSharp
 		void LogException(Exception ex);
 	}
 
-	class CitpConsoleLogger : ICitpLogService
+	internal class CitpConsoleLogger : ICitpLogService
 	{
 		public CitpConsoleLogger(CitpLoggerLevel logLevel)
 		{

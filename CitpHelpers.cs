@@ -14,12 +14,14 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace Imp.CitpSharp
 {
-	class DateTimeHelpers
+	internal static class DateTimeHelpers
 	{
 		public static DateTime ConvertFromUnixTimestamp(ulong timestamp)
 		{
@@ -32,6 +34,30 @@ namespace Imp.CitpSharp
 			DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 			TimeSpan diff = date.ToUniversalTime() - origin;
 			return (ulong)Math.Floor(diff.TotalSeconds);
+		}
+	}
+
+	internal static class EnumerableHelpers
+	{
+		public static bool ScrambledEquals<T>(this IEnumerable<T> a, IEnumerable<T> b)
+		{
+			var cnt = new Dictionary<T, int>();
+			foreach (T s in a)
+			{
+				if (cnt.ContainsKey(s))
+					cnt[s]++;
+				else
+					cnt.Add(s, 1);
+			}
+			foreach (T s in b)
+			{
+				if (cnt.ContainsKey(s))
+					cnt[s]--;
+				else
+					return false;
+			}
+
+			return cnt.Values.All(c => c == 0);
 		}
 	}
 
@@ -70,7 +96,7 @@ namespace Imp.CitpSharp
 		public byte? LibraryNumber;
 	}
 
-	public class CitpBinaryWriter : BinaryWriter
+	internal class CitpBinaryWriter : BinaryWriter
 	{
 		public CitpBinaryWriter(Stream output)
 			: base(output, Encoding.Unicode)
@@ -92,7 +118,7 @@ namespace Imp.CitpSharp
 		}
 	}
 
-	public class CitpBinaryReader : BinaryReader
+	internal class CitpBinaryReader : BinaryReader
 	{
 		public CitpBinaryReader(Stream input)
 			: base(input, Encoding.Unicode)

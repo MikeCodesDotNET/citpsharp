@@ -20,7 +20,7 @@ using System.Text;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
-	public class ClientInformationMessagePacket : CitpMsexPacket
+	internal class ClientInformationMessagePacket : CitpMsexPacket
 	{
 		public ClientInformationMessagePacket()
 			: base(MsexMessageType.ClientInformationMessage) 
@@ -64,7 +64,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class ServerInformationMessagePacket : CitpMsexPacket
+	internal class ServerInformationMessagePacket : CitpMsexPacket
 	{
 		public ServerInformationMessagePacket()
 			: base(MsexMessageType.ServerInformationMessage)
@@ -87,7 +87,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public List<MsexImageFormat> ThumbnailFormats { get; set; }
 		public List<MsexImageFormat> StreamFormats { get; set; }
 
-		public List<DmxConnectionString> LayerDmxSources { get; set; }
+		public List<CitpDmxConnectionString> LayerDmxSources { get; set; }
 
 		protected override void serializeToStream(CitpBinaryWriter writer)
 		{
@@ -147,9 +147,9 @@ namespace Imp.CitpSharp.Packets.Msex
 				ProductVersionMinor = reader.ReadByte();
 
 				int dmxSourcesCount = reader.ReadByte();
-				LayerDmxSources = new List<DmxConnectionString>(dmxSourcesCount);
+				LayerDmxSources = new List<CitpDmxConnectionString>(dmxSourcesCount);
 				for (int i = 0; i < dmxSourcesCount; ++i)
-					LayerDmxSources.Add(DmxConnectionString.FromString(reader.ReadString(true)));
+					LayerDmxSources.Add(CitpDmxConnectionString.FromString(reader.ReadString(true)));
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
@@ -196,16 +196,16 @@ namespace Imp.CitpSharp.Packets.Msex
 					StreamFormats.Add(CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()));
 
 				int dmxSourcesCount = reader.ReadByte();
-				LayerDmxSources = new List<DmxConnectionString>(dmxSourcesCount);
+				LayerDmxSources = new List<CitpDmxConnectionString>(dmxSourcesCount);
 				for (int i = 0; i < dmxSourcesCount; ++i)
-					LayerDmxSources.Add(DmxConnectionString.FromString(reader.ReadString(true)));
+					LayerDmxSources.Add(CitpDmxConnectionString.FromString(reader.ReadString(true)));
 			}
 		}
 	}
 
 
 
-	public class NegativeAcknowledgeMessagePacket : CitpMsexPacket
+	internal class NegativeAcknowledgeMessagePacket : CitpMsexPacket
 	{
 		public NegativeAcknowledgeMessagePacket()
 			: base(MsexMessageType.NegativeAcknowledgeMessage)
@@ -232,7 +232,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class LayerStatusMessagePacket : CitpMsexPacket
+	internal class LayerStatusMessagePacket : CitpMsexPacket
 	{
 		public LayerStatusMessagePacket()
 			: base(MsexMessageType.LayerStatusMessage)
@@ -350,7 +350,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class GetElementLibraryInformationMessagePacket : CitpMsexPacket
+	internal class GetElementLibraryInformationMessagePacket : CitpMsexPacket
 	{
 		public GetElementLibraryInformationMessagePacket()
 			: base(MsexMessageType.GetElementLibraryInformationMessage)
@@ -462,19 +462,9 @@ namespace Imp.CitpSharp.Packets.Msex
 		}
 	}
 
-	public class ElementLibraryInformation
-	{
-		public byte Number { get; set; }
-		public MsexLibraryId? Id { get; set; }
-		public uint SerialNumber { get; set; }
-		public byte DmxRangeMin { get; set; }
-		public byte DmxRangeMax { get; set; }
-		public string Name { get; set; }
-		public ushort LibraryCount { get; set; }
-		public ushort ElementCount { get; set; }
-	}
 
-	public class ElementLibraryInformationMessagePacket : CitpMsexPacket
+
+	internal class ElementLibraryInformationMessagePacket : CitpMsexPacket
 	{
 		public ElementLibraryInformationMessagePacket()
 			: base(MsexMessageType.ElementLibraryInformationMessage)
@@ -484,7 +474,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 		public MsexLibraryType LibraryType { get; set; }
 
-		public List<ElementLibraryInformation> Elements { get; set; }
+		public List<CitpElementLibraryInformation> Elements { get; set; }
 
 		protected override void serializeToStream(CitpBinaryWriter writer)
 		{
@@ -546,10 +536,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
 				int libraryCount = reader.ReadByte();
-				Elements = new List<ElementLibraryInformation>(libraryCount);
+				Elements = new List<CitpElementLibraryInformation>(libraryCount);
 				for (int i = 0; i < libraryCount; ++i)
 				{
-					Elements.Add(new ElementLibraryInformation
+					Elements.Add(new CitpElementLibraryInformation
 					{
 						Number = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -564,10 +554,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
 				int libraryCount = reader.ReadByte();
-				Elements = new List<ElementLibraryInformation>(libraryCount);
+				Elements = new List<CitpElementLibraryInformation>(libraryCount);
 				for (int i = 0; i < libraryCount; ++i)
 				{
-					Elements.Add(new ElementLibraryInformation
+					Elements.Add(new CitpElementLibraryInformation
 					{
 						Number = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -583,10 +573,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
 				int libraryCount = reader.ReadUInt16();
-				Elements = new List<ElementLibraryInformation>(libraryCount);
+				Elements = new List<CitpElementLibraryInformation>(libraryCount);
 				for (int i = 0; i < libraryCount; ++i)
 				{
-					Elements.Add(new ElementLibraryInformation
+					Elements.Add(new CitpElementLibraryInformation
 					{
 						Number = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -602,7 +592,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class ElementLibraryUpdatedMessagePacket : CitpMsexPacket
+	internal class ElementLibraryUpdatedMessagePacket : CitpMsexPacket
 	{
 		public ElementLibraryUpdatedMessagePacket()
 			: base(MsexMessageType.ElementLibraryUpdatedMessage)
@@ -614,7 +604,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public byte LibraryNumber { get; set; }
 		public MsexLibraryId? LibraryId { get; set; }
 
-		public ElementLibraryUpdatedFlags UpdateFlags { get; set; }
+		public MsexElementLibraryUpdatedFlags UpdateFlags { get; set; }
 
 		public List<byte> AffectedElements { get; set; }
 		public List<byte> AffectedLibraries { get; set; }
@@ -668,19 +658,19 @@ namespace Imp.CitpSharp.Packets.Msex
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryNumber = reader.ReadByte();
-				UpdateFlags = (ElementLibraryUpdatedFlags)reader.ReadByte();
+				UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
-				UpdateFlags = (ElementLibraryUpdatedFlags)reader.ReadByte();
+				UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
-				UpdateFlags = (ElementLibraryUpdatedFlags)reader.ReadByte();
+				UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 
 				AffectedElements = new List<byte>();
 				var affectedElementsArray = new BitArray(reader.ReadBytes(32));
@@ -703,7 +693,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class GetElementInformationMessagePacket : CitpMsexPacket
+	internal class GetElementInformationMessagePacket : CitpMsexPacket
 	{
 		public GetElementInformationMessagePacket()
 			: base(MsexMessageType.GetElementInformationMessage)
@@ -810,36 +800,12 @@ namespace Imp.CitpSharp.Packets.Msex
 		}
 	}
 
-	public abstract class ElementInformation
-	{
-		public byte ElementNumber { get; set; }
-		public uint SerialNumber { get; set; }
-		public byte DmxRangeMin { get; set; }
-		public byte DmxRangeMax { get; set; }
-		public string Name { get; set; }
-	}
 
-	public class MediaInformation : ElementInformation
-	{
-		public DateTime MediaVersionTimestamp { get; set; }
 
-		public ushort MediaWidth { get; set; }
-		public ushort MediaHeight { get; set; }
-		public uint MediaLength { get; set; }
-		public byte MediaFps { get; set; }
-	}
 
-	public class EffectInformation : ElementInformation
-	{
-		public List<string> EffectParameterNames { get; set; }
-	}
 
-	public class GenericInformation : ElementInformation
-	{
-		public DateTime VersionTimestamp { get; set; }
-	}
 
-	public class MediaElementInformationMessagePacket : CitpMsexPacket
+	internal class MediaElementInformationMessagePacket : CitpMsexPacket
 	{
 		public MediaElementInformationMessagePacket()
 			: base(MsexMessageType.MediaElementInformationMessage)
@@ -850,7 +816,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public byte LibraryNumber { get; set; }
 		public MsexLibraryId? LibraryId { get; set; }
 
-		public List<MediaInformation> Media { get; set; }
+		public List<CitpMediaInformation> Media { get; set; }
 
 		protected override void serializeToStream(CitpBinaryWriter writer)
 		{
@@ -922,10 +888,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryNumber = reader.ReadByte();
 
 				int mediaCount = reader.ReadByte();
-				Media = new List<MediaInformation>(mediaCount);
+				Media = new List<CitpMediaInformation>(mediaCount);
 				for (int i = 0; i < mediaCount; ++i)
 				{
-					Media.Add(new MediaInformation
+					Media.Add(new CitpMediaInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -944,10 +910,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
 				int mediaCount = reader.ReadByte();
-				Media = new List<MediaInformation>(mediaCount);
+				Media = new List<CitpMediaInformation>(mediaCount);
 				for (int i = 0; i < mediaCount; ++i)
 				{
-					Media.Add(new MediaInformation
+					Media.Add(new CitpMediaInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -966,10 +932,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
 				int mediaCount = reader.ReadUInt16();
-				Media = new List<MediaInformation>(mediaCount);
+				Media = new List<CitpMediaInformation>(mediaCount);
 				for (int i = 0; i < mediaCount; ++i)
 				{
-					Media.Add(new MediaInformation
+					Media.Add(new CitpMediaInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						SerialNumber = reader.ReadUInt32(),
@@ -989,7 +955,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class EffectElementInformationMessagePacket : CitpMsexPacket
+	internal class EffectElementInformationMessagePacket : CitpMsexPacket
 	{
 		public EffectElementInformationMessagePacket()
 			: base(MsexMessageType.EffectElementInformationMessage)
@@ -1000,7 +966,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public byte LibraryNumber { get; set; }
 		public MsexLibraryId? LibraryId { get; set; }
 
-		public List<EffectInformation> Effects { get; set; }
+		public List<CitpEffectInformation> Effects { get; set; }
 
 		protected override void serializeToStream(CitpBinaryWriter writer)
 		{
@@ -1069,10 +1035,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryNumber = reader.ReadByte();
 
 				int effectCount = reader.ReadByte();
-				Effects = new List<EffectInformation>(effectCount);
+				Effects = new List<CitpEffectInformation>(effectCount);
 				for (int i = 0; i < effectCount; ++i)
 				{
-					var e = new EffectInformation
+					var e = new CitpEffectInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -1093,10 +1059,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
 				int effectCount = reader.ReadByte();
-				Effects = new List<EffectInformation>(effectCount);
+				Effects = new List<CitpEffectInformation>(effectCount);
 				for (int i = 0; i < effectCount; ++i)
 				{
-					var e = new EffectInformation
+					var e = new CitpEffectInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -1117,10 +1083,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
 				int effectCount = reader.ReadUInt16();
-				Effects = new List<EffectInformation>(effectCount);
+				Effects = new List<CitpEffectInformation>(effectCount);
 				for (int i = 0; i < effectCount; ++i)
 				{
-					var e = new EffectInformation
+					var e = new CitpEffectInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						SerialNumber = reader.ReadUInt32(),
@@ -1142,7 +1108,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class GenericElementInformationMessagePacket : CitpMsexPacket
+	internal class GenericElementInformationMessagePacket : CitpMsexPacket
 	{
 		public GenericElementInformationMessagePacket()
 			: base(MsexMessageType.GenericElementInformationMessage)
@@ -1153,7 +1119,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public MsexLibraryType LibraryType { get; set; }
 		public MsexLibraryId LibraryId { get; set; }
 
-		public List<GenericInformation> Information { get; set; }
+		public List<CitpGenericInformation> Information { get; set; }
 
 		protected override void serializeToStream(CitpBinaryWriter writer)
 		{
@@ -1200,10 +1166,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
 				int elementCount = reader.ReadByte();
-				Information = new List<GenericInformation>(elementCount);
+				Information = new List<CitpGenericInformation>(elementCount);
 				for (int i = 0; i < elementCount; ++i)
 				{
-					Information.Add(new GenericInformation
+					Information.Add(new CitpGenericInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						DmxRangeMin = reader.ReadByte(),
@@ -1218,10 +1184,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
 				int elementCount = reader.ReadUInt16();
-				Information = new List<GenericInformation>(elementCount);
+				Information = new List<CitpGenericInformation>(elementCount);
 				for (int i = 0; i < elementCount; ++i)
 				{
-					Information.Add(new GenericInformation
+					Information.Add(new CitpGenericInformation
 					{
 						ElementNumber = reader.ReadByte(),
 						SerialNumber = reader.ReadUInt32(),
@@ -1237,7 +1203,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class GetElementLibraryThumbnailMessagePacket : CitpMsexPacket
+	internal class GetElementLibraryThumbnailMessagePacket : CitpMsexPacket
 	{
 		public GetElementLibraryThumbnailMessagePacket()
 			: base(MsexMessageType.GetElementLibraryThumbnailMessage)
@@ -1385,7 +1351,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class ElementLibraryThumbnailMessagePacket : CitpMsexPacket
+	internal class ElementLibraryThumbnailMessagePacket : CitpMsexPacket
 	{
 		public ElementLibraryThumbnailMessagePacket()
 			: base(MsexMessageType.ElementLibraryThumbnailMessage)
@@ -1467,7 +1433,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class GetElementThumbnailMessagePacket : CitpMsexPacket
+	internal class GetElementThumbnailMessagePacket : CitpMsexPacket
 	{
 		public GetElementThumbnailMessagePacket()
 			: base(MsexMessageType.GetElementThumbnailMessage)
@@ -1624,7 +1590,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class ElementThumbnailMessagePacket : CitpMsexPacket
+	internal class ElementThumbnailMessagePacket : CitpMsexPacket
 	{
 		public ElementThumbnailMessagePacket()
 			: base(MsexMessageType.ElementThumbnailMessage)
@@ -1708,7 +1674,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class GetVideoSourcesMessagePacket : CitpMsexPacket
+	internal class GetVideoSourcesMessagePacket : CitpMsexPacket
 	{
 		public GetVideoSourcesMessagePacket()
 			: base(MsexMessageType.GetVideoSourcesMessage)
@@ -1717,9 +1683,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		}
 	}
 
-
-
-	public class VideoSourcesMessagePacket : CitpMsexPacket
+	internal class VideoSourcesMessagePacket : CitpMsexPacket
 	{
 		public VideoSourcesMessagePacket()
 			: base(MsexMessageType.VideoSourcesMessage)
@@ -1727,25 +1691,9 @@ namespace Imp.CitpSharp.Packets.Msex
 
 		}
 
-		public List<SourceInformation> Sources { get; set; }
+		public List<CitpVideoSourceInformation> Sources { get; set; }
 
-		public class SourceInformation
-		{
-			public ushort SourceIdentifier { get; set; }
-			public string SourceName { get; set; }
-
-			public bool HasPhysicalOutput { get; set; }
-			public byte PhysicalOutput { get; set; }
-
-			public bool HasLayerNumber { get; set; }
-			public byte LayerNumber { get; set; }
-
-			public MsexVideoSourcesFlags Flags { get; set; }
-
-			public ushort Width { get; set; }
-			public ushort Height { get; set; }
-		}
-
+		
 		protected override void serializeToStream(CitpBinaryWriter writer)
 		{
 			base.serializeToStream(writer);
@@ -1778,10 +1726,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.deserializeFromStream(reader);
 
 			int sourcesCount = reader.ReadUInt16();
-			Sources = new List<SourceInformation>(sourcesCount);
+			Sources = new List<CitpVideoSourceInformation>(sourcesCount);
 			for (int i = 0; i < sourcesCount; ++i)
 			{
-				var s = new SourceInformation
+				var s = new CitpVideoSourceInformation
 				{
 					SourceIdentifier = reader.ReadUInt16(),
 					SourceName = reader.ReadString(),
@@ -1802,7 +1750,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class RequestStreamMessagePacket : CitpMsexPacket
+	internal class RequestStreamMessagePacket : CitpMsexPacket
 	{
 		public RequestStreamMessagePacket()
 			: base(MsexMessageType.RequestStreamMessage)
@@ -1845,7 +1793,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
 
-	public class StreamFrameMessagePacket : CitpMsexPacket
+	internal class StreamFrameMessagePacket : CitpMsexPacket
 	{
 		public StreamFrameMessagePacket()
 			: base(MsexMessageType.StreamFrameMessage)
