@@ -19,6 +19,7 @@ using Imp.CitpSharp.Packets.Pinf;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -133,7 +134,7 @@ namespace Imp.CitpSharp
 
 
 
-		public async Task SendPacket(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
+		public async Task<bool> SendPacket(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
 		{
 			if (peer.IsConnected == false)
 				throw new InvalidOperationException("Cannot send packet, peer is not connected");
@@ -160,7 +161,7 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			await sendDataToPeer(peer, packet.ToByteArray());
+			return await sendDataToPeer(peer, packet.ToByteArray());
 		}
 
 		public async Task SendPacketToAllConnectedPeers(CitpPacket packet)
@@ -206,15 +207,10 @@ namespace Imp.CitpSharp
 
 		public async Task SendMulticastPacket(CitpPacket packet, int requestResponseIndex = 0)
 		{
-			// TODO: Deal with packet splitting
-
-			packet.MessagePart = 0;
-			packet.MessagePartCount = 1;
-			packet.RequestResponseIndex = Convert.ToUInt16(requestResponseIndex);
-
-			byte[] data = packet.ToByteArray();
-
-			await _udpService.Send(data);
+			foreach (var data in packet.ToByteArray(CitpUdpService.MaximumUdpPacketLength, requestResponseIndex))
+			{
+				await _udpService.Send(data);
+			}
 		}
 
 
@@ -376,21 +372,13 @@ namespace Imp.CitpSharp
 			_peers.RemoveAll(p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CITP_PEER_EXPIRY_TIME);
 		}
 
-		async Task sendDataToPeer(CitpPeer peer, byte[] data)
+		async Task<bool> sendDataToPeer(CitpPeer peer, byte[] data)
 		{
 			ICitpTcpClient client;
-			if (_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client))
-			{
-				bool result = await client.Send(data);
+			if (_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) == false)
+				return false;
 
-				if (result == false)
-					throw new InvalidOperationException("Failed to send packet");
-
-			}
-			else
-			{
-				throw new InvalidOperationException("Cannot send packet, peer is not connected.");
-			}
+			return await client.Send(data);
 		}
 
 		PeerNameMessagePacket createPeerNamePacket()

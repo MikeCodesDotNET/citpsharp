@@ -14,6 +14,7 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -172,22 +173,38 @@ namespace Imp.CitpSharp.Packets
 
 		public byte[] ToByteArray()
 		{
-			byte[] data;
+			return serializePacket();
+		}
 
+		public List<byte[]> ToByteArray(int maximumPacketSize, int requestResponseIndex = 0)
+		{
+			var packets = new List<byte[]>();
 
-			using (CitpBinaryWriter writer = new CitpBinaryWriter(new MemoryStream()))
+			byte[] fullData = serializePacket(false);
+
+			int maximumDataSize = maximumPacketSize - CITP_HEADER_LENGTH;
+
+			int numPackets = (int)Math.Ceiling((float)fullData.Length / (float)maximumDataSize);
+
+			for (int i = 0; i < numPackets; ++i)
 			{
-				// Leave space for the header to be written in later
-				writer.Write(new byte[CITP_HEADER_LENGTH]);
+				int packetDataLength;
 
-				serializeToStream(writer);
+				if (i == numPackets - 1)
+					packetDataLength = fullData.Length % maximumDataSize;
+				else
+					packetDataLength = maximumDataSize;
 
-				data = ((MemoryStream)writer.BaseStream).ToArray();
+				byte[] packet = new byte[packetDataLength + CITP_HEADER_LENGTH];
+
+				Buffer.BlockCopy(fullData, i * maximumDataSize, packet, CITP_HEADER_LENGTH, packetDataLength);
+
+				writeInHeader(packet, requestResponseIndex, i, numPackets);
+
+				packets.Add(packet);
 			}
 
-			writeInHeader(data);
-
-			return data;
+			return packets;
 		}
 
 		readonly CitpLayerType m_layerType;
@@ -197,8 +214,27 @@ namespace Imp.CitpSharp.Packets
 		public ushort MessagePartCount { get; set; }
 		public ushort MessagePart { get; set; }
 
+		byte[] serializePacket(bool isAddHeader = true)
+		{
+			byte[] data;
 
-		void writeInHeader(byte[] data)
+			using (CitpBinaryWriter writer = new CitpBinaryWriter(new MemoryStream()))
+			{
+				if (isAddHeader)
+					writer.Write(new byte[CITP_HEADER_LENGTH]);
+
+				serializeToStream(writer);
+
+				data = ((MemoryStream)writer.BaseStream).ToArray();
+			}
+
+			if (isAddHeader)
+				writeInHeader(data, RequestResponseIndex, MessagePart, MessagePartCount);
+
+			return data;
+		}
+
+		void writeInHeader(byte[] data, int requestResponseIndex, int messagePart, int messagePartCount)
 		{
 			System.Buffer.BlockCopy(CITP_COOKIE, 0, data, 0, 4);
 
@@ -207,19 +243,19 @@ namespace Imp.CitpSharp.Packets
 
 			unchecked
 			{
-				data[6] = (byte)(RequestResponseIndex);
-				data[7] = (byte)(RequestResponseIndex >> 8);
+				data[6] = (byte)(requestResponseIndex);
+				data[7] = (byte)(requestResponseIndex >> 8);
 
 				data[8] = (byte)(data.Length);
 				data[9] = (byte)(data.Length >> 8);
 				data[10] = (byte)(data.Length >> 16);
 				data[11] = (byte)(data.Length >> 24);
 
-				data[12] = (byte)(MessagePartCount);
-				data[13] = (byte)(MessagePartCount >> 8);
+				data[12] = (byte)(messagePartCount);
+				data[13] = (byte)(messagePartCount >> 8);
 
-				data[14] = (byte)(MessagePart);
-				data[15] = (byte)(MessagePart >> 8);
+				data[14] = (byte)(messagePart);
+				data[15] = (byte)(messagePart >> 8);
 			}
 
 			System.Buffer.BlockCopy(LayerType.GetAttributeOfType<CitpId>().Id, 0, data, 16, 4);

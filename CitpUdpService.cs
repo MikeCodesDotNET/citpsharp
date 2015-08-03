@@ -14,6 +14,7 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ namespace Imp.CitpSharp
 {
 	internal sealed class CitpUdpService : IDisposable
 	{
+		public static readonly int MaximumUdpPacketLength = 65507;
+
 		static readonly int CITP_UDP_PORT = 4809;
 		static readonly IPAddress CITP_MULTICAST_ORIGINAL_IP = IPAddress.Parse("224.0.0.180");
 		static readonly IPAddress CITP_MULTICAST_IP = IPAddress.Parse("239.224.0.180");
@@ -147,7 +150,8 @@ namespace Imp.CitpSharp
 						continue;
 					}
 
-					IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, CITP_UDP_PORT);
+					if (result.RemoteEndPoint.Address.Equals(_nicIp))
+						continue;
 
 					if (PacketReceived != null)
 						PacketReceived(this, Tuple.Create(result.RemoteEndPoint.Address, result.Buffer));

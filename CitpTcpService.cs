@@ -114,7 +114,7 @@ namespace Imp.CitpSharp
 				var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
 
 				var citpClient = new CitpTcpClient(_log, client);
-				
+
 
 				citpClient.Disconnected += citpClient_Disconnected;
 				citpClient.PacketReceieved += citpClient_PacketReceieved;
@@ -125,8 +125,6 @@ namespace Imp.CitpSharp
 
 				if (ClientConnected != null)
 					ClientConnected(this, citpClient);
-
-				
 			}
 		}
 
@@ -218,15 +216,20 @@ namespace Imp.CitpSharp
 							}
 
 							var amountRead = amountReadTask.Result;
+
 							if (amountRead == 0)
 								break;
 
 							parseCitpPackets(amountRead, buffer);
 						}
 					}
+					catch (AggregateException)
+					{
+						_log.LogInfo("Client closed connection");
+					}
 					catch (IOException)
 					{
-						_log.LogInfo("Client timed out");
+						_log.LogInfo("Client closed connection");
 					}
 					finally
 					{

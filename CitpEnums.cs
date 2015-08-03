@@ -288,6 +288,7 @@ namespace Imp.CitpSharp
 	[Flags]
 	public enum MsexLayerStatusFlags : uint
 	{
+		None = 0x0000,
 		MediaPlaying = 0x0001,
 		MediaPlaybackReverse = 0x0002,
 		MediaPlaybackLooping = 0x0004,
@@ -299,6 +300,7 @@ namespace Imp.CitpSharp
 	[Flags]
 	public enum MsexElementLibraryUpdatedFlags : byte
 	{
+		None = 0x00,
 		ExistingElementsUpdated = 0x01,
 		ElementsAddedOrRemoved = 0x02,
 		SubLibrariesUpdated = 0x04,
@@ -308,12 +310,14 @@ namespace Imp.CitpSharp
 	[Flags]
 	public enum MsexThumbnailFlags : byte
 	{
+		None = 0x00,
 		PreserveAspectRatio = 0x01
 	}
 
 	[Flags]
 	public enum MsexVideoSourcesFlags : ushort
 	{
+		None = 0x0000,
 		WithoutEffects = 0x0001
 	}
 }

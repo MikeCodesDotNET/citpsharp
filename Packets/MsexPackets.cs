@@ -1704,13 +1704,13 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write(s.SourceIdentifier);
 				writer.Write(s.SourceName);
 
-				if (s.HasPhysicalOutput)
-					writer.Write(s.PhysicalOutput);
+				if (s.PhysicalOutput.HasValue)
+					writer.Write(s.PhysicalOutput.Value);
 				else
 					writer.Write((byte)0xFF);
 
-				if (s.HasLayerNumber)
-					writer.Write(s.LayerNumber);
+				if (s.LayerNumber.HasValue)
+					writer.Write(s.LayerNumber.Value);
 				else
 					writer.Write((byte)0xFF);
 
@@ -1739,9 +1739,6 @@ namespace Imp.CitpSharp.Packets.Msex
 					Width = reader.ReadUInt16(),
 					Height = reader.ReadUInt16()
 				};
-
-				s.HasPhysicalOutput = s.PhysicalOutput != 0xFF;
-				s.HasLayerNumber = s.LayerNumber != 0xFF;
 				
 				Sources.Add(s);
 			}
@@ -1823,7 +1820,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
-				writer.Write(Encoding.UTF8.GetBytes(MediaServerUUID.ToString("D")));
+				writer.Write(MediaServerUUID);
 				writer.Write(SourceIdentifier);
 				writer.Write(FrameFormat.GetAttributeOfType<CitpId>().Id);
 				writer.Write(FrameWidth);
@@ -1849,7 +1846,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
-				MediaServerUUID = new Guid(reader.ReadString(true));
+				MediaServerUUID = reader.ReadGuid();
 				SourceIdentifier = reader.ReadUInt16();
 				FrameFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				FrameWidth = reader.ReadUInt16();

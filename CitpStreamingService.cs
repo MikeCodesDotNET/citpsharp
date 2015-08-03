@@ -1,6 +1,7 @@
 ﻿using Imp.CitpSharp.Packets.Msex;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -44,7 +45,7 @@ namespace Imp.CitpSharp
 
 				foreach (var formatRequest in request.Formats)
 				{
-					if (DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
+					if (request.Fps == 0 || DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
 						break;
 
 					if (frame == null)
@@ -57,7 +58,7 @@ namespace Imp.CitpSharp
 
 					byte[] frameBuffer;
 
-					switch(formatRequest.FrameFormat)
+					switch (formatRequest.FrameFormat)
 					{
 						case MsexImageFormat.RGB8:
 							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version1_0);

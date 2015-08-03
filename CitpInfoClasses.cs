@@ -247,11 +247,8 @@ namespace Imp.CitpSharp
 		public ushort SourceIdentifier { get; set; }
 		public string SourceName { get; set; }
 
-		public bool HasPhysicalOutput { get; set; }
-		public byte PhysicalOutput { get; set; }
-
-		public bool HasLayerNumber { get; set; }
-		public byte LayerNumber { get; set; }
+		public byte? PhysicalOutput { get; set; }
+		public byte? LayerNumber { get; set; }
 
 		public MsexVideoSourcesFlags Flags { get; set; }
 
@@ -274,8 +271,8 @@ namespace Imp.CitpSharp
 
 			return SourceIdentifier == other.SourceIdentifier
 				&& SourceName == other.SourceName
-				&& HasPhysicalOutput == other.HasPhysicalOutput
-				&& HasLayerNumber == other.HasLayerNumber
+				&& PhysicalOutput == other.PhysicalOutput
+				&& LayerNumber == other.LayerNumber
 				&& Flags == other.Flags
 				&& Width == other.Width
 				&& Height == other.Height;
@@ -285,10 +282,8 @@ namespace Imp.CitpSharp
 		{
 			return SourceIdentifier.GetHashCode()
 				^ (SourceName != null ? SourceName.GetHashCode() : 0)
-				^ HasPhysicalOutput.GetHashCode()
-				^ PhysicalOutput.GetHashCode()
-				^ HasLayerNumber.GetHashCode()
-				^ LayerNumber.GetHashCode()
+				^ (PhysicalOutput != null ? PhysicalOutput.GetHashCode() : 0)
+				^ (LayerNumber != null ? LayerNumber.GetHashCode() : 0)
 				^ Flags.GetHashCode()
 				^ Width.GetHashCode()
 				^ Height.GetHashCode();

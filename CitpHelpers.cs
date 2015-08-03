@@ -116,6 +116,11 @@ namespace Imp.CitpSharp
 			else
 				Write(Encoding.Unicode.GetBytes((value ?? String.Empty) + "\0"));
 		}
+
+		public void Write(Guid value)
+		{
+			Write(Encoding.UTF8.GetBytes(value.ToString("D")));
+		}
 	}
 
 	internal class CitpBinaryReader : BinaryReader
@@ -155,6 +160,11 @@ namespace Imp.CitpSharp
 		public string ReadIdString()
 		{
 			return Encoding.UTF8.GetString(ReadBytes(4));
+		}
+
+		public Guid ReadGuid()
+		{
+			return Guid.Parse(Encoding.UTF8.GetString(ReadBytes(36)));
 		}
 	}
 }

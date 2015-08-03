@@ -23,6 +23,17 @@ namespace Imp.CitpSharp
 {
 	internal static class CitpImageHelpers
 	{
+		static readonly ImageCodecInfo jpegEncoder = getEncoder(ImageFormat.Jpeg);
+		static readonly EncoderParameters jpegEncoderParameters;
+		const long JpegEncodingQuality = 50;
+
+		static CitpImageHelpers()
+		{
+			jpegEncoderParameters = new EncoderParameters(1);
+			var encoder = Encoder.Quality;
+			jpegEncoderParameters.Param[0] = new EncoderParameter(encoder, JpegEncodingQuality);
+		}
+
 		static public byte[] ToByteArray(this Image image, MsexImageFormat format, MsexVersion? version)
 		{
 			switch (format)
@@ -104,7 +115,7 @@ namespace Imp.CitpSharp
 
 			using (var ms = new MemoryStream())
 			{
-				image.Save(ms, ImageFormat.Jpeg);
+				image.Save(ms, jpegEncoder, jpegEncoderParameters);
 				data = ms.ToArray();
 			}
 
@@ -158,6 +169,22 @@ namespace Imp.CitpSharp
 			{
 				return (Image)(new Bitmap(thumb, targetSize));
 			}
+		}
+
+
+
+		private static ImageCodecInfo getEncoder(ImageFormat format)
+		{
+
+			ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
+
+			foreach (ImageCodecInfo codec in codecs)
+			{
+				if (codec.FormatID == format.Guid)
+					return codec;
+			}
+
+			return null;
 		}
 	}
 }
