@@ -109,23 +109,27 @@ namespace Imp.CitpSharp
 
 		async void acceptClientsAsync(CancellationToken cancelToken)
 		{
-			while (!cancelToken.IsCancellationRequested)
+			try
 			{
-				var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
+				while (!cancelToken.IsCancellationRequested)
+				{
+					var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
 
-				var citpClient = new CitpTcpClient(_log, client);
+					var citpClient = new CitpTcpClient(_log, client);
 
 
-				citpClient.Disconnected += citpClient_Disconnected;
-				citpClient.PacketReceieved += citpClient_PacketReceieved;
+					citpClient.Disconnected += citpClient_Disconnected;
+					citpClient.PacketReceieved += citpClient_PacketReceieved;
 
-				citpClient.OpenStream(cancelToken);
+					citpClient.OpenStream(cancelToken);
 
-				_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
+					_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
 
-				if (ClientConnected != null)
-					ClientConnected(this, citpClient);
+					if (ClientConnected != null)
+						ClientConnected(this, citpClient);
+				}
 			}
+			catch (ObjectDisposedException) { }	
 		}
 
 		void citpClient_Disconnected(object sender, EventArgs e)

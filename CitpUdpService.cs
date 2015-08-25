@@ -137,7 +137,7 @@ namespace Imp.CitpSharp
 
 					try
 					{
-						result = await _client.ReceiveAsync();
+						result = await _client.ReceiveAsync().ConfigureAwait(false);
 					}
 					catch (ObjectDisposedException)
 					{
