@@ -16,8 +16,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Linq;
+using System.Text;
 
 namespace Imp.CitpSharp
 {
@@ -25,31 +25,33 @@ namespace Imp.CitpSharp
 	{
 		public static DateTime ConvertFromUnixTimestamp(ulong timestamp)
 		{
-			DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+			var origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 			return origin.AddSeconds(timestamp);
 		}
 
 		public static ulong ConvertToUnixTimestamp(DateTime date)
 		{
-			DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-			TimeSpan diff = date.ToUniversalTime() - origin;
+			var origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+			var diff = date.ToUniversalTime() - origin;
 			return (ulong)Math.Floor(diff.TotalSeconds);
 		}
 	}
+
+
 
 	internal static class EnumerableHelpers
 	{
 		public static bool ScrambledEquals<T>(this IEnumerable<T> a, IEnumerable<T> b)
 		{
 			var cnt = new Dictionary<T, int>();
-			foreach (T s in a)
+			foreach (var s in a)
 			{
 				if (cnt.ContainsKey(s))
 					cnt[s]++;
 				else
 					cnt.Add(s, 1);
 			}
-			foreach (T s in b)
+			foreach (var s in b)
 			{
 				if (cnt.ContainsKey(s))
 					cnt[s]--;
@@ -61,6 +63,8 @@ namespace Imp.CitpSharp
 		}
 	}
 
+
+
 	public struct MsexId
 	{
 		public MsexId(MsexLibraryId? libraryId, byte libaryNumber)
@@ -70,9 +74,7 @@ namespace Imp.CitpSharp
 		}
 
 		public MsexId(MsexLibraryId? libraryId, int libraryNumber)
-			: this(libraryId, (byte)libraryNumber)
-		{
-		}
+			: this(libraryId, (byte)libraryNumber) { }
 
 		public MsexId(MsexLibraryId libraryId)
 		{
@@ -87,22 +89,18 @@ namespace Imp.CitpSharp
 		}
 
 		public MsexId(int libraryNumber)
-			: this((byte)libraryNumber)
-		{
-
-		}
+			: this((byte)libraryNumber) { }
 
 		public MsexLibraryId? LibraryId;
 		public byte? LibraryNumber;
 	}
 
+
+
 	internal class CitpBinaryWriter : BinaryWriter
 	{
 		public CitpBinaryWriter(Stream output)
-			: base(output, Encoding.Unicode)
-		{
-
-		}
+			: base(output, Encoding.Unicode) { }
 
 		public override void Write(string value)
 		{
@@ -111,10 +109,9 @@ namespace Imp.CitpSharp
 
 		public void Write(string value, bool isUtf8)
 		{
-			if (isUtf8)
-				Write(Encoding.UTF8.GetBytes((value ?? String.Empty) + "\0"));
-			else
-				Write(Encoding.Unicode.GetBytes((value ?? String.Empty) + "\0"));
+			Write(isUtf8
+				? Encoding.UTF8.GetBytes((value ?? string.Empty) + "\0")
+				: Encoding.Unicode.GetBytes((value ?? string.Empty) + "\0"));
 		}
 
 		public void Write(Guid value)
@@ -123,13 +120,12 @@ namespace Imp.CitpSharp
 		}
 	}
 
+
+
 	internal class CitpBinaryReader : BinaryReader
 	{
 		public CitpBinaryReader(Stream input)
-			: base(input, Encoding.Unicode)
-		{
-
-		}
+			: base(input, Encoding.Unicode) { }
 
 		public override string ReadString()
 		{
@@ -141,12 +137,9 @@ namespace Imp.CitpSharp
 			var result = new StringBuilder(32);
 			char c;
 
-			for (int i = 0; i < this.BaseStream.Length; ++i)
+			for (int i = 0; i < BaseStream.Length; ++i)
 			{
-				if (isUtf8)
-					c = Convert.ToChar(ReadByte());
-				else
-					c = this.ReadChar();
+				c = isUtf8 ? Convert.ToChar(ReadByte()) : ReadChar();
 
 				if (c == 0)
 					break;

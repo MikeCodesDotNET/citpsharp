@@ -15,42 +15,59 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
- 
+
 namespace Imp.CitpSharp
 {
-
 	internal interface ICitpTcpClient
 	{
+		IPEndPoint RemoteEndPoint { get; }
 		event EventHandler Disconnected;
 
 		event EventHandler<byte[]> PacketReceieved;
-		IPEndPoint RemoteEndPoint { get; }
-		Task<bool> Send(byte[] data);
+		Task<bool> SendAsync(byte[] data);
 	}
+
+
 
 	internal sealed class CitpTcpService : IDisposable
 	{
-		readonly CancellationTokenSource _cancelTokenSource = new CancellationTokenSource();
-		readonly ConcurrentDictionary<IPEndPoint, ICitpTcpClient> _clients = new ConcurrentDictionary<IPEndPoint, ICitpTcpClient>();
-		readonly IPEndPoint _localEndpoint;
-		readonly ICitpLogService _log;
-		TcpListener _listener;
+		private readonly CancellationTokenSource m_cancelTokenSource = new CancellationTokenSource();
+
+		private readonly ConcurrentDictionary<IPEndPoint, ICitpTcpClient> m_clients =
+			new ConcurrentDictionary<IPEndPoint, ICitpTcpClient>();
+
+		private readonly IPEndPoint m_localEndpoint;
+		private readonly ICitpLogService m_log;
+		private TcpListener m_listener;
 
 
 
 		public CitpTcpService(ICitpLogService log, IPAddress nicAddress, int port)
 		{
-			_log = log;
-			_localEndpoint = new IPEndPoint(nicAddress, port);
+			m_log = log;
+			m_localEndpoint = new IPEndPoint(nicAddress, port);
+		}
+
+
+
+		public ConcurrentDictionary<IPEndPoint, ICitpTcpClient> Clients
+		{
+			get { return m_clients; }
+		}
+
+		public void Dispose()
+		{
+			if (m_listener != null)
+				Close();
+
+			if (m_cancelTokenSource != null)
+				m_cancelTokenSource.Dispose();
 		}
 
 
@@ -63,59 +80,43 @@ namespace Imp.CitpSharp
 
 
 
-		public ConcurrentDictionary<IPEndPoint, ICitpTcpClient> Clients
-		{
-			get { return _clients; }
-		}
-
-
-
 		public void Close()
 		{
-			_cancelTokenSource.Cancel();
-			_listener.Stop();
-		}
-
-		public void Dispose()
-		{
-			if (_listener != null)
-				Close();
-
-			if (_cancelTokenSource != null)
-				_cancelTokenSource.Dispose();
+			m_cancelTokenSource.Cancel();
+			m_listener.Stop();
 		}
 
 		public bool StartListening()
 		{
-			_listener = new TcpListener(_localEndpoint);
+			m_listener = new TcpListener(m_localEndpoint);
 
 			try
 			{
-				_listener.Start();
+				m_listener.Start();
 			}
 			catch (SocketException ex)
 			{
-				_log.LogError(String.Format("Failed to start listening on TCP port {0}, socket exception.", _localEndpoint.Port));
-				_log.LogException(ex);
+				m_log.LogError(string.Format("Failed to start listening on TCP port {0}, socket exception.", m_localEndpoint.Port));
+				m_log.LogException(ex);
 				return false;
 			}
 
-			acceptClientsAsync(_cancelTokenSource.Token);
+			acceptClientsAsync(m_cancelTokenSource.Token);
 
 			return true;
 		}
 
 
 
-		async void acceptClientsAsync(CancellationToken cancelToken)
+		private async void acceptClientsAsync(CancellationToken cancelToken)
 		{
 			try
 			{
 				while (!cancelToken.IsCancellationRequested)
 				{
-					var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
+					var client = await m_listener.AcceptTcpClientAsync().ConfigureAwait(false);
 
-					var citpClient = new CitpTcpClient(_log, client);
+					var citpClient = new CitpTcpClient(m_log, client);
 
 
 					citpClient.Disconnected += citpClient_Disconnected;
@@ -123,25 +124,25 @@ namespace Imp.CitpSharp
 
 					citpClient.OpenStream(cancelToken);
 
-					_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
+					m_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
 
 					if (ClientConnected != null)
 						ClientConnected(this, citpClient);
 				}
 			}
-			catch (ObjectDisposedException) { }	
+			catch (ObjectDisposedException) { }
 		}
 
-		void citpClient_Disconnected(object sender, EventArgs e)
+		private void citpClient_Disconnected(object sender, EventArgs e)
 		{
 			ICitpTcpClient removedClient;
-			_clients.TryRemove((sender as CitpTcpClient).RemoteEndPoint, out removedClient);
+			m_clients.TryRemove((sender as CitpTcpClient).RemoteEndPoint, out removedClient);
 
 			if (ClientDisconnected != null)
 				ClientDisconnected(this, removedClient.RemoteEndPoint);
 		}
 
-		void citpClient_PacketReceieved(object sender, byte[] e)
+		private void citpClient_PacketReceieved(object sender, byte[] e)
 		{
 			if (PacketReceieved != null)
 				PacketReceieved(this, Tuple.Create((sender as CitpTcpClient).RemoteEndPoint, e));
@@ -149,25 +150,25 @@ namespace Imp.CitpSharp
 
 
 
-		class CitpTcpClient : ICitpTcpClient
+		private class CitpTcpClient : ICitpTcpClient
 		{
-			static readonly byte[] CITP_SEARCH_PATTERN = new byte[] { 0x43, 0x49, 0x54, 0x50, 0x01, 0x00 };
+			private static readonly byte[] CitpSearchPattern = {0x43, 0x49, 0x54, 0x50, 0x01, 0x00};
 
-			readonly TcpClient _client;
-			readonly ICitpLogService _log;
-			readonly IPEndPoint _remoteEndPoint;
+			private readonly TcpClient m_client;
+			private readonly ICitpLogService m_log;
+			private readonly IPEndPoint m_remoteEndPoint;
 
-			NetworkStream _stream;
+			private byte[] m_currentPacket;
+			private int m_packetBytesRemaining;
 
-			byte[] _currentPacket;
-			int _packetBytesRemaining;
+			private NetworkStream m_stream;
 
 
 			public CitpTcpClient(ICitpLogService log, TcpClient client)
 			{
-				_log = log;
-				_client = client;
-				_remoteEndPoint = _client.Client.RemoteEndPoint as IPEndPoint;
+				m_log = log;
+				m_client = client;
+				m_remoteEndPoint = m_client.Client.RemoteEndPoint as IPEndPoint;
 			}
 
 
@@ -180,80 +181,17 @@ namespace Imp.CitpSharp
 
 			public IPEndPoint RemoteEndPoint
 			{
-				get { return _remoteEndPoint; }
+				get { return m_remoteEndPoint; }
 			}
 
-			public async void OpenStream(CancellationToken ct)
+			public async Task<bool> SendAsync(byte[] data)
 			{
-				using (_client)
-				{
-					try
-					{
-						var buffer = new byte[4096];
-
-						try
-						{
-							_stream = _client.GetStream();
-						}
-						catch (InvalidOperationException)
-						{
-							_log.LogError("Couldn't get network stream");
-							return;
-						}
-
-						while (!ct.IsCancellationRequested)
-						{
-							//under some circumstances, it's not possible to detect
-							//a client disconnecting if there's no data being sent
-							//so it's a good idea to give them a timeout to ensure that 
-							//we clean them up.
-							var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15));
-							var amountReadTask = _stream.ReadAsync(buffer, 0, buffer.Length, ct);
-
-							var completedTask = await Task.WhenAny(timeoutTask, amountReadTask)
-														  .ConfigureAwait(false);
-
-							if (completedTask == timeoutTask)
-							{
-								_log.LogInfo("Client timed out");
-								break;
-							}
-
-							var amountRead = amountReadTask.Result;
-
-							if (amountRead == 0)
-								break;
-
-							parseCitpPackets(amountRead, buffer);
-						}
-					}
-					catch (AggregateException)
-					{
-						_log.LogInfo("Client closed connection");
-					}
-					catch (IOException)
-					{
-						_log.LogInfo("Client closed connection");
-					}
-					finally
-					{
-						_stream.Dispose();
-						_stream = null;
-
-						if (Disconnected != null)
-							Disconnected(this, EventArgs.Empty);
-					}
-				}	
-			}
-
-			public async Task<bool> Send(byte[] data)
-			{
-				if (_stream == null)
+				if (m_stream == null)
 					throw new InvalidOperationException("Client is not ready to send data");
 
 				try
 				{
-					await _stream.WriteAsync(data, 0, data.Length);
+					await m_stream.WriteAsync(data, 0, data.Length);
 				}
 				catch (IOException)
 				{
@@ -271,59 +209,120 @@ namespace Imp.CitpSharp
 				return true;
 			}
 
-
-
-			int copyBytesToPacket(int srcOffset, int nBytesToCopy, byte[] source)
+			public async void OpenStream(CancellationToken ct)
 			{
-				Buffer.BlockCopy(source, srcOffset, _currentPacket,
-					_currentPacket.Length - _packetBytesRemaining,
+				using (m_client)
+				{
+					try
+					{
+						var buffer = new byte[4096];
+
+						try
+						{
+							m_stream = m_client.GetStream();
+						}
+						catch (InvalidOperationException)
+						{
+							m_log.LogError("Couldn't get network stream");
+							return;
+						}
+
+						while (!ct.IsCancellationRequested)
+						{
+							//under some circumstances, it's not possible to detect
+							//a client disconnecting if there's no data being sent
+							//so it's a good idea to give them a timeout to ensure that 
+							//we clean them up.
+							var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15));
+							var amountReadTask = m_stream.ReadAsync(buffer, 0, buffer.Length, ct);
+
+							var completedTask = await Task.WhenAny(timeoutTask, amountReadTask)
+								.ConfigureAwait(false);
+
+							if (completedTask == timeoutTask)
+							{
+								m_log.LogInfo("Client timed out");
+								break;
+							}
+
+							int amountRead = amountReadTask.Result;
+
+							if (amountRead == 0)
+								break;
+
+							parseCitpPackets(amountRead, buffer);
+						}
+					}
+					catch (AggregateException)
+					{
+						m_log.LogInfo("Client closed connection");
+					}
+					catch (IOException)
+					{
+						m_log.LogInfo("Client closed connection");
+					}
+					finally
+					{
+						m_stream.Dispose();
+						m_stream = null;
+
+						if (Disconnected != null)
+							Disconnected(this, EventArgs.Empty);
+					}
+				}
+			}
+
+
+
+			private int copyBytesToPacket(int srcOffset, int nBytesToCopy, byte[] source)
+			{
+				Buffer.BlockCopy(source, srcOffset, m_currentPacket,
+					m_currentPacket.Length - m_packetBytesRemaining,
 					nBytesToCopy);
 
-				_packetBytesRemaining -= nBytesToCopy;
+				m_packetBytesRemaining -= nBytesToCopy;
 
-				if (_packetBytesRemaining == 0)
+				if (m_packetBytesRemaining == 0)
 				{
-
 					if (PacketReceieved != null)
-						PacketReceieved(this, _currentPacket);
+						PacketReceieved(this, m_currentPacket);
 
-					_currentPacket = null;
+					m_currentPacket = null;
 				}
 
 				return nBytesToCopy;
 			}
 
-			void parseCitpPackets(int nBytesReceived, byte[] source)
+			private void parseCitpPackets(int nBytesReceived, byte[] source)
 			{
 				int i = 0;
 				while (i < nBytesReceived)
 				{
-					if (_packetBytesRemaining > 0)
+					if (m_packetBytesRemaining > 0)
 					{
-						i += copyBytesToPacket(i, Math.Min(_packetBytesRemaining, nBytesReceived), source);
+						i += copyBytesToPacket(i, Math.Min(m_packetBytesRemaining, nBytesReceived), source);
 					}
-					else if (source.Skip(i).Take(CITP_SEARCH_PATTERN.Length).SequenceEqual(CITP_SEARCH_PATTERN))
+					else if (source.Skip(i).Take(CitpSearchPattern.Length).SequenceEqual(CitpSearchPattern))
 					{
-						UInt32 packetLength = BitConverter.ToUInt32(source, i + 8);
+						uint packetLength = BitConverter.ToUInt32(source, i + 8);
 
 						// Ignore packets reporting their length as over 5MB, they're probably wrong
 						if (packetLength > 5000000)
 						{
-							_log.LogWarning("Received a CITP packet with an invalid length of " + packetLength);
+							m_log.LogWarning("Received a CITP packet with an invalid length of " + packetLength);
 							continue;
 						}
 
-						_packetBytesRemaining = (int)packetLength;
-						_currentPacket = new byte[packetLength];
+						m_packetBytesRemaining = (int)packetLength;
+						m_currentPacket = new byte[packetLength];
 
-						i += copyBytesToPacket(i, Math.Min(_packetBytesRemaining, nBytesReceived), source);
+						i += copyBytesToPacket(i, Math.Min(m_packetBytesRemaining, nBytesReceived), source);
 					}
 					else
 					{
 						++i;
 					}
 				}
-
 			}
 		}
 	}

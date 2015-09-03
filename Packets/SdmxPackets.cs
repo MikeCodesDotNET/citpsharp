@@ -20,25 +20,22 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class CapabilitiesMessagePacket : CitpSdmxPacket
 	{
 		public CapabilitiesMessagePacket()
-			: base(SdmxMessageType.CapabilitiesMessage)
-		{
-
-		}
+			: base(SdmxMessageType.CapabilitiesMessage) { }
 
 		public List<SdmxCapability> Capabilities { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write((ushort)Capabilities.Count);
 			foreach (var c in Capabilities)
 				writer.Write((ushort)c);
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			ushort capabilitiesCount = reader.ReadUInt16();
 			Capabilities = new List<SdmxCapability>(capabilitiesCount);
@@ -52,25 +49,22 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class UniverseNameMessagePacket : CitpSdmxPacket
 	{
 		public UniverseNameMessagePacket()
-			: base(SdmxMessageType.UniverseNameMessage)
-		{
-
-		}
+			: base(SdmxMessageType.UniverseNameMessage) { }
 
 		public byte UniverseIndex { get; set; }
 		public string UniverseName { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write(UniverseIndex);
 			writer.Write(UniverseName, true);
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			UniverseIndex = reader.ReadByte();
 			UniverseName = reader.ReadString(true);
@@ -82,23 +76,20 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class EncryptionIdentifierMessagePacket : CitpSdmxPacket
 	{
 		public EncryptionIdentifierMessagePacket()
-			: base(SdmxMessageType.EncryptionIdentifierMessage)
-		{
-
-		}
+			: base(SdmxMessageType.EncryptionIdentifierMessage) { }
 
 		public string Identifier { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write(Identifier, true);
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			Identifier = reader.ReadString(true);
 		}
@@ -109,31 +100,28 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class ChannelBlockMessagePacket : CitpSdmxPacket
 	{
 		public ChannelBlockMessagePacket()
-			: base(SdmxMessageType.ChannelBlockMessage)
-		{
-
-		}
+			: base(SdmxMessageType.ChannelBlockMessage) { }
 
 		public bool IsBlind { get; set; }
 		public byte UniverseIndex { get; set; }
 		public ushort FirstChannel { get; set; }
 		public List<byte> ChannelLevels { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write(IsBlind);
 			writer.Write(UniverseIndex);
 			writer.Write(FirstChannel);
 			writer.Write((ushort)ChannelLevels.Count);
-			foreach (var c in ChannelLevels)
+			foreach (byte c in ChannelLevels)
 				writer.Write(c);
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			IsBlind = reader.ReadBoolean();
 			UniverseIndex = reader.ReadByte();
@@ -151,23 +139,13 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class ChannelListMessagePacket : CitpSdmxPacket
 	{
 		public ChannelListMessagePacket()
-			: base(SdmxMessageType.ChannelListMessage)
-		{
-
-		}
+			: base(SdmxMessageType.ChannelListMessage) { }
 
 		public List<ChannelLevel> Levels { get; set; }
 
-		public class ChannelLevel
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			public byte UniverseIndex { get; set; }
-			public ushort Channel { get; set; }
-			public byte Level { get; set; }
-		}
-
-		protected override void serializeToStream(CitpBinaryWriter writer)
-		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write((ushort)Levels.Count);
 			foreach (var l in Levels)
@@ -178,9 +156,9 @@ namespace Imp.CitpSharp.Packets.Sdmx
 			}
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			ushort levelsCount = reader.ReadUInt16();
 			Levels = new List<ChannelLevel>(levelsCount);
@@ -194,6 +172,15 @@ namespace Imp.CitpSharp.Packets.Sdmx
 				});
 			}
 		}
+
+
+
+		public class ChannelLevel
+		{
+			public byte UniverseIndex { get; set; }
+			public ushort Channel { get; set; }
+			public byte Level { get; set; }
+		}
 	}
 
 
@@ -201,23 +188,20 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class SetExternalSourceMessagePacket : CitpSdmxPacket
 	{
 		public SetExternalSourceMessagePacket()
-			: base(SdmxMessageType.SetExternalSourceMessage)
-		{
-
-		}
+			: base(SdmxMessageType.SetExternalSourceMessage) { }
 
 		public CitpDmxConnectionString ConnectionString { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
-			writer.Write(ConnectionString.ToUTF8ByteArray());
+			writer.Write(ConnectionString.ToUtf8ByteArray());
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			ConnectionString = CitpDmxConnectionString.FromString(reader.ReadString(true));
 		}
@@ -228,25 +212,22 @@ namespace Imp.CitpSharp.Packets.Sdmx
 	internal class SetExternalUniverseSourceMessagePacket : CitpSdmxPacket
 	{
 		public SetExternalUniverseSourceMessagePacket()
-			: base(SdmxMessageType.SetExternalUniverseSourceMessage)
-		{
-
-		}
+			: base(SdmxMessageType.SetExternalUniverseSourceMessage) { }
 
 		public byte UniverseIndex { get; set; }
 		public CitpDmxConnectionString ConnectionString { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write(UniverseIndex);
-			writer.Write(ConnectionString.ToUTF8ByteArray());
+			writer.Write(ConnectionString.ToUtf8ByteArray());
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			UniverseIndex = reader.ReadByte();
 			ConnectionString = CitpDmxConnectionString.FromString(reader.ReadString(true));

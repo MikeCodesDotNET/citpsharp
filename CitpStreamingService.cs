@@ -1,45 +1,43 @@
-﻿using Imp.CitpSharp.Packets.Msex;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Imp.CitpSharp.Packets.Msex;
 
 namespace Imp.CitpSharp
 {
 	internal sealed class CitpStreamingService
 	{
-		readonly ICitpLogService _log;
-		readonly ICitpMediaServerInfo _serverInfo;
-		readonly CitpNetworkService _networkService;
+		private readonly ICitpLogService m_log;
+		private readonly CitpNetworkService m_networkService;
+		private readonly ICitpMediaServerInfo m_serverInfo;
 
-		readonly Dictionary<int, SourceStreamRequest> _streamRequests = new Dictionary<int, SourceStreamRequest>();
+		private readonly Dictionary<int, SourceStreamRequest> m_streamRequests = new Dictionary<int, SourceStreamRequest>();
 
 		public CitpStreamingService(ICitpLogService log, ICitpMediaServerInfo serverInfo, CitpNetworkService networkService)
 		{
-			_log = log;
-			_serverInfo = serverInfo;
-			_networkService = networkService;
+			m_log = log;
+			m_serverInfo = serverInfo;
+			m_networkService = networkService;
 		}
 
 		public void AddStreamRequest(MsexVersion? peerMsexVersion, RequestStreamMessagePacket requestPacket)
 		{
 			SourceStreamRequest request;
 
-			if (_streamRequests.TryGetValue(requestPacket.SourceIdentifier, out request) == false)
+			if (m_streamRequests.TryGetValue(requestPacket.SourceIdentifier, out request) == false)
 			{
 				request = new SourceStreamRequest();
-				_streamRequests.Add(requestPacket.SourceIdentifier, request);
+				m_streamRequests.Add(requestPacket.SourceIdentifier, request);
 			}
 
-			request.AddRequestFormat(peerMsexVersion.HasValue ? peerMsexVersion.Value : MsexVersion.Version1_0, requestPacket);
+			request.AddRequestFormat(peerMsexVersion ?? MsexVersion.Version10, requestPacket);
 		}
 
-		public async Task ProcessStreamRequests()
+		public async Task ProcessStreamRequestsAsync()
 		{
-			foreach (var request in _streamRequests.Values.ToList())
+			foreach (var request in m_streamRequests.Values.ToList())
 			{
 				Image frame = null;
 
@@ -50,7 +48,7 @@ namespace Imp.CitpSharp
 
 					if (frame == null)
 					{
-						frame = _serverInfo.GetVideoSourceFrame(request.SourceIdentifier, request.FrameWidth, request.FrameHeight);
+						frame = m_serverInfo.GetVideoSourceFrame(request.SourceIdentifier, request.FrameWidth, request.FrameHeight);
 
 						if (frame == null)
 							break;
@@ -60,13 +58,13 @@ namespace Imp.CitpSharp
 
 					switch (formatRequest.FrameFormat)
 					{
-						case MsexImageFormat.RGB8:
-							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version1_0);
+						case MsexImageFormat.Rgb8:
+							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version10);
 							break;
-						case MsexImageFormat.JPEG:
+						case MsexImageFormat.Jpeg:
 							frameBuffer = frame.ToJpegByteArray();
 							break;
-						case MsexImageFormat.PNG:
+						case MsexImageFormat.Png:
 							frameBuffer = frame.ToPngByteArray();
 							break;
 						default:
@@ -76,7 +74,7 @@ namespace Imp.CitpSharp
 					var packet = new StreamFrameMessagePacket
 					{
 						Version = formatRequest.Version,
-						MediaServerUUID = _serverInfo.Uuid,
+						MediaServerUuid = m_serverInfo.Uuid,
 						SourceIdentifier = Convert.ToUInt16(request.SourceIdentifier),
 						FrameFormat = formatRequest.FrameFormat,
 						FrameWidth = Convert.ToUInt16(request.FrameWidth),
@@ -84,7 +82,7 @@ namespace Imp.CitpSharp
 						FrameBuffer = frameBuffer
 					};
 
-					await _networkService.SendMulticastPacket(packet);
+					await m_networkService.SendMulticastPacketAsync(packet);
 
 					formatRequest.LastOutput = DateTime.Now;
 				}
@@ -93,14 +91,16 @@ namespace Imp.CitpSharp
 				request.RemoveTimedOutRequests();
 
 				if (request.Formats.Count == 0)
-					_streamRequests.Remove(request.SourceIdentifier);
+					m_streamRequests.Remove(request.SourceIdentifier);
 			}
 		}
 
 
 
-		class SourceStreamRequest
+		private class SourceStreamRequest
 		{
+			private readonly HashSet<RequestFormat> m_formats = new HashSet<RequestFormat>();
+
 			public SourceStreamRequest()
 			{
 				SourceIdentifier = -1;
@@ -115,10 +115,9 @@ namespace Imp.CitpSharp
 			public int FrameHeight { get; set; }
 			public float Fps { get; set; }
 
-			HashSet<RequestFormat> _formats = new HashSet<RequestFormat>();
 			public HashSet<RequestFormat> Formats
 			{
-				get { return _formats; }
+				get { return m_formats; }
 			}
 
 
@@ -136,21 +135,21 @@ namespace Imp.CitpSharp
 				Fps = Math.Max(Fps, packet.Fps);
 
 
-				var format = _formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat 
-					&& r.IsVersion1_2 == (peerMsexVersion == MsexVersion.Version1_2));
+				var format = m_formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat
+				                                           && r.IsVersion12 == (peerMsexVersion == MsexVersion.Version12));
 
 				if (format != null)
 				{
 					format.Version = peerMsexVersion;
 
-					DateTime packetExpireAt = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout);
+					var packetExpireAt = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout);
 
 					if (packetExpireAt > format.ExpireAt)
 						format.ExpireAt = packetExpireAt;
 				}
 				else
 				{
-					_formats.Add(new RequestFormat
+					m_formats.Add(new RequestFormat
 					{
 						FrameFormat = packet.FrameFormat,
 						Version = peerMsexVersion,
@@ -162,10 +161,10 @@ namespace Imp.CitpSharp
 
 			public void RemoveTimedOutRequests()
 			{
-				foreach (var format in _formats.ToList())
+				foreach (var format in m_formats.ToList())
 				{
 					if (DateTime.Now >= format.ExpireAt)
-						_formats.Remove(format);
+						m_formats.Remove(format);
 				}
 			}
 
@@ -179,30 +178,30 @@ namespace Imp.CitpSharp
 				public DateTime LastOutput { get; set; }
 				public DateTime ExpireAt { get; set; }
 
-				public bool IsVersion1_2
+				public bool IsVersion12
 				{
-					get { return Version == MsexVersion.Version1_2; }
-				}
-
-				public override bool Equals(object obj)
-				{
-					var m = obj as RequestFormat;
-					if ((object)m == null)
-						return false;
-
-					return Equals(m);
+					get { return Version == MsexVersion.Version12; }
 				}
 
 				public bool Equals(RequestFormat other)
 				{
 					return FrameFormat == other.FrameFormat
-						&& IsVersion1_2 == other.IsVersion1_2;
+					       && IsVersion12 == other.IsVersion12;
+				}
+
+				public override bool Equals(object obj)
+				{
+					var m = obj as RequestFormat;
+					if (m == null)
+						return false;
+
+					return Equals(m);
 				}
 
 				public override int GetHashCode()
 				{
 					return FrameFormat.GetHashCode()
-						^ IsVersion1_2.GetHashCode();
+					       ^ IsVersion12.GetHashCode();
 				}
 			}
 		}

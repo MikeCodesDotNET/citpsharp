@@ -20,6 +20,15 @@ namespace Imp.CitpSharp
 {
 	internal class CitpPeer : IEquatable<CitpPeer>
 	{
+		public DateTime LastUpdateReceived;
+		public Guid? MediaServerUuid;
+		public MsexVersion? MsexVersion;
+
+		public string Name;
+		public string State;
+
+		public CitpPeerType Type;
+
 		public CitpPeer(IPAddress ip, string name)
 		{
 			Ip = ip;
@@ -36,6 +45,34 @@ namespace Imp.CitpSharp
 			LastUpdateReceived = DateTime.Now;
 		}
 
+		public IPAddress Ip { get; private set; }
+		public int? RemoteTcpPort { get; private set; }
+		public int? ListeningTcpPort { get; private set; }
+		public bool IsConnected { get; private set; }
+
+		public IPEndPoint RemoteEndPoint
+		{
+			get
+			{
+				if (RemoteTcpPort.HasValue == false)
+					return null;
+				return new IPEndPoint(Ip, RemoteTcpPort.Value);
+			}
+		}
+
+		public bool Equals(CitpPeer other)
+		{
+			if (ReferenceEquals(null, other))
+				return false;
+			if (ReferenceEquals(this, other))
+				return true;
+			return string.Equals(Name, other.Name) && Type == other.Type && string.Equals(State, other.State)
+			       && LastUpdateReceived.Equals(other.LastUpdateReceived) && MsexVersion == other.MsexVersion
+			       && MediaServerUuid.Equals(other.MediaServerUuid) && Equals(Ip, other.Ip)
+			       && RemoteTcpPort == other.RemoteTcpPort && ListeningTcpPort == other.ListeningTcpPort
+			       && IsConnected == other.IsConnected;
+		}
+
 		public void SetConnected(int remoteTcpPort)
 		{
 			RemoteTcpPort = remoteTcpPort;
@@ -48,76 +85,36 @@ namespace Imp.CitpSharp
 			IsConnected = false;
 		}
 
-		public IPAddress Ip { get; private set; }
-		public int? RemoteTcpPort { get; private set; }
-		public int? ListeningTcpPort { get; private set; }
-		public bool IsConnected { get; private set; }
-
-		public string Name;
-
-		public CitpPeerType Type;
-		public string State;
-		
-		public DateTime LastUpdateReceived;
-		public MsexVersion? MsexVersion;
-		public Guid? MediaServerUuid;
-
-		public IPEndPoint RemoteEndPoint
-		{
-			get
-			{
-				if (RemoteTcpPort.HasValue == false)
-					return null;
-				else
-					return new IPEndPoint(Ip, RemoteTcpPort.Value);
-			}
-		}
-
 		public override bool Equals(object obj)
 		{
-			if (obj == null)
+			if (ReferenceEquals(null, obj))
 				return false;
-
-			if (!(obj is CitpPeer))
-				return false;
-
-			return Equals((CitpPeer)obj);
-		}
-
-		public bool Equals(CitpPeer other)
-		{
-			if (other == null)
-				return false;
-
-			return Ip.Equals(other.Ip)
-				&& RemoteTcpPort == other.RemoteTcpPort
-				&& ListeningTcpPort == other.ListeningTcpPort
-				&& Name == other.Name
-				&& Type == other.Type
-				&& State == other.State
-				&& IsConnected == other.IsConnected
-				&& LastUpdateReceived == other.LastUpdateReceived
-				&& MsexVersion == other.MsexVersion
-				&& MediaServerUuid == other.MediaServerUuid;
+			if (ReferenceEquals(this, obj))
+				return true;
+			return obj.GetType() == GetType() && Equals((CitpPeer)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return (Ip != null ? Ip.GetHashCode() : 0)
-				^ (RemoteTcpPort != null ? RemoteTcpPort.GetHashCode() : 0)
-				^ (ListeningTcpPort != null ? ListeningTcpPort.GetHashCode() : 0)
-				^ (Name != null ? Name.GetHashCode() : 0)
-				^ Type.GetHashCode()
-				^ State.GetHashCode()
-				^ IsConnected.GetHashCode()
-				^ LastUpdateReceived.GetHashCode()
-				^ (MsexVersion != null ? MsexVersion.GetHashCode() : MsexVersion.GetHashCode())
-				^ (MediaServerUuid != null ? MediaServerUuid.GetHashCode() : 0);
+			unchecked
+			{
+				int hashCode = (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (int)Type;
+				hashCode = (hashCode * 397) ^ (State != null ? State.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ LastUpdateReceived.GetHashCode();
+				hashCode = (hashCode * 397) ^ MsexVersion.GetHashCode();
+				hashCode = (hashCode * 397) ^ MediaServerUuid.GetHashCode();
+				hashCode = (hashCode * 397) ^ (Ip != null ? Ip.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ RemoteTcpPort.GetHashCode();
+				hashCode = (hashCode * 397) ^ ListeningTcpPort.GetHashCode();
+				hashCode = (hashCode * 397) ^ IsConnected.GetHashCode();
+				return hashCode;
+			}
 		}
 
 		public override string ToString()
 		{
-			return String.Format("Peer: {0}, {1}:{2}", Name ?? "(Unknown)", Ip, RemoteTcpPort);
+			return string.Format("Peer: {0}, {1}:{2}", Name ?? "(Unknown)", Ip, RemoteTcpPort);
 		}
 	}
 }

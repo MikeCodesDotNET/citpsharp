@@ -14,7 +14,6 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -25,35 +24,35 @@ namespace Imp.CitpSharp
 	{
 		public static readonly int MaximumUdpPacketLength = 65507;
 
-		static readonly int CITP_UDP_PORT = 4809;
-		static readonly IPAddress CITP_MULTICAST_ORIGINAL_IP = IPAddress.Parse("224.0.0.180");
-		static readonly IPAddress CITP_MULTICAST_IP = IPAddress.Parse("239.224.0.180");
-		static readonly IPEndPoint CITP_MULTICAST_ORIGINAL_ENDPOINT = new IPEndPoint(CITP_MULTICAST_ORIGINAL_IP, CITP_UDP_PORT);
-		static readonly IPEndPoint CITP_MULTICAST_ENDPOINT = new IPEndPoint(CITP_MULTICAST_IP, CITP_UDP_PORT);
+		private static readonly int CitpUdpPort = 4809;
+		private static readonly IPAddress CitpMulticastOriginalIp = IPAddress.Parse("224.0.0.180");
+		private static readonly IPAddress CitpMulticastIp = IPAddress.Parse("239.224.0.180");
+		private static readonly IPEndPoint CitpMulticastOriginalEndpoint = new IPEndPoint(CitpMulticastOriginalIp, CitpUdpPort);
+		private static readonly IPEndPoint CitpMulticastEndpoint = new IPEndPoint(CitpMulticastIp, CitpUdpPort);
 
-		readonly ICitpLogService _log;
-		readonly IPAddress _nicIp;
-		readonly bool _useOriginalMulticastIp;
+		private readonly ICitpLogService m_log;
+		private readonly IPAddress m_nicIp;
+		private readonly bool m_useOriginalMulticastIp;
 
-		UdpClient _client;
+		private UdpClient m_client;
 
-		bool _isListenLoopRunning;
+		private bool m_isListenLoopRunning;
 
 
 		public CitpUdpService(ICitpLogService log, IPAddress nicIp, bool useOriginalMulticastIp)
 		{
-			_log = log;
+			m_log = log;
 
-			_nicIp = nicIp;
-			_useOriginalMulticastIp = useOriginalMulticastIp;
+			m_nicIp = nicIp;
+			m_useOriginalMulticastIp = useOriginalMulticastIp;
 		}
 
 		public void Dispose()
 		{
-			if (_client != null)
+			if (m_client != null)
 			{
-				_client.Close();
-				_client = null;
+				m_client.Close();
+				m_client = null;
 			}
 		}
 
@@ -61,32 +60,28 @@ namespace Imp.CitpSharp
 
 		public bool Start()
 		{
-			if (_client != null)
+			if (m_client != null)
 			{
-				_client.Close();
-				_client = null;
+				m_client.Close();
+				m_client = null;
 			}
 
-			_client = new UdpClient();
-			_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+			m_client = new UdpClient();
+			m_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
 			try
 			{
-				_client.Client.Bind(new IPEndPoint(_nicIp, CITP_UDP_PORT));
+				m_client.Client.Bind(new IPEndPoint(m_nicIp, CitpUdpPort));
 
-				if (_useOriginalMulticastIp)
-					_client.JoinMulticastGroup(CITP_MULTICAST_ORIGINAL_IP);
-				else
-					_client.JoinMulticastGroup(CITP_MULTICAST_IP);
-
+				m_client.JoinMulticastGroup(m_useOriginalMulticastIp ? CitpMulticastOriginalIp : CitpMulticastIp);
 			}
 			catch (SocketException ex)
 			{
-				_log.LogError("Failed to setup UDP socket");
-				_log.LogException(ex);
+				m_log.LogError("Failed to setup UDP socket");
+				m_log.LogException(ex);
 
-				_client.Close();
-				_client = null;
+				m_client.Close();
+				m_client = null;
 
 				return false;
 			}
@@ -98,15 +93,15 @@ namespace Imp.CitpSharp
 
 		public async Task<bool> Send(byte[] data)
 		{
-			if (_client == null)
+			if (m_client == null)
 				return false;
 
 			try
 			{
-				if (_useOriginalMulticastIp)
-					await _client.SendAsync(data, data.Length, CITP_MULTICAST_ORIGINAL_ENDPOINT);
+				if (m_useOriginalMulticastIp)
+					await m_client.SendAsync(data, data.Length, CitpMulticastOriginalEndpoint);
 				else
-					await _client.SendAsync(data, data.Length, CITP_MULTICAST_ENDPOINT);
+					await m_client.SendAsync(data, data.Length, CitpMulticastEndpoint);
 			}
 			catch (ObjectDisposedException)
 			{
@@ -114,30 +109,30 @@ namespace Imp.CitpSharp
 			}
 			catch (SocketException ex)
 			{
-				_log.LogError("Failed to send data via UDP");
-				_log.LogException(ex);
+				m_log.LogError("Failed to send data via UDP");
+				m_log.LogException(ex);
 				return false;
 			}
 
 			return true;
 		}
 
-		async void listen()
+		private async void listen()
 		{
-			if (_isListenLoopRunning == true)
+			if (m_isListenLoopRunning)
 				return;
 
 			try
 			{
-				_isListenLoopRunning = true;
+				m_isListenLoopRunning = true;
 
-				while (_client != null)
+				while (m_client != null)
 				{
 					UdpReceiveResult result;
 
 					try
 					{
-						result = await _client.ReceiveAsync().ConfigureAwait(false);
+						result = await m_client.ReceiveAsync().ConfigureAwait(false);
 					}
 					catch (ObjectDisposedException)
 					{
@@ -145,12 +140,12 @@ namespace Imp.CitpSharp
 					}
 					catch (SocketException ex)
 					{
-						_log.LogError("Udp socket exception");
-						_log.LogException(ex);
+						m_log.LogError("Udp socket exception");
+						m_log.LogException(ex);
 						continue;
 					}
 
-					if (result.RemoteEndPoint.Address.Equals(_nicIp))
+					if (result.RemoteEndPoint.Address.Equals(m_nicIp))
 						continue;
 
 					if (PacketReceived != null)
@@ -159,7 +154,7 @@ namespace Imp.CitpSharp
 			}
 			finally
 			{
-				_isListenLoopRunning = false;
+				m_isListenLoopRunning = false;
 			}
 		}
 	}

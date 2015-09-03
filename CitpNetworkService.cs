@@ -13,76 +13,116 @@
 //	You should have received a copy of the GNU Lesser General Public License
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
-using Imp.CitpSharp.Packets;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	/// Class which manages the TCP and UDP services, maintains a list of CITP peers and handles messages related to peer discovery
+	///     Class which manages the TCP and UDP services, maintains a list of CITP peers and handles messages related to peer
+	///     discovery
 	/// </summary>
 	internal sealed class CitpNetworkService : IDisposable
 	{
-		static readonly int CITP_PEER_EXPIRY_TIME = 10;
+		private static readonly int CitpPeerExpiryTime = 10;
 
-		readonly ICitpLogService _log;
-		readonly IPAddress _nicAddress;
-		readonly bool _useOriginalMulticastIp;
-		readonly ICitpMediaServerInfo _serverInfo;
+		private readonly ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> m_frameQueue =
+			new ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>>();
 
-		int _tcpListenPort;
-		
-		CitpUdpService _udpService;
-		CitpTcpService _tcpListenService;
+		private readonly ICitpLogService m_log;
 
-		
+		private readonly ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> m_messageQueue =
+			new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
 
-		
+		private readonly IPAddress m_nicAddress;
 
 
-		CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp)
+
+		private readonly List<CitpPeer> m_peers = new List<CitpPeer>();
+		private readonly ICitpMediaServerInfo m_serverInfo;
+		private readonly bool m_useOriginalMulticastIp;
+
+		private CitpTcpService m_tcpListenService;
+
+		private CitpUdpService m_udpService;
+
+
+
+		private CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp)
 		{
-			_nicAddress = nicAddress;
-			_useOriginalMulticastIp = useOriginalMulticastIp;
-			_log = log;
+			m_nicAddress = nicAddress;
+			m_useOriginalMulticastIp = useOriginalMulticastIp;
+			m_log = log;
 		}
 
 
-		public CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp, 
+		public CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp,
 			ICitpMediaServerInfo serverInfo)
 			: this(log, nicAddress, useOriginalMulticastIp)
 		{
-			_serverInfo = serverInfo;
+			m_serverInfo = serverInfo;
+		}
+
+
+		public int LocalTcpListenPort { get; private set; }
+
+		public IReadOnlyList<CitpPeer> Peers
+		{
+			get { return m_peers; }
+		}
+
+		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue
+		{
+			get { return m_messageQueue; }
+		}
+
+		public ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> FrameQueue
+		{
+			get { return m_frameQueue; }
+		}
+
+		public void Dispose()
+		{
+			if (m_tcpListenService != null)
+			{
+				m_tcpListenService.Dispose();
+				m_tcpListenService = null;
+			}
+
+			if (m_udpService != null)
+			{
+				m_udpService.Dispose();
+				m_udpService = null;
+			}
 		}
 
 
 		public bool Start()
 		{
-			_udpService = new CitpUdpService(_log, _nicAddress, _useOriginalMulticastIp);
-			_udpService.PacketReceived += udpService_PacketReceived;
+			m_udpService = new CitpUdpService(m_log, m_nicAddress, m_useOriginalMulticastIp);
+			m_udpService.PacketReceived += udpService_PacketReceived;
 
-			bool udpResult = _udpService.Start();
+			bool udpResult = m_udpService.Start();
 
 			if (udpResult == false)
 				return false;
 
-			_tcpListenPort = getAvailableTcpPort();
+			LocalTcpListenPort = getAvailableTcpPort();
 
-			_tcpListenService = new CitpTcpService(_log, _nicAddress, _tcpListenPort);
-			_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
-			_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
-			_tcpListenService.PacketReceieved += tcpListenService_PacketReceived;
+			m_tcpListenService = new CitpTcpService(m_log, m_nicAddress, LocalTcpListenPort);
+			m_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
+			m_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
+			m_tcpListenService.PacketReceieved += tcpListenService_PacketReceived;
 
-			bool tcpResult = _tcpListenService.StartListening();
+			bool tcpResult = m_tcpListenService.StartListening();
 
 			if (tcpResult == false)
 				return false;
@@ -90,51 +130,9 @@ namespace Imp.CitpSharp
 			return true;
 		}
 
-		public void Dispose()
-		{
-			if (_tcpListenService != null)
-			{
-				_tcpListenService.Dispose();
-				_tcpListenService = null;
-			}
-
-			if (_udpService != null)
-			{
-				_udpService.Dispose();
-				_udpService = null;
-			}
-		}
 
 
-		public int LocalTcpListenPort
-		{
-			get { return _tcpListenPort; }
-		}
-
-
-
-		List<CitpPeer> _peers = new List<CitpPeer>();
-		public IReadOnlyList<CitpPeer> Peers
-		{
-			get { return _peers; }
-		}
-
-		ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> _messageQueue = new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
-		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue
-		{
-			get { return _messageQueue; }
-		}
-
-		ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> _frameQueue = new ConcurrentQueue<Tuple<IPAddress,StreamFrameMessagePacket>>();
-		public ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> FrameQueue
-		{
-			get { return _frameQueue; }
-		}
-
-
-
-
-		public async Task<bool> SendPacket(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
+		public async Task<bool> SendPacketAsync(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
 		{
 			if (peer.IsConnected == false)
 				throw new InvalidOperationException("Cannot send packet, peer is not connected");
@@ -153,7 +151,7 @@ namespace Imp.CitpSharp
 				if (msexPacket.Version.HasValue)
 				{
 					if (msexPacket.Version.Value > peer.MsexVersion)
-						_log.LogWarning("Attempting to send an MSEX message with a higher version number than the peer supports");
+						m_log.LogWarning("Attempting to send an MSEX message with a higher version number than the peer supports");
 				}
 				else
 				{
@@ -161,12 +159,12 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			return await sendDataToPeer(peer, packet.ToByteArray());
+			return await sendDataToPeerAsync(peer, packet.ToByteArray());
 		}
 
-		public async Task SendPacketToAllConnectedPeers(CitpPacket packet)
+		public async Task SendPacketToAllConnectedPeersAsync(CitpPacket packet)
 		{
-			var connectedPeers = Peers.Where(p => p.IsConnected == true).ToList();
+			var connectedPeers = Peers.Where(p => p.IsConnected).ToList();
 
 			// If it's possible that different peers might need different versions of the packet,
 			// run this special routine to avoid serializing the packet more than once for each version.
@@ -191,57 +189,55 @@ namespace Imp.CitpSharp
 							continue;
 
 						msexPacket.Version = version;
-						byte[] data = msexPacket.ToByteArray();
+						var data = msexPacket.ToByteArray();
 
 						foreach (var peer in peersWithVersion)
-							await sendDataToPeer(peer, data);
+							await sendDataToPeerAsync(peer, data);
 					}
 				}
 			}
 			else
 			{
 				foreach (var peer in connectedPeers)
-					await SendPacket(packet, peer);
+					await SendPacketAsync(packet, peer);
 			}
 		}
 
-		public async Task SendMulticastPacket(CitpPacket packet, int requestResponseIndex = 0)
+		public async Task SendMulticastPacketAsync(CitpPacket packet, int requestResponseIndex = 0)
 		{
 			foreach (var data in packet.ToByteArray(CitpUdpService.MaximumUdpPacketLength, requestResponseIndex))
 			{
-				await _udpService.Send(data);
+				await m_udpService.Send(data);
 			}
 		}
 
 
 
-
-
-		async void tcpListenService_ClientConnect(object sender, ICitpTcpClient e)
+		private async void tcpListenService_ClientConnect(object sender, ICitpTcpClient e)
 		{
-			var peer = _peers.FirstOrDefault(p => e.RemoteEndPoint.Address.Equals(p.Ip));
+			var peer = m_peers.FirstOrDefault(p => e.RemoteEndPoint.Address.Equals(p.Ip));
 
 			if (peer != null)
 				peer.SetConnected(e.RemoteEndPoint.Port);
 			else
-				_peers.Add(new CitpPeer(e.RemoteEndPoint));
+				m_peers.Add(new CitpPeer(e.RemoteEndPoint));
 
-			await e.Send(createPeerNamePacket().ToByteArray());
-			await e.Send(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray());
+			await e.SendAsync(createPeerNamePacket().ToByteArray());
+			await e.SendAsync(createServerInfoPacket(MsexVersion.Version10).ToByteArray());
 		}
 
-		void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
+		private void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
 		{
 			var peer = Peers.FirstOrDefault(p => e.Equals(p.RemoteEndPoint));
 
 			if (peer == null)
-				throw new InvalidOperationException(String.Format("Unregistered peer disconnected from TCP,  remote endpoint {0}", e));
+				throw new InvalidOperationException(string.Format("Unregistered peer disconnected from TCP,  remote endpoint {0}", e));
 
 			peer.SetDisconnected();
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		async void tcpListenService_PacketReceived(object sender, Tuple<IPEndPoint, byte[]> e)
+		private async void tcpListenService_PacketReceived(object sender, Tuple<IPEndPoint, byte[]> e)
 		{
 			CitpPacket packet = null;
 
@@ -251,8 +247,8 @@ namespace Imp.CitpSharp
 			}
 			catch (InvalidOperationException ex)
 			{
-				_log.LogError(String.Format("Error: Failed to deserialize TCP packet from {0}", e.Item1.ToString()));
-				_log.LogException(ex);
+				m_log.LogError(string.Format("Error: Failed to deserialize TCP packet from {0}", e.Item1));
+				m_log.LogException(ex);
 				return;
 			}
 
@@ -262,19 +258,19 @@ namespace Imp.CitpSharp
 				return;
 			}
 
-			var peer = _peers.FirstOrDefault(p => e.Item1.Equals(p.RemoteEndPoint));
+			var peer = m_peers.FirstOrDefault(p => e.Item1.Equals(p.RemoteEndPoint));
 
 			if (peer == null)
 				throw new InvalidOperationException("Message received via TCP from unrecognised peer.");
 
 
 			if (packet is ClientInformationMessagePacket)
-				await receivedClientInformationMessage(packet as ClientInformationMessagePacket, peer);
+				await receivedClientInformationMessageAsync(packet as ClientInformationMessagePacket, peer);
 			else
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
 		}
 
-		void udpService_PacketReceived(object sender, Tuple<IPAddress, byte[]> e)
+		private void udpService_PacketReceived(object sender, Tuple<IPAddress, byte[]> e)
 		{
 			CitpPacket packet;
 
@@ -284,8 +280,8 @@ namespace Imp.CitpSharp
 			}
 			catch (InvalidOperationException ex)
 			{
-				_log.LogError(String.Format("Failed to deserialize UDP packet from {0}", e.Item1.ToString()));
-				_log.LogException(ex);
+				m_log.LogError(string.Format("Failed to deserialize UDP packet from {0}", e.Item1));
+				m_log.LogException(ex);
 				return;
 			}
 
@@ -299,21 +295,20 @@ namespace Imp.CitpSharp
 			}
 			else
 			{
-				_log.LogError(String.Format("Invalid packet received via UDP from {0}", e.Item1.ToString()));
+				m_log.LogError(string.Format("Invalid packet received via UDP from {0}", e.Item1));
 			}
-
 		}
 
 
 
-		int getAvailableTcpPort()
+		private static int getAvailableTcpPort()
 		{
 			const int portStartIndex = 1024;
 			const int portEndIndex = 49151;
 			var properties = IPGlobalProperties.GetIPGlobalProperties();
-			IPEndPoint[] tcpEndPoints = properties.GetActiveTcpListeners();
+			var tcpEndPoints = properties.GetActiveTcpListeners();
 
-			List<int> usedPorts = tcpEndPoints.Select(p => p.Port).ToList<int>();
+			var usedPorts = tcpEndPoints.Select(p => p.Port).ToList();
 			int unusedPort = 0;
 
 			for (int port = portStartIndex; port < portEndIndex; ++port)
@@ -327,9 +322,9 @@ namespace Imp.CitpSharp
 			return unusedPort;
 		}
 
-		void receivedPeerNameMessage(PeerNameMessagePacket message, IPEndPoint remoteEndPoint)
+		private void receivedPeerNameMessage(PeerNameMessagePacket message, IPEndPoint remoteEndPoint)
 		{
-			var peer = _peers.FirstOrDefault(p => remoteEndPoint.Address.Equals(p.Ip));
+			var peer = m_peers.FirstOrDefault(p => remoteEndPoint.Address.Equals(p.Ip));
 
 			if (peer == null)
 				throw new InvalidOperationException("Received peer name message for unconnected peer");
@@ -338,10 +333,11 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		void receivedPeerLocationMessage(PeerLocationMessagePacket message, IPAddress remoteIp)
+		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IPAddress remoteIp)
 		{
 			// Filter out this CITP peer
-			if (remoteIp.Equals(_nicAddress) && message.Name == _serverInfo.PeerName && message.ListeningTcpPort == _tcpListenPort)
+			if (remoteIp.Equals(m_nicAddress) && message.Name == m_serverInfo.PeerName
+			    && message.ListeningTcpPort == LocalTcpListenPort)
 				return;
 
 			var peer = Peers.FirstOrDefault(p => p.Ip.Equals(remoteIp) && p.Name == message.Name);
@@ -349,7 +345,7 @@ namespace Imp.CitpSharp
 			if (peer == null)
 			{
 				peer = new CitpPeer(remoteIp, message.Name);
-				_peers.Add(peer);
+				m_peers.Add(peer);
 			}
 
 			peer.Type = message.Type;
@@ -357,53 +353,54 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		async Task receivedClientInformationMessage(ClientInformationMessagePacket message, CitpPeer peer)
+		private async Task receivedClientInformationMessageAsync(ClientInformationMessagePacket message, CitpPeer peer)
 		{
-			if (message.SupportedMsexVersions.Contains(MsexVersion.Version1_2))
+			if (message.SupportedMsexVersions.Contains(MsexVersion.Version12))
 			{
-				peer.MsexVersion = MsexVersion.Version1_2;
-				var packet = createServerInfoPacket(MsexVersion.Version1_2);
-				await SendPacket(packet, peer, message.RequestResponseIndex);
+				peer.MsexVersion = MsexVersion.Version12;
+				var packet = createServerInfoPacket(MsexVersion.Version12);
+				await SendPacketAsync(packet, peer, message.RequestResponseIndex);
 			}
 		}
 
-		void removeInactivePeers()
+		private void removeInactivePeers()
 		{
-			_peers.RemoveAll(p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CITP_PEER_EXPIRY_TIME);
+			m_peers.RemoveAll(
+				p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CitpPeerExpiryTime);
 		}
 
-		async Task<bool> sendDataToPeer(CitpPeer peer, byte[] data)
+		private async Task<bool> sendDataToPeerAsync(CitpPeer peer, byte[] data)
 		{
 			ICitpTcpClient client;
-			if (_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) == false)
+			if (m_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) == false)
 				return false;
 
-			return await client.Send(data);
+			return await client.SendAsync(data);
 		}
 
-		PeerNameMessagePacket createPeerNamePacket()
+		private PeerNameMessagePacket createPeerNamePacket()
 		{
 			return new PeerNameMessagePacket
 			{
-				Name = _serverInfo.PeerName
+				Name = m_serverInfo.PeerName
 			};
 		}
 
-		ServerInformationMessagePacket createServerInfoPacket(MsexVersion? version)
+		private ServerInformationMessagePacket createServerInfoPacket(MsexVersion? version)
 		{
 			return new ServerInformationMessagePacket
 			{
 				Version = version,
-				Uuid = _serverInfo.Uuid,
-				ProductName = _serverInfo.ProductName,
-				ProductVersionMajor = Convert.ToByte(_serverInfo.ProductVersionMajor),
-				ProductVersionMinor = Convert.ToByte(_serverInfo.ProductVersionMinor),
-				ProductVersionBugfix = Convert.ToByte(_serverInfo.ProductVersionBugfix),
-				SupportedMsexVersions = _serverInfo.SupportedMsexVersions.ToList(),
-				SupportedLibraryTypes = _serverInfo.SupportedLibraryTypes.ToList(),
-				ThumbnailFormats = _serverInfo.SupportedThumbnailFormats.ToList(),
-				StreamFormats = _serverInfo.SupportedStreamFormats.ToList(),
-				LayerDmxSources = _serverInfo.Layers.Select(l => l.DmxSource).ToList()
+				Uuid = m_serverInfo.Uuid,
+				ProductName = m_serverInfo.ProductName,
+				ProductVersionMajor = Convert.ToByte(m_serverInfo.ProductVersionMajor),
+				ProductVersionMinor = Convert.ToByte(m_serverInfo.ProductVersionMinor),
+				ProductVersionBugfix = Convert.ToByte(m_serverInfo.ProductVersionBugfix),
+				SupportedMsexVersions = m_serverInfo.SupportedMsexVersions.ToList(),
+				SupportedLibraryTypes = m_serverInfo.SupportedLibraryTypes.ToList(),
+				ThumbnailFormats = m_serverInfo.SupportedThumbnailFormats.ToList(),
+				StreamFormats = m_serverInfo.SupportedStreamFormats.ToList(),
+				LayerDmxSources = m_serverInfo.Layers.Select(l => l.DmxSource).ToList()
 			};
 		}
 	}

@@ -26,6 +26,8 @@ namespace Imp.CitpSharp
 		Disabled = 4
 	}
 
+
+
 	public interface ICitpLogService
 	{
 		void LogDebug(string message);
@@ -35,48 +37,50 @@ namespace Imp.CitpSharp
 		void LogException(Exception ex);
 	}
 
+
+
 	internal class CitpConsoleLogger : ICitpLogService
 	{
+		private readonly CitpLoggerLevel m_logLevel;
+
 		public CitpConsoleLogger(CitpLoggerLevel logLevel)
 		{
-			_logLevel = logLevel;
+			m_logLevel = logLevel;
 		}
-
-		CitpLoggerLevel _logLevel;
 
 		public void LogDebug(string message)
 		{
-			if (_logLevel <= CitpLoggerLevel.Debug)
+			if (m_logLevel <= CitpLoggerLevel.Debug)
 				writeToConsole(CitpLoggerLevel.Debug, message);
 		}
 
 		public void LogInfo(string message)
 		{
-			if (_logLevel <= CitpLoggerLevel.Info)
+			if (m_logLevel <= CitpLoggerLevel.Info)
 				writeToConsole(CitpLoggerLevel.Info, message);
 		}
 
 		public void LogWarning(string message)
 		{
-			if (_logLevel <= CitpLoggerLevel.Warning)
+			if (m_logLevel <= CitpLoggerLevel.Warning)
 				writeToConsole(CitpLoggerLevel.Warning, message);
 		}
 
 		public void LogError(string message)
 		{
-			if (_logLevel <= CitpLoggerLevel.Error)
+			if (m_logLevel <= CitpLoggerLevel.Error)
 				writeToConsole(CitpLoggerLevel.Error, message);
 		}
 
 		public void LogException(Exception ex)
 		{
-			if (_logLevel <= CitpLoggerLevel.Error)
+			if (m_logLevel <= CitpLoggerLevel.Error)
 				writeToConsole(CitpLoggerLevel.Error, ex.ToString());
 		}
 
-		void writeToConsole(CitpLoggerLevel level, string message)
+		private void writeToConsole(CitpLoggerLevel level, string message)
 		{
-			Console.WriteLine(String.Format("CitpLib ({0}): {1}", level.ToString(), message));
+			Console.WriteLine("CitpLib ({0}): {1}", level, message);
 		}
 	}
 }

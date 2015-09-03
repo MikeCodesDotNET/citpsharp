@@ -20,35 +20,31 @@ namespace Imp.CitpSharp.Packets.Pinf
 	internal class PeerNameMessagePacket : CitpPinfPacket
 	{
 		public PeerNameMessagePacket()
-			: base(PinfMessageType.PeerNameMessage)
-		{
-
-		}
+			: base(PinfMessageType.PeerNameMessage) { }
 
 		public string Name { get; set; }
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			writer.Write(Name, true);
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
-			Name = reader.ReadString(true); 
+			Name = reader.ReadString(true);
 		}
 	}
+
+
 
 	internal class PeerLocationMessagePacket : CitpPinfPacket
 	{
 		public PeerLocationMessagePacket()
-			: base(PinfMessageType.PeerLocationMessage)
-		{
-
-		}
+			: base(PinfMessageType.PeerLocationMessage) { }
 
 		public bool IsListeningForTcpConnection { get; set; }
 
@@ -57,11 +53,11 @@ namespace Imp.CitpSharp.Packets.Pinf
 		public string Name { get; set; }
 		public string State { get; set; }
 
-		
 
-		protected override void serializeToStream(CitpBinaryWriter writer)
+
+		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
-			base.serializeToStream(writer);
+			base.SerializeToStream(writer);
 
 			if (IsListeningForTcpConnection)
 				writer.Write(ListeningTcpPort);
@@ -73,9 +69,9 @@ namespace Imp.CitpSharp.Packets.Pinf
 			writer.Write(State, true);
 		}
 
-		protected override void deserializeFromStream(CitpBinaryReader reader)
+		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			base.deserializeFromStream(reader);
+			base.DeserializeFromStream(reader);
 
 			ListeningTcpPort = reader.ReadUInt16();
 
@@ -83,10 +79,7 @@ namespace Imp.CitpSharp.Packets.Pinf
 				IsListeningForTcpConnection = false;
 
 			CitpPeerType peerType;
-			if (Enum.TryParse<CitpPeerType>(reader.ReadString(true), out peerType))
-				Type = peerType;
-			else
-				Type = CitpPeerType.Unknown;
+			Type = Enum.TryParse(reader.ReadString(true), out peerType) ? peerType : CitpPeerType.Unknown;
 
 			Name = reader.ReadString(true);
 			State = reader.ReadString(true);

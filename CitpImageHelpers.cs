@@ -18,36 +18,36 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 
 namespace Imp.CitpSharp
 {
 	internal static class CitpImageHelpers
 	{
-		static readonly ImageCodecInfo jpegEncoder = getEncoder(ImageFormat.Jpeg);
-		static readonly EncoderParameters jpegEncoderParameters;
-		const long JpegEncodingQuality = 50;
+		private const long JpegEncodingQuality = 50;
+		private static readonly ImageCodecInfo JpegEncoder = getEncoder(ImageFormat.Jpeg);
+		private static readonly EncoderParameters JpegEncoderParameters;
 
 		static CitpImageHelpers()
 		{
-			jpegEncoderParameters = new EncoderParameters(1);
+			JpegEncoderParameters = new EncoderParameters(1);
 			var encoder = Encoder.Quality;
-			jpegEncoderParameters.Param[0] = new EncoderParameter(encoder, JpegEncodingQuality);
+			JpegEncoderParameters.Param[0] = new EncoderParameter(encoder, JpegEncodingQuality);
 		}
 
-		static public byte[] ToByteArray(this Image image, MsexImageFormat format, MsexVersion? version)
+		public static byte[] ToByteArray(this Image image, MsexImageFormat format, MsexVersion? version)
 		{
 			switch (format)
 			{
-				case MsexImageFormat.RGB8:
-					if (version == MsexVersion.Version1_0)
+				case MsexImageFormat.Rgb8:
+					if (version == MsexVersion.Version10)
 						return image.ToRgb8ByteArray(true);
-					else
-						return image.ToRgb8ByteArray();
+					return image.ToRgb8ByteArray();
 
-				case MsexImageFormat.JPEG:
+				case MsexImageFormat.Jpeg:
 					return image.ToJpegByteArray();
 
-				case MsexImageFormat.PNG:
+				case MsexImageFormat.Png:
 					return image.ToPngByteArray();
 
 				default:
@@ -55,17 +55,17 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		static public byte[] ToRgb8ByteArray(this Image image, bool isBgrOrder = false)
+		public static byte[] ToRgb8ByteArray(this Image image, bool isBgrOrder = false)
 		{
 			var bm = new Bitmap(image);
 
 			if (bm.PixelFormat != PixelFormat.Format32bppArgb)
 				return null;
 
-			BitmapData bmd = bm.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, bm.PixelFormat);
+			var bmd = bm.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, bm.PixelFormat);
 
 			int length = Math.Abs(bmd.Stride) * image.Height;
-			byte[] data = new byte[length];
+			var data = new byte[length];
 
 			if (isBgrOrder)
 			{
@@ -73,7 +73,7 @@ namespace Imp.CitpSharp
 				{
 					fixed (byte* dst = data)
 					{
-						byte* src = (byte*)bmd.Scan0.ToPointer();
+						var src = (byte*)bmd.Scan0.ToPointer();
 
 						for (int i = 0, j = 0; j < length; i += 3, j += 4)
 						{
@@ -90,7 +90,7 @@ namespace Imp.CitpSharp
 				{
 					fixed (byte* dst = data)
 					{
-						byte* src = (byte*)bmd.Scan0.ToPointer();
+						var src = (byte*)bmd.Scan0.ToPointer();
 
 						for (int i = 0, j = 0; j < length; i += 3, j += 4)
 						{
@@ -102,27 +102,27 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			
+
 
 			bm.UnlockBits(bmd);
 
 			return data;
 		}
 
-		static public byte[] ToJpegByteArray(this Image image)
+		public static byte[] ToJpegByteArray(this Image image)
 		{
 			byte[] data;
 
 			using (var ms = new MemoryStream())
 			{
-				image.Save(ms, jpegEncoder, jpegEncoderParameters);
+				image.Save(ms, JpegEncoder, JpegEncoderParameters);
 				data = ms.ToArray();
 			}
 
 			return data;
 		}
 
-		static public byte[] ToPngByteArray(this Image image)
+		public static byte[] ToPngByteArray(this Image image)
 		{
 			byte[] data;
 
@@ -135,23 +135,23 @@ namespace Imp.CitpSharp
 			return data;
 		}
 
-		static public Image Resize(this Image thumb, Size preferredSize, bool shouldPreserveAspect)
+		public static Image Resize(this Image thumb, Size preferredSize, bool shouldPreserveAspect)
 		{
-			Size targetSize = new Size(Math.Min(preferredSize.Width, thumb.Width),
+			var targetSize = new Size(Math.Min(preferredSize.Width, thumb.Width),
 				Math.Min(preferredSize.Height, thumb.Height));
 
 			if (shouldPreserveAspect)
 			{
 				Image resizedThumb = new Bitmap(targetSize.Width, targetSize.Height);
-				Graphics graphic = Graphics.FromImage(resizedThumb);
+				var graphic = Graphics.FromImage(resizedThumb);
 
 				graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
 				graphic.SmoothingMode = SmoothingMode.HighQuality;
 				graphic.PixelOffsetMode = PixelOffsetMode.HighQuality;
 				graphic.CompositingQuality = CompositingQuality.HighQuality;
 
-				double ratioX = (double)targetSize.Width / (double)thumb.Width;
-				double ratioY = (double)targetSize.Height / (double)thumb.Height;
+				double ratioX = targetSize.Width / (double)thumb.Width;
+				double ratioY = targetSize.Height / (double)thumb.Height;
 				double ratio = ratioX < ratioY ? ratioX : ratioY;
 
 				int newWidth = Convert.ToInt32(thumb.Width * ratio);
@@ -165,26 +165,16 @@ namespace Imp.CitpSharp
 
 				return resizedThumb;
 			}
-			else
-			{
-				return (Image)(new Bitmap(thumb, targetSize));
-			}
+			return new Bitmap(thumb, targetSize);
 		}
 
 
 
 		private static ImageCodecInfo getEncoder(ImageFormat format)
 		{
+			var codecs = ImageCodecInfo.GetImageDecoders();
 
-			ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
-
-			foreach (ImageCodecInfo codec in codecs)
-			{
-				if (codec.FormatID == format.Guid)
-					return codec;
-			}
-
-			return null;
+			return codecs.FirstOrDefault(codec => codec.FormatID == format.Guid);
 		}
 	}
 }

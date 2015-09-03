@@ -13,7 +13,6 @@
 //	You should have received a copy of the GNU Lesser General Public License
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
-using Imp.CitpSharp.Packets.Msex;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -33,7 +32,7 @@ namespace Imp.CitpSharp
 		IReadOnlyList<MsexVersion> SupportedMsexVersions { get; }
 
 		IReadOnlyList<MsexLibraryType> SupportedLibraryTypes { get; }
-		
+
 		IReadOnlyList<MsexImageFormat> SupportedThumbnailFormats { get; }
 		IReadOnlyList<MsexImageFormat> SupportedStreamFormats { get; }
 
@@ -45,17 +44,22 @@ namespace Imp.CitpSharp
 
 		List<CitpElementLibraryUpdatedInformation> GetLibraryUpdateMessages();
 
-		List<CitpElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType, MsexLibraryId? parentLibraryId, List<byte> libraryIndices);
+		List<CitpElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType,
+			MsexLibraryId? parentLibraryId, List<byte> libraryIndices);
 
 		List<CitpMediaInformation> GetMediaElementInformation(MsexId libraryId, List<byte> elementNumbers);
 		List<CitpEffectInformation> GetEffectElementInformation(MsexId libraryId, List<byte> elementNumbers);
-		List<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId, List<byte> elementNumbers);
+
+		List<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId,
+			List<byte> elementNumbers);
 
 		List<Tuple<MsexId, Image>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
 		List<Tuple<byte, Image>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
 
 		Image GetVideoSourceFrame(int sourceId, int frameWidth, int frameHeight);
 	}
+
+
 
 	public interface ICitpLayer
 	{
@@ -71,5 +75,5 @@ namespace Imp.CitpSharp
 		uint MediaNumFrames { get; }
 		int MediaFps { get; }
 		MsexLayerStatusFlags LayerStatusFlags { get; }
-	}	
+	}
 }
