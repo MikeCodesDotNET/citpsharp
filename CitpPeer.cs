@@ -81,7 +81,6 @@ namespace Imp.CitpSharp
 
 		public void SetDisconnected()
 		{
-			RemoteTcpPort = null;
 			IsConnected = false;
 		}
 

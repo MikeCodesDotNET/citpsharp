@@ -140,7 +140,9 @@ namespace Imp.CitpSharp
 
 				if (format != null)
 				{
-					format.Version = peerMsexVersion;
+					Formats.Remove(format);
+					format = new RequestFormat(format.FrameFormat, peerMsexVersion);
+					Formats.Add(format);
 
 					var packetExpireAt = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout);
 
@@ -149,10 +151,8 @@ namespace Imp.CitpSharp
 				}
 				else
 				{
-					m_formats.Add(new RequestFormat
+					m_formats.Add(new RequestFormat(packet.FrameFormat, peerMsexVersion)
 					{
-						FrameFormat = packet.FrameFormat,
-						Version = peerMsexVersion,
 						LastOutput = DateTime.MinValue,
 						ExpireAt = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout)
 					});
@@ -172,8 +172,14 @@ namespace Imp.CitpSharp
 
 			public class RequestFormat : IEquatable<RequestFormat>
 			{
-				public MsexImageFormat FrameFormat { get; set; }
-				public MsexVersion Version { get; set; }
+				public RequestFormat(MsexImageFormat frameFormat, MsexVersion version)
+				{
+					FrameFormat = frameFormat;
+					Version = version;
+				}
+
+				public MsexImageFormat FrameFormat { get; private set; }
+				public MsexVersion Version { get; private set; }
 
 				public DateTime LastOutput { get; set; }
 				public DateTime ExpireAt { get; set; }
@@ -185,23 +191,28 @@ namespace Imp.CitpSharp
 
 				public bool Equals(RequestFormat other)
 				{
-					return FrameFormat == other.FrameFormat
-					       && IsVersion12 == other.IsVersion12;
+					if (ReferenceEquals(null, other))
+						return false;
+					if (ReferenceEquals(this, other))
+						return true;
+					return FrameFormat == other.FrameFormat && IsVersion12 == other.IsVersion12;
 				}
 
 				public override bool Equals(object obj)
 				{
-					var m = obj as RequestFormat;
-					if (m == null)
+					if (ReferenceEquals(null, obj))
 						return false;
-
-					return Equals(m);
+					if (ReferenceEquals(this, obj))
+						return true;
+					return obj.GetType() == this.GetType() && Equals((RequestFormat)obj);
 				}
 
 				public override int GetHashCode()
 				{
-					return FrameFormat.GetHashCode()
-					       ^ IsVersion12.GetHashCode();
+					unchecked
+					{
+						return ((int)FrameFormat * 397) ^ IsVersion12.GetHashCode();
+					}
 				}
 			}
 		}
