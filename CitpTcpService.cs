@@ -122,9 +122,9 @@ namespace Imp.CitpSharp
 					citpClient.Disconnected += citpClient_Disconnected;
 					citpClient.PacketReceieved += citpClient_PacketReceieved;
 
-					citpClient.OpenStream(cancelToken);
-
 					m_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
+
+					citpClient.OpenStream(cancelToken);
 
 					if (ClientConnected != null)
 						ClientConnected(this, citpClient);

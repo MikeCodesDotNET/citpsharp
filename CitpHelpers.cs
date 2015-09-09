@@ -39,27 +39,75 @@ namespace Imp.CitpSharp
 
 
 
-	internal static class EnumerableHelpers
+	internal static class ArrayHelpers
 	{
-		public static bool ScrambledEquals<T>(this IEnumerable<T> a, IEnumerable<T> b)
+		public static byte[][] Split(this byte[] arrayIn, int length)
 		{
-			var cnt = new Dictionary<T, int>();
-			foreach (var s in a)
-			{
-				if (cnt.ContainsKey(s))
-					cnt[s]++;
-				else
-					cnt.Add(s, 1);
-			}
-			foreach (var s in b)
-			{
-				if (cnt.ContainsKey(s))
-					cnt[s]--;
-				else
-					return false;
-			}
+			bool even = arrayIn.Length % length == 0;
+			int totalLength = arrayIn.Length / length;
+			if (!even)
+				++totalLength;
 
-			return cnt.Values.All(c => c == 0);
+			var newArray = new byte[totalLength][];
+			for (int i = 0; i < totalLength; ++i)
+			{
+				int allocLength = length;
+				if (!even && i == totalLength - 1)
+					allocLength = arrayIn.Length % length;
+
+				newArray[i] = new byte[allocLength];
+				Buffer.BlockCopy(arrayIn, i * length, newArray[i], 0, allocLength);
+			}
+			return newArray;
+		}
+	}
+
+
+
+	internal static class SequenceComparison
+	{
+		public static bool SequenceEqual<T>(IEnumerable<T> a, IEnumerable<T> b)
+		{
+			if (Object.ReferenceEquals(a, b))
+				return true;
+
+			if (a == null || b == null)
+				return a == null && b == null;
+
+			return a.SequenceEqual(b);
+		}
+
+		public static bool SequenceEqual<T>(IEnumerable<T> a, IEnumerable<T> b, IEqualityComparer<T> comparer)
+		{
+			if (Object.ReferenceEquals(a, b))
+				return true;
+
+			if (a == null || b == null)
+				return a == null && b == null;
+
+			return a.SequenceEqual(b, comparer);
+		}
+
+		public static bool SequenceEqual<T>(ICollection<T> a, ICollection<T> b)
+		{
+			if (Object.ReferenceEquals(a, b))
+				return true;
+
+			if (a == null || b == null)
+				return a == null && b == null;
+
+			return a.Count == b.Count && a.SequenceEqual(b);
+		}
+
+		public static bool SequenceEqual<T>(ICollection<T> a, ICollection<T> b, IEqualityComparer<T> comparer)
+		{
+			if (Object.ReferenceEquals(a, b))
+				return true;
+
+			if (a == null || b == null)
+				return a == null && b == null;
+
+			return a.Count == b.Count && a.SequenceEqual(b, comparer);
 		}
 	}
 

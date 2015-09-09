@@ -91,17 +91,14 @@ namespace Imp.CitpSharp
 			return true;
 		}
 
-		public async Task<bool> Send(byte[] data)
+		public async Task<bool> SendAsync(byte[] data)
 		{
 			if (m_client == null)
 				return false;
 
 			try
 			{
-				if (m_useOriginalMulticastIp)
-					await m_client.SendAsync(data, data.Length, CitpMulticastOriginalEndpoint);
-				else
-					await m_client.SendAsync(data, data.Length, CitpMulticastEndpoint);
+				await m_client.SendAsync(data, data.Length, m_useOriginalMulticastIp ? CitpMulticastOriginalEndpoint : CitpMulticastEndpoint);
 			}
 			catch (ObjectDisposedException)
 			{

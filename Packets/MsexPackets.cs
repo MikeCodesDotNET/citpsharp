@@ -1743,6 +1743,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public ushort FrameWidth { get; set; }
 		public ushort FrameHeight { get; set; }
 		public byte[] FrameBuffer { get; set; }
+		public FragmentPreamble FragmentInfo { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -1764,7 +1765,24 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write(FrameFormat.GetAttributeOfType<CitpId>().Id);
 				writer.Write(FrameWidth);
 				writer.Write(FrameHeight);
-				writer.Write((ushort)FrameBuffer.Length);
+				
+				if (FrameFormat == MsexImageFormat.FragmentedJpeg || FrameFormat == MsexImageFormat.FragmentedPng)
+				{
+					if (FragmentInfo == null)
+						throw new InvalidOperationException("FragmentInfo must be set when sending a fragmented image format");
+
+					writer.Write((ushort)(FrameBuffer.Length + FragmentPreamble.ByteLength));
+
+					writer.Write(FragmentInfo.FrameIndex);
+					writer.Write(FragmentInfo.FragmentCount);
+					writer.Write(FragmentInfo.FragmentIndex);
+					writer.Write(FragmentInfo.FragmentByteOffset);
+				}
+				else
+				{
+					writer.Write((ushort)FrameBuffer.Length);
+				}
+
 				writer.Write(FrameBuffer);
 			}
 		}
@@ -1794,6 +1812,17 @@ namespace Imp.CitpSharp.Packets.Msex
 				int frameBufferLength = reader.ReadUInt16();
 				FrameBuffer = reader.ReadBytes(frameBufferLength);
 			}
+		}
+
+
+		public class FragmentPreamble
+		{
+			public const int ByteLength = 12;
+
+			public uint FrameIndex { get; set; }
+			public ushort FragmentCount { get; set; } 
+			public ushort FragmentIndex { get; set; }
+			public uint FragmentByteOffset { get; set; }
 		}
 	}
 }

@@ -9,6 +9,8 @@ namespace Imp.CitpSharp
 {
 	internal sealed class CitpStreamingService
 	{
+		private const int MaximumImageBufferSize = 65000;
+
 		private readonly ICitpLogService m_log;
 		private readonly CitpNetworkService m_networkService;
 		private readonly ICitpMediaServerInfo m_serverInfo;
@@ -62,9 +64,11 @@ namespace Imp.CitpSharp
 							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version10);
 							break;
 						case MsexImageFormat.Jpeg:
+						case MsexImageFormat.FragmentedJpeg:
 							frameBuffer = frame.ToJpegByteArray();
 							break;
 						case MsexImageFormat.Png:
+						case MsexImageFormat.FragmentedPng:
 							frameBuffer = frame.ToPngByteArray();
 							break;
 						default:
@@ -79,19 +83,55 @@ namespace Imp.CitpSharp
 						FrameFormat = formatRequest.FrameFormat,
 						FrameWidth = Convert.ToUInt16(request.FrameWidth),
 						FrameHeight = Convert.ToUInt16(request.FrameHeight),
-						FrameBuffer = frameBuffer
 					};
 
-					await m_networkService.SendMulticastPacketAsync(packet);
 
+					if (formatRequest.FrameFormat == MsexImageFormat.FragmentedJpeg
+					    || formatRequest.FrameFormat == MsexImageFormat.FragmentedPng)
+					{
+						var fragments = frameBuffer.Split(MaximumImageBufferSize);
+
+						packet.FragmentInfo = new StreamFrameMessagePacket.FragmentPreamble()
+						{
+							FrameIndex = request.FrameCounter,
+							FragmentCount = (ushort)fragments.Length
+						};
+
+						if (fragments.Length > ushort.MaxValue)
+						{
+							m_log.LogWarning("Cannot send streaming frame, too many image fragments");
+							return;
+						}
+
+						for (uint i = 0; i < fragments.Length; ++i)
+						{
+							packet.FragmentInfo.FragmentIndex = (ushort)i;
+							packet.FragmentInfo.FragmentByteOffset = MaximumImageBufferSize * i;
+							packet.FrameBuffer = fragments[i];
+							await m_networkService.SendMulticastPacketAsync(packet);
+						}
+					}
+					else
+					{
+						if (frameBuffer.Length > MaximumImageBufferSize)
+						{
+							m_log.LogWarning("Cannot send streaming frame, image buffer too large");
+							return;
+						}
+
+						packet.FrameBuffer = frameBuffer;
+						await m_networkService.SendMulticastPacketAsync(packet);
+					}
+					
 					formatRequest.LastOutput = DateTime.Now;
 				}
-
 
 				request.RemoveTimedOutRequests();
 
 				if (request.Formats.Count == 0)
 					m_streamRequests.Remove(request.SourceIdentifier);
+
+				++request.FrameCounter;
 			}
 		}
 
@@ -114,6 +154,8 @@ namespace Imp.CitpSharp
 			public int FrameWidth { get; set; }
 			public int FrameHeight { get; set; }
 			public float Fps { get; set; }
+
+			public uint FrameCounter { get; set; }
 
 			public HashSet<RequestFormat> Formats
 			{

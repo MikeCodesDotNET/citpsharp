@@ -192,7 +192,7 @@ namespace Imp.CitpSharp.Packets
 			return serializePacket();
 		}
 
-		public List<byte[]> ToByteArray(int maximumPacketSize, int requestResponseIndex = 0)
+		public IEnumerable<byte[]> ToByteArray(int maximumPacketSize, int requestResponseIndex = 0)
 		{
 			var packets = new List<byte[]>();
 

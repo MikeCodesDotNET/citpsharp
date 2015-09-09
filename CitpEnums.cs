@@ -256,7 +256,9 @@ namespace Imp.CitpSharp
 	{
 		[CitpId("RGB8")] Rgb8,
 		[CitpId("PNG ")] Png,
-		[CitpId("JPEG")] Jpeg
+		[CitpId("JPEG")] Jpeg,
+		[CitpId("fJPG")] FragmentedJpeg,
+		[CitpId("fPNG")] FragmentedPng
 	}
 
 

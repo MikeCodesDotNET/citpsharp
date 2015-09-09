@@ -207,7 +207,7 @@ namespace Imp.CitpSharp
 		{
 			foreach (var data in packet.ToByteArray(CitpUdpService.MaximumUdpPacketLength, requestResponseIndex))
 			{
-				await m_udpService.Send(data);
+				await m_udpService.SendAsync(data);
 			}
 		}
 
@@ -239,7 +239,7 @@ namespace Imp.CitpSharp
 
 		private async void tcpListenService_PacketReceived(object sender, Tuple<IPEndPoint, byte[]> e)
 		{
-			CitpPacket packet = null;
+			CitpPacket packet;
 
 			try
 			{
