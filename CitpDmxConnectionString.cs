@@ -15,6 +15,7 @@
 
 using System;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -135,7 +136,7 @@ namespace Imp.CitpSharp
 			return Encoding.UTF8.GetBytes(ToString());
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals([CanBeNull] object obj)
 		{
 			if (!(obj is CitpDmxConnectionString))
 				return false;

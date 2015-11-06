@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets.Msex;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -11,27 +12,27 @@ namespace Imp.CitpSharp
 	{
 		private const int MaximumImageBufferSize = 65000;
 
-		private readonly ICitpLogService m_log;
-		private readonly CitpNetworkService m_networkService;
-		private readonly ICitpMediaServerInfo m_serverInfo;
+		private readonly ICitpLogService _log;
+		private readonly CitpNetworkService _networkService;
+		private readonly ICitpMediaServerInfo _serverInfo;
 
-		private readonly Dictionary<int, SourceStreamRequest> m_streamRequests = new Dictionary<int, SourceStreamRequest>();
+		private readonly Dictionary<int, SourceStreamRequest> _streamRequests = new Dictionary<int, SourceStreamRequest>();
 
 		public CitpStreamingService(ICitpLogService log, ICitpMediaServerInfo serverInfo, CitpNetworkService networkService)
 		{
-			m_log = log;
-			m_serverInfo = serverInfo;
-			m_networkService = networkService;
+			_log = log;
+			_serverInfo = serverInfo;
+			_networkService = networkService;
 		}
 
 		public void AddStreamRequest(MsexVersion? peerMsexVersion, RequestStreamMessagePacket requestPacket)
 		{
 			SourceStreamRequest request;
 
-			if (m_streamRequests.TryGetValue(requestPacket.SourceIdentifier, out request) == false)
+			if (_streamRequests.TryGetValue(requestPacket.SourceIdentifier, out request) == false)
 			{
 				request = new SourceStreamRequest();
-				m_streamRequests.Add(requestPacket.SourceIdentifier, request);
+				_streamRequests.Add(requestPacket.SourceIdentifier, request);
 			}
 
 			request.AddRequestFormat(peerMsexVersion ?? MsexVersion.Version10, requestPacket);
@@ -39,7 +40,7 @@ namespace Imp.CitpSharp
 
 		public async Task ProcessStreamRequestsAsync()
 		{
-			foreach (var request in m_streamRequests.Values.ToList())
+			foreach (var request in _streamRequests.Values.ToList())
 			{
 				Image frame = null;
 
@@ -50,7 +51,7 @@ namespace Imp.CitpSharp
 
 					if (frame == null)
 					{
-						frame = m_serverInfo.GetVideoSourceFrame(request.SourceIdentifier, request.FrameWidth, request.FrameHeight);
+						frame = _serverInfo.GetVideoSourceFrame(request.SourceIdentifier, request.FrameWidth, request.FrameHeight);
 
 						if (frame == null)
 							break;
@@ -78,7 +79,7 @@ namespace Imp.CitpSharp
 					var packet = new StreamFrameMessagePacket
 					{
 						Version = formatRequest.Version,
-						MediaServerUuid = m_serverInfo.Uuid,
+						MediaServerUuid = _serverInfo.Uuid,
 						SourceIdentifier = Convert.ToUInt16(request.SourceIdentifier),
 						FrameFormat = formatRequest.FrameFormat,
 						FrameWidth = Convert.ToUInt16(request.FrameWidth),
@@ -99,7 +100,7 @@ namespace Imp.CitpSharp
 
 						if (fragments.Length > ushort.MaxValue)
 						{
-							m_log.LogWarning("Cannot send streaming frame, too many image fragments");
+							_log.LogWarning("Cannot send streaming frame, too many image fragments");
 							return;
 						}
 
@@ -108,19 +109,19 @@ namespace Imp.CitpSharp
 							packet.FragmentInfo.FragmentIndex = (ushort)i;
 							packet.FragmentInfo.FragmentByteOffset = MaximumImageBufferSize * i;
 							packet.FrameBuffer = fragments[i];
-							await m_networkService.SendMulticastPacketAsync(packet);
+							await _networkService.SendMulticastPacketAsync(packet);
 						}
 					}
 					else
 					{
 						if (frameBuffer.Length > MaximumImageBufferSize)
 						{
-							m_log.LogWarning("Cannot send streaming frame, image buffer too large");
+							_log.LogWarning("Cannot send streaming frame, image buffer too large");
 							return;
 						}
 
 						packet.FrameBuffer = frameBuffer;
-						await m_networkService.SendMulticastPacketAsync(packet);
+						await _networkService.SendMulticastPacketAsync(packet);
 					}
 					
 					formatRequest.LastOutput = DateTime.Now;
@@ -129,7 +130,7 @@ namespace Imp.CitpSharp
 				request.RemoveTimedOutRequests();
 
 				if (request.Formats.Count == 0)
-					m_streamRequests.Remove(request.SourceIdentifier);
+					_streamRequests.Remove(request.SourceIdentifier);
 
 				++request.FrameCounter;
 			}
@@ -139,7 +140,7 @@ namespace Imp.CitpSharp
 
 		private class SourceStreamRequest
 		{
-			private readonly HashSet<RequestFormat> m_formats = new HashSet<RequestFormat>();
+			private readonly HashSet<RequestFormat> _formats = new HashSet<RequestFormat>();
 
 			public SourceStreamRequest()
 			{
@@ -159,7 +160,7 @@ namespace Imp.CitpSharp
 
 			public HashSet<RequestFormat> Formats
 			{
-				get { return m_formats; }
+				get { return _formats; }
 			}
 
 
@@ -177,7 +178,7 @@ namespace Imp.CitpSharp
 				Fps = Math.Max(Fps, packet.Fps);
 
 
-				var format = m_formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat
+				var format = _formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat
 				                                           && r.IsVersion12 == (peerMsexVersion == MsexVersion.Version12));
 
 				if (format != null)
@@ -193,7 +194,7 @@ namespace Imp.CitpSharp
 				}
 				else
 				{
-					m_formats.Add(new RequestFormat(packet.FrameFormat, peerMsexVersion)
+					_formats.Add(new RequestFormat(packet.FrameFormat, peerMsexVersion)
 					{
 						LastOutput = DateTime.MinValue,
 						ExpireAt = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout)
@@ -203,10 +204,10 @@ namespace Imp.CitpSharp
 
 			public void RemoveTimedOutRequests()
 			{
-				foreach (var format in m_formats.ToList())
+				foreach (var format in _formats.ToList())
 				{
 					if (DateTime.Now >= format.ExpireAt)
-						m_formats.Remove(format);
+						_formats.Remove(format);
 				}
 			}
 
@@ -231,7 +232,7 @@ namespace Imp.CitpSharp
 					get { return Version == MsexVersion.Version12; }
 				}
 
-				public bool Equals(RequestFormat other)
+				public bool Equals([CanBeNull] RequestFormat other)
 				{
 					if (ReferenceEquals(null, other))
 						return false;
@@ -240,7 +241,7 @@ namespace Imp.CitpSharp
 					return FrameFormat == other.FrameFormat && IsVersion12 == other.IsVersion12;
 				}
 
-				public override bool Equals(object obj)
+				public override bool Equals([CanBeNull] object obj)
 				{
 					if (ReferenceEquals(null, obj))
 						return false;

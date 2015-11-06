@@ -30,29 +30,29 @@ namespace Imp.CitpSharp
 		private static readonly IPEndPoint CitpMulticastOriginalEndpoint = new IPEndPoint(CitpMulticastOriginalIp, CitpUdpPort);
 		private static readonly IPEndPoint CitpMulticastEndpoint = new IPEndPoint(CitpMulticastIp, CitpUdpPort);
 
-		private readonly ICitpLogService m_log;
-		private readonly IPAddress m_nicIp;
-		private readonly bool m_useOriginalMulticastIp;
+		private readonly ICitpLogService _log;
+		private readonly IPAddress _nicIp;
+		private readonly bool _useOriginalMulticastIp;
 
-		private UdpClient m_client;
+		private UdpClient _client;
 
-		private bool m_isListenLoopRunning;
+		private bool _isListenLoopRunning;
 
 
 		public CitpUdpService(ICitpLogService log, IPAddress nicIp, bool useOriginalMulticastIp)
 		{
-			m_log = log;
+			_log = log;
 
-			m_nicIp = nicIp;
-			m_useOriginalMulticastIp = useOriginalMulticastIp;
+			_nicIp = nicIp;
+			_useOriginalMulticastIp = useOriginalMulticastIp;
 		}
 
 		public void Dispose()
 		{
-			if (m_client != null)
+			if (_client != null)
 			{
-				m_client.Close();
-				m_client = null;
+				_client.Close();
+				_client = null;
 			}
 		}
 
@@ -60,28 +60,28 @@ namespace Imp.CitpSharp
 
 		public bool Start()
 		{
-			if (m_client != null)
+			if (_client != null)
 			{
-				m_client.Close();
-				m_client = null;
+				_client.Close();
+				_client = null;
 			}
 
-			m_client = new UdpClient();
-			m_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+			_client = new UdpClient();
+			_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
 			try
 			{
-				m_client.Client.Bind(new IPEndPoint(m_nicIp, CitpUdpPort));
+				_client.Client.Bind(new IPEndPoint(_nicIp, CitpUdpPort));
 
-				m_client.JoinMulticastGroup(m_useOriginalMulticastIp ? CitpMulticastOriginalIp : CitpMulticastIp);
+				_client.JoinMulticastGroup(_useOriginalMulticastIp ? CitpMulticastOriginalIp : CitpMulticastIp);
 			}
 			catch (SocketException ex)
 			{
-				m_log.LogError("Failed to setup UDP socket");
-				m_log.LogException(ex);
+				_log.LogError("Failed to setup UDP socket");
+				_log.LogException(ex);
 
-				m_client.Close();
-				m_client = null;
+				_client.Close();
+				_client = null;
 
 				return false;
 			}
@@ -93,12 +93,12 @@ namespace Imp.CitpSharp
 
 		public async Task<bool> SendAsync(byte[] data)
 		{
-			if (m_client == null)
+			if (_client == null)
 				return false;
 
 			try
 			{
-				await m_client.SendAsync(data, data.Length, m_useOriginalMulticastIp ? CitpMulticastOriginalEndpoint : CitpMulticastEndpoint);
+				await _client.SendAsync(data, data.Length, _useOriginalMulticastIp ? CitpMulticastOriginalEndpoint : CitpMulticastEndpoint);
 			}
 			catch (ObjectDisposedException)
 			{
@@ -106,8 +106,8 @@ namespace Imp.CitpSharp
 			}
 			catch (SocketException ex)
 			{
-				m_log.LogError("Failed to send data via UDP");
-				m_log.LogException(ex);
+				_log.LogError("Failed to send data via UDP");
+				_log.LogException(ex);
 				return false;
 			}
 
@@ -116,20 +116,20 @@ namespace Imp.CitpSharp
 
 		private async void listen()
 		{
-			if (m_isListenLoopRunning)
+			if (_isListenLoopRunning)
 				return;
 
 			try
 			{
-				m_isListenLoopRunning = true;
+				_isListenLoopRunning = true;
 
-				while (m_client != null)
+				while (_client != null)
 				{
 					UdpReceiveResult result;
 
 					try
 					{
-						result = await m_client.ReceiveAsync().ConfigureAwait(false);
+						result = await _client.ReceiveAsync().ConfigureAwait(false);
 					}
 					catch (ObjectDisposedException)
 					{
@@ -137,12 +137,12 @@ namespace Imp.CitpSharp
 					}
 					catch (SocketException ex)
 					{
-						m_log.LogError("Udp socket exception");
-						m_log.LogException(ex);
+						_log.LogError("Udp socket exception");
+						_log.LogException(ex);
 						continue;
 					}
 
-					if (result.RemoteEndPoint.Address.Equals(m_nicIp))
+					if (result.RemoteEndPoint.Address.Equals(_nicIp))
 						continue;
 
 					if (PacketReceived != null)
@@ -151,7 +151,7 @@ namespace Imp.CitpSharp
 			}
 			finally
 			{
-				m_isListenLoopRunning = false;
+				_isListenLoopRunning = false;
 			}
 		}
 	}

@@ -51,7 +51,7 @@ namespace Imp.CitpSharp
 					return image.ToPngByteArray();
 
 				default:
-					return null;
+					throw new ArgumentOutOfRangeException("image", "Unsupported image format");
 			}
 		}
 
@@ -60,7 +60,7 @@ namespace Imp.CitpSharp
 			var bm = new Bitmap(image);
 
 			if (bm.PixelFormat != PixelFormat.Format32bppArgb)
-				return null;
+				throw new InvalidOperationException("Pixel format of image is not 32bppArgb");
 
 			var bmd = bm.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, bm.PixelFormat);
 
@@ -157,8 +157,8 @@ namespace Imp.CitpSharp
 				int newWidth = Convert.ToInt32(thumb.Width * ratio);
 				int newHeight = Convert.ToInt32(thumb.Height * ratio);
 
-				int imageTopLeftX = Convert.ToInt32((targetSize.Width - (thumb.Width * ratio)) / 2);
-				int imageTopLeftY = Convert.ToInt32((targetSize.Height - (thumb.Height * ratio)) / 2);
+				int imageTopLeftX = Convert.ToInt32((targetSize.Width - thumb.Width * ratio) / 2);
+				int imageTopLeftY = Convert.ToInt32((targetSize.Height - thumb.Height * ratio) / 2);
 
 				graphic.Clear(Color.Black);
 				graphic.DrawImage(thumb, imageTopLeftX, imageTopLeftY, newWidth, newHeight);
@@ -172,9 +172,8 @@ namespace Imp.CitpSharp
 
 		private static ImageCodecInfo getEncoder(ImageFormat format)
 		{
-			var codecs = ImageCodecInfo.GetImageDecoders();
-
-			return codecs.FirstOrDefault(codec => codec.FormatID == format.Guid);
+			return ImageCodecInfo.GetImageDecoders()
+				.First(codec => codec.FormatID == format.Guid);
 		}
 	}
 }

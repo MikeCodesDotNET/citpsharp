@@ -32,14 +32,14 @@ namespace Imp.CitpSharp
 		private const int CitpPlocFrequency = 1000;
 		private const int CitpLstaFrequency = 250;
 
-		private readonly ICitpLogService m_log;
-		private readonly ICitpMediaServerInfo m_serverInfo;
-		private readonly CitpStreamingService m_streamingService;
-		private DateTime m_layerStatusMessageLastSent;
+		private readonly ICitpLogService _log;
+		private readonly ICitpMediaServerInfo _serverInfo;
+		private readonly CitpStreamingService _streamingService;
+		private DateTime _layerStatusMessageLastSent;
 
-		private CitpNetworkService m_networkService;
+		private CitpNetworkService _networkService;
 
-		private DateTime m_peerLocationMessageLastSent;
+		private DateTime _peerLocationMessageLastSent;
 
 
 
@@ -48,16 +48,16 @@ namespace Imp.CitpSharp
 			ICitpMediaServerInfo serverInfo, bool isStreamingEnabled,
 			ICitpLogService log = null)
 		{
-			m_log = log ?? new CitpConsoleLogger(CitpLoggerLevel.Info);
+			_log = log ?? new CitpConsoleLogger(CitpLoggerLevel.Info);
 
-			m_serverInfo = serverInfo;
+			_serverInfo = serverInfo;
 
-			m_networkService = new CitpNetworkService(m_log, nicAddress, useOriginalMulticastIp, m_serverInfo);
+			_networkService = new CitpNetworkService(_log, nicAddress, useOriginalMulticastIp, _serverInfo);
 
 			IsStreamingEnabled = isStreamingEnabled;
 
 			if (isStreamingEnabled)
-				m_streamingService = new CitpStreamingService(m_log, m_serverInfo, m_networkService);
+				_streamingService = new CitpStreamingService(_log, _serverInfo, _networkService);
 		}
 
 
@@ -67,16 +67,16 @@ namespace Imp.CitpSharp
 
 		public void Dispose()
 		{
-			if (m_networkService != null)
+			if (_networkService != null)
 			{
-				m_networkService.Dispose();
-				m_networkService = null;
+				_networkService.Dispose();
+				_networkService = null;
 			}
 		}
 
 		public bool Start()
 		{
-			return m_networkService.Start();
+			return _networkService.Start();
 		}
 
 
@@ -85,27 +85,25 @@ namespace Imp.CitpSharp
 		/// </summary>
 		public async Task SendAndReceiveMessagesAsync()
 		{
-			m_log.LogDebug("Started processing messages");
+			_log.LogDebug("Started processing messages");
 
-			if (m_peerLocationMessageLastSent == null
-			    || (DateTime.Now - m_peerLocationMessageLastSent).TotalMilliseconds >= CitpPlocFrequency)
+			if ((DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpPlocFrequency)
 			{
 				await sendPeerLocationPacketAsync();
-				m_peerLocationMessageLastSent = DateTime.Now;
+				_peerLocationMessageLastSent = DateTime.Now;
 			}
 
-			if (m_layerStatusMessageLastSent == null
-			    || (DateTime.Now - m_peerLocationMessageLastSent).TotalMilliseconds >= CitpLstaFrequency)
+			if ((DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpLstaFrequency)
 			{
 				await sendLayerStatusPacketAsync();
-				m_layerStatusMessageLastSent = DateTime.Now;
+				_layerStatusMessageLastSent = DateTime.Now;
 			}
 
-			while (m_networkService.MessageQueue.Count > 0)
+			while (_networkService.MessageQueue.Count > 0)
 			{
 				Tuple<CitpPeer, CitpPacket> message;
 
-				if (m_networkService.MessageQueue.TryDequeue(out message) == false)
+				if (_networkService.MessageQueue.TryDequeue(out message) == false)
 					throw new InvalidOperationException("Failed to dequeue message");
 
 				try
@@ -120,7 +118,7 @@ namespace Imp.CitpSharp
 						}
 						else if (message.Item1.MsexVersion < msexPacket.Version)
 						{
-							m_log.LogWarning(
+							_log.LogWarning(
 								"Received packet from peer with higher MSEX version than previously discovered for this client. Updating peer version");
 							message.Item1.MsexVersion = msexPacket.Version;
 						}
@@ -137,26 +135,26 @@ namespace Imp.CitpSharp
 					else if (message.Item2 is GetVideoSourcesMessagePacket)
 						await getVideoSourcesAsync(message.Item1, message.Item2 as GetVideoSourcesMessagePacket);
 					else if (message.Item2 is RequestStreamMessagePacket)
-						m_streamingService.AddStreamRequest(message.Item1.MsexVersion, message.Item2 as RequestStreamMessagePacket);
+						_streamingService.AddStreamRequest(message.Item1.MsexVersion, message.Item2 as RequestStreamMessagePacket);
 				}
 				catch (InvalidOperationException ex)
 				{
-					m_log.LogError("Failed to process message");
-					m_log.LogException(ex);
+					_log.LogError("Failed to process message");
+					_log.LogException(ex);
 				}
 				catch (SocketException ex)
 				{
-					m_log.LogError("Socket exception whilst processing message");
-					m_log.LogException(ex);
+					_log.LogError("Socket exception whilst processing message");
+					_log.LogException(ex);
 				}
 			}
 
-			m_log.LogDebug("Finished processing messages");
+			_log.LogDebug("Finished processing messages");
 		}
 
 		public async Task ProcessVideoStreamsAsync()
 		{
-			await m_streamingService.ProcessStreamRequestsAsync();
+			await _streamingService.ProcessStreamRequestsAsync();
 		}
 
 
@@ -166,18 +164,18 @@ namespace Imp.CitpSharp
 			var packet = new PeerLocationMessagePacket
 			{
 				IsListeningForTcpConnection = true,
-				ListeningTcpPort = Convert.ToUInt16(m_networkService.LocalTcpListenPort),
+				ListeningTcpPort = Convert.ToUInt16(_networkService.LocalTcpListenPort),
 				Type = CitpPeerType.MediaServer,
-				Name = m_serverInfo.PeerName,
+				Name = _serverInfo.PeerName,
 				State = Status
 			};
 
-			await m_networkService.SendMulticastPacketAsync(packet);
+			await _networkService.SendMulticastPacketAsync(packet);
 		}
 
 		private async Task sendLayerStatusPacketAsync()
 		{
-			var layers = m_serverInfo.Layers.Select((l, i) => new LayerStatusMessagePacket.LayerStatus
+			var layers = _serverInfo.Layers.Select((l, i) => new LayerStatusMessagePacket.LayerStatus
 			{
 				LayerNumber = (byte)i,
 				PhysicalOutput = (byte)l.PhysicalOutput,
@@ -193,14 +191,14 @@ namespace Imp.CitpSharp
 			});
 
 			var packet = new LayerStatusMessagePacket {LayerStatuses = layers.ToList()};
-			await m_networkService.SendPacketToAllConnectedPeersAsync(packet);
+			await _networkService.SendPacketToAllConnectedPeersAsync(packet);
 		}
 
 		private async Task sendElementLibraryUpdatedPacketsAsync()
 		{
-			foreach (var message in m_serverInfo.GetLibraryUpdateMessages())
+			foreach (var message in _serverInfo.GetLibraryUpdateMessages())
 			{
-				await m_networkService.SendPacketToAllConnectedPeersAsync(message.ToPacket());
+				await _networkService.SendPacketToAllConnectedPeersAsync(message.ToPacket());
 			}
 		}
 
@@ -209,7 +207,7 @@ namespace Imp.CitpSharp
 		private async Task getElementLibraryInfomationAsync(CitpPeer peer,
 			GetElementLibraryInformationMessagePacket requestPacket)
 		{
-			var libraries = m_serverInfo.GetElementLibraryInformation(requestPacket.LibraryType,
+			var libraries = _serverInfo.GetElementLibraryInformation(requestPacket.LibraryType,
 				requestPacket.Version != MsexVersion.Version10 ? requestPacket.LibraryParentId : null,
 				requestPacket.RequestedLibraryNumbers);
 
@@ -218,7 +216,7 @@ namespace Imp.CitpSharp
 				LibraryType = requestPacket.LibraryType,
 				Elements = libraries
 			};
-			await m_networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
+			await _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
 		private async Task getElementInformationAsync(CitpPeer peer, GetElementInformationMessagePacket requestPacket)
@@ -230,12 +228,11 @@ namespace Imp.CitpSharp
 				var mediaPacket = new MediaElementInformationMessagePacket
 				{
 					LibraryNumber = requestPacket.LibraryNumber,
-					LibraryId = requestPacket.LibraryId
+					LibraryId = requestPacket.LibraryId,
+					Media = _serverInfo.GetMediaElementInformation(new MsexId(requestPacket.LibraryId, requestPacket.LibraryNumber),
+						requestPacket.RequestedElementNumbers)
 				};
 
-				mediaPacket.Media =
-					m_serverInfo.GetMediaElementInformation(new MsexId(requestPacket.LibraryId, requestPacket.LibraryNumber),
-						requestPacket.RequestedElementNumbers);
 
 				packet = mediaPacket;
 			}
@@ -244,12 +241,12 @@ namespace Imp.CitpSharp
 				var effectPacket = new EffectElementInformationMessagePacket
 				{
 					LibraryNumber = requestPacket.LibraryNumber,
-					LibraryId = requestPacket.LibraryId
+					LibraryId = requestPacket.LibraryId,
+					Effects =
+						_serverInfo.GetEffectElementInformation(new MsexId(requestPacket.LibraryId, requestPacket.LibraryNumber),
+							requestPacket.RequestedElementNumbers)
 				};
 
-				effectPacket.Effects =
-					m_serverInfo.GetEffectElementInformation(new MsexId(requestPacket.LibraryId, requestPacket.LibraryNumber),
-						requestPacket.RequestedElementNumbers);
 
 				packet = effectPacket;
 			}
@@ -261,16 +258,16 @@ namespace Imp.CitpSharp
 				var genericPacket = new GenericElementInformationMessagePacket
 				{
 					LibraryId = requestPacket.LibraryId.Value,
-					LibraryType = requestPacket.LibraryType
+					LibraryType = requestPacket.LibraryType,
+					Information = _serverInfo.GetGenericElementInformation(requestPacket.LibraryType,
+						requestPacket.LibraryId.Value, requestPacket.RequestedElementNumbers)
 				};
 
-				genericPacket.Information = m_serverInfo.GetGenericElementInformation(requestPacket.LibraryType,
-					requestPacket.LibraryId.Value, requestPacket.RequestedElementNumbers);
 
 				packet = genericPacket;
 			}
 
-			await m_networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
+			await _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
 		private async Task getElementLibraryThumbnailAsync(CitpPeer peer,
@@ -278,12 +275,11 @@ namespace Imp.CitpSharp
 		{
 			List<MsexId> msexIds;
 
-			if (requestPacket.Version == MsexVersion.Version10)
-				msexIds = requestPacket.LibraryNumbers.Select(n => new MsexId(n)).ToList();
-			else
-				msexIds = requestPacket.LibraryIds.Select(i => new MsexId(i)).ToList();
+			msexIds = requestPacket.Version == MsexVersion.Version10 
+				? requestPacket.LibraryNumbers.Select(n => new MsexId(n)).ToList() 
+				: requestPacket.LibraryIds.Select(i => new MsexId(i)).ToList();
 
-			var thumbs = m_serverInfo.GetElementLibraryThumbnails(requestPacket.LibraryType, msexIds);
+			var thumbs = _serverInfo.GetElementLibraryThumbnails(requestPacket.LibraryType, msexIds);
 
 			var packets = thumbs.Select(t =>
 			{
@@ -303,7 +299,7 @@ namespace Imp.CitpSharp
 			});
 
 			foreach (var packet in packets)
-				await m_networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
+				await _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
 		private async Task getElementThumbnailAsync(CitpPeer peer, GetElementThumbnailMessagePacket requestPacket)
@@ -312,12 +308,11 @@ namespace Imp.CitpSharp
 
 			MsexId msexId;
 
-			if (requestPacket.Version == MsexVersion.Version10)
-				msexId = new MsexId(requestPacket.LibraryNumber);
-			else
-				msexId = new MsexId(requestPacket.LibraryId.Value);
+			msexId = requestPacket.Version == MsexVersion.Version10 
+				? new MsexId(requestPacket.LibraryNumber) 
+				: new MsexId(requestPacket.LibraryId.Value);
 
-			thumbs = m_serverInfo.GetElementThumbnails(requestPacket.LibraryType, msexId, requestPacket.ElementNumbers);
+			thumbs = _serverInfo.GetElementThumbnails(requestPacket.LibraryType, msexId, requestPacket.ElementNumbers);
 
 			var packets = thumbs.Select(t =>
 			{
@@ -338,14 +333,14 @@ namespace Imp.CitpSharp
 			});
 
 			foreach (var packet in packets)
-				await m_networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
+				await _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
 		}
 
 
 		private async Task getVideoSourcesAsync(CitpPeer peer, GetVideoSourcesMessagePacket requestPacket)
 		{
-			var packet = new VideoSourcesMessagePacket {Sources = m_serverInfo.VideoSources.Values.ToList()};
-			await m_networkService.SendPacketAsync(packet, peer);
+			var packet = new VideoSourcesMessagePacket {Sources = _serverInfo.VideoSources.Values.ToList()};
+			await _networkService.SendPacketAsync(packet, peer);
 		}
 	}
 }

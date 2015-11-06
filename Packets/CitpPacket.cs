@@ -31,19 +31,19 @@ namespace Imp.CitpSharp.Packets
 		private static readonly int CitpHeaderLength = 20;
 		private static readonly int CitpContentTypePosition = 16;
 
-		private readonly CitpLayerType m_layerType;
+		private readonly CitpLayerType _layerType;
 
 
 		protected CitpPacket(CitpLayerType layerType)
 		{
-			m_layerType = layerType;
+			_layerType = layerType;
 			MessagePart = 1;
 			MessagePartCount = 1;
 		}
 
 		public CitpLayerType LayerType
 		{
-			get { return m_layerType; }
+			get { return _layerType; }
 		}
 
 		public ushort RequestResponseIndex { get; set; }
@@ -252,18 +252,18 @@ namespace Imp.CitpSharp.Packets
 
 			unchecked
 			{
-				data[6] = (byte)(requestResponseIndex);
+				data[6] = (byte)requestResponseIndex;
 				data[7] = (byte)(requestResponseIndex >> 8);
 
-				data[8] = (byte)(data.Length);
+				data[8] = (byte)data.Length;
 				data[9] = (byte)(data.Length >> 8);
 				data[10] = (byte)(data.Length >> 16);
 				data[11] = (byte)(data.Length >> 24);
 
-				data[12] = (byte)(messagePartCount);
+				data[12] = (byte)messagePartCount;
 				data[13] = (byte)(messagePartCount >> 8);
 
-				data[14] = (byte)(messagePart);
+				data[14] = (byte)messagePart;
 				data[15] = (byte)(messagePart >> 8);
 			}
 
@@ -286,17 +286,17 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 20;
 
-		private readonly PinfMessageType m_messageType;
+		private readonly PinfMessageType _messageType;
 
 		public CitpPinfPacket(PinfMessageType messageType)
 			: base(CitpLayerType.PeerInformationLayer)
 		{
-			m_messageType = messageType;
+			_messageType = messageType;
 		}
 
 		public PinfMessageType MessageType
 		{
-			get { return m_messageType; }
+			get { return _messageType; }
 		}
 
 		public static PinfMessageType? GetMessageType(byte[] data)
@@ -327,17 +327,17 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 20;
 
-		private readonly SdmxMessageType m_messageType;
+		private readonly SdmxMessageType _messageType;
 
 		public CitpSdmxPacket(SdmxMessageType messageType)
 			: base(CitpLayerType.SendDmxLayer)
 		{
-			m_messageType = messageType;
+			_messageType = messageType;
 		}
 
 		public SdmxMessageType MessageType
 		{
-			get { return m_messageType; }
+			get { return _messageType; }
 		}
 
 		public static SdmxMessageType? GetMessageType(byte[] data)
@@ -368,18 +368,18 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 22;
 
-		private readonly MsexMessageType m_messageType;
+		private readonly MsexMessageType _messageType;
 
 		public CitpMsexPacket(MsexMessageType messageType)
 			: base(CitpLayerType.MediaServerExtensionsLayer)
 		{
 			Version = null;
-			m_messageType = messageType;
+			_messageType = messageType;
 		}
 
 		public MsexMessageType MessageType
 		{
-			get { return m_messageType; }
+			get { return _messageType; }
 		}
 
 		public MsexVersion? Version { get; set; }

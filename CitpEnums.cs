@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -48,12 +49,13 @@ namespace Imp.CitpSharp
 		/// <typeparam name="T">The type of the attribute you want to retrieve</typeparam>
 		/// <param name="enumVal">The enum value</param>
 		/// <returns>The attribute of type T that exists on the enum value</returns>
+		[CanBeNull]
 		public static T GetAttributeOfType<T>(this Enum enumVal) where T : Attribute
 		{
 			var type = enumVal.GetType();
 			var memInfo = type.GetMember(enumVal.ToString());
 			var attributes = memInfo[0].GetCustomAttributes(typeof(T), false);
-			return (attributes.Length > 0) ? (T)attributes[0] : null;
+			return attributes.Length > 0 ? (T)attributes[0] : null;
 		}
 
 		public static T GetEnumFromIdString<T>(string s) where T : struct, IConvertible
@@ -196,7 +198,7 @@ namespace Imp.CitpSharp
 		public byte MajorVersion { get; private set; }
 		public byte MinorVersion { get; private set; }
 
-		public bool Equals(CitpVersion other)
+		public bool Equals([CanBeNull] CitpVersion other)
 		{
 			if (other == null)
 				return false;
@@ -209,7 +211,7 @@ namespace Imp.CitpSharp
 			return new[] {MajorVersion, MinorVersion};
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals([CanBeNull] object obj)
 		{
 			var m = obj as CitpElementLibraryInformation;
 			if (m == null)

@@ -41,40 +41,40 @@ namespace Imp.CitpSharp
 
 	internal class CitpConsoleLogger : ICitpLogService
 	{
-		private readonly CitpLoggerLevel m_logLevel;
+		private readonly CitpLoggerLevel _logLevel;
 
 		public CitpConsoleLogger(CitpLoggerLevel logLevel)
 		{
-			m_logLevel = logLevel;
+			_logLevel = logLevel;
 		}
 
 		public void LogDebug(string message)
 		{
-			if (m_logLevel <= CitpLoggerLevel.Debug)
+			if (_logLevel <= CitpLoggerLevel.Debug)
 				writeToConsole(CitpLoggerLevel.Debug, message);
 		}
 
 		public void LogInfo(string message)
 		{
-			if (m_logLevel <= CitpLoggerLevel.Info)
+			if (_logLevel <= CitpLoggerLevel.Info)
 				writeToConsole(CitpLoggerLevel.Info, message);
 		}
 
 		public void LogWarning(string message)
 		{
-			if (m_logLevel <= CitpLoggerLevel.Warning)
+			if (_logLevel <= CitpLoggerLevel.Warning)
 				writeToConsole(CitpLoggerLevel.Warning, message);
 		}
 
 		public void LogError(string message)
 		{
-			if (m_logLevel <= CitpLoggerLevel.Error)
+			if (_logLevel <= CitpLoggerLevel.Error)
 				writeToConsole(CitpLoggerLevel.Error, message);
 		}
 
 		public void LogException(Exception ex)
 		{
-			if (m_logLevel <= CitpLoggerLevel.Error)
+			if (_logLevel <= CitpLoggerLevel.Error)
 				writeToConsole(CitpLoggerLevel.Error, ex.ToString());
 		}
 

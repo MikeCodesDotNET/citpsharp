@@ -15,6 +15,7 @@
 
 using System;
 using System.Net;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -60,7 +61,7 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public bool Equals(CitpPeer other)
+		public bool Equals([CanBeNull] CitpPeer other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -84,7 +85,7 @@ namespace Imp.CitpSharp
 			IsConnected = false;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals([CanBeNull] object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -97,7 +98,7 @@ namespace Imp.CitpSharp
 		{
 			unchecked
 			{
-				int hashCode = (Name != null ? Name.GetHashCode() : 0);
+				int hashCode = Name != null ? Name.GetHashCode() : 0;
 				hashCode = (hashCode * 397) ^ (int)Type;
 				hashCode = (hashCode * 397) ^ (State != null ? State.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ LastUpdateReceived.GetHashCode();
