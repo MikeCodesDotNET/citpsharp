@@ -16,9 +16,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace Imp.CitpSharp.Packets.Msex
+namespace Imp.CitpSharp.Packets
 {
 	internal class ClientInformationMessagePacket : CitpMsexPacket
 	{
@@ -110,9 +111,8 @@ namespace Imp.CitpSharp.Packets.Msex
 				foreach (var v in SupportedMsexVersions)
 					writer.Write(v.GetAttributeOfType<CitpVersion>().ToByteArray());
 
-				ushort supportedLibraryTypes = 0;
-				foreach (var t in SupportedLibraryTypes)
-					supportedLibraryTypes |= (ushort)(2 ^ (int)t);
+				ushort supportedLibraryTypes = 
+					SupportedLibraryTypes.Aggregate<MsexLibraryType, ushort>(0, (cur, t) => (ushort)(cur | (ushort)(2 ^ (int)t)));
 				writer.Write(supportedLibraryTypes);
 
 				writer.Write((byte)ThumbnailFormats.Count);
@@ -142,7 +142,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				int dmxSourcesCount = reader.ReadByte();
 				LayerDmxSources = new List<CitpDmxConnectionString>(dmxSourcesCount);
 				for (int i = 0; i < dmxSourcesCount; ++i)
-					LayerDmxSources.Add(CitpDmxConnectionString.FromString(reader.ReadString(true)));
+					LayerDmxSources.Add(CitpDmxConnectionString.Parse(reader.ReadString(true)));
 			}
 			else if (Version == MsexVersion.Version12)
 			{
@@ -191,7 +191,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				int dmxSourcesCount = reader.ReadByte();
 				LayerDmxSources = new List<CitpDmxConnectionString>(dmxSourcesCount);
 				for (int i = 0; i < dmxSourcesCount; ++i)
-					LayerDmxSources.Add(CitpDmxConnectionString.FromString(reader.ReadString(true)));
+					LayerDmxSources.Add(CitpDmxConnectionString.Parse(reader.ReadString(true)));
 			}
 		}
 	}

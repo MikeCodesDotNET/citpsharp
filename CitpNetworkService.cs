@@ -21,8 +21,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
@@ -159,7 +157,7 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			return await sendDataToPeerAsync(peer, packet.ToByteArray());
+			return await sendDataToPeerAsync(peer, packet.ToByteArray()).ConfigureAwait(false);
 		}
 
 		public async Task SendPacketToAllConnectedPeersAsync(CitpPacket packet)
@@ -192,14 +190,14 @@ namespace Imp.CitpSharp
 						var data = msexPacket.ToByteArray();
 
 						foreach (var peer in peersWithVersion)
-							await sendDataToPeerAsync(peer, data);
+							await sendDataToPeerAsync(peer, data).ConfigureAwait(false);
 					}
 				}
 			}
 			else
 			{
 				foreach (var peer in connectedPeers)
-					await SendPacketAsync(packet, peer);
+					await SendPacketAsync(packet, peer).ConfigureAwait(false);
 			}
 		}
 
@@ -207,7 +205,7 @@ namespace Imp.CitpSharp
 		{
 			foreach (var data in packet.ToByteArray(CitpUdpService.MaximumUdpPacketLength, requestResponseIndex))
 			{
-				await _udpService.SendAsync(data);
+				await _udpService.SendAsync(data).ConfigureAwait(false);
 			}
 		}
 
@@ -222,8 +220,8 @@ namespace Imp.CitpSharp
 			else
 				_peers.Add(new CitpPeer(e.RemoteEndPoint));
 
-			await e.SendAsync(createPeerNamePacket().ToByteArray());
-			await e.SendAsync(createServerInfoPacket(MsexVersion.Version10).ToByteArray());
+			await e.SendAsync(createPeerNamePacket().ToByteArray()).ConfigureAwait(false);
+			await e.SendAsync(createServerInfoPacket(MsexVersion.Version10).ToByteArray()).ConfigureAwait(false);
 		}
 
 		private void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
@@ -265,7 +263,7 @@ namespace Imp.CitpSharp
 
 
 			if (packet is ClientInformationMessagePacket)
-				await receivedClientInformationMessageAsync(packet as ClientInformationMessagePacket, peer);
+				await receivedClientInformationMessageAsync(packet as ClientInformationMessagePacket, peer).ConfigureAwait(false);
 			else
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
 		}
@@ -359,7 +357,7 @@ namespace Imp.CitpSharp
 			{
 				peer.MsexVersion = MsexVersion.Version12;
 				var packet = createServerInfoPacket(MsexVersion.Version12);
-				await SendPacketAsync(packet, peer, message.RequestResponseIndex);
+				await SendPacketAsync(packet, peer, message.RequestResponseIndex).ConfigureAwait(false);
 			}
 		}
 
@@ -375,7 +373,7 @@ namespace Imp.CitpSharp
 			if (_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) == false)
 				return false;
 
-			return await client.SendAsync(data);
+			return await client.SendAsync(data).ConfigureAwait(false);
 		}
 
 		private PeerNameMessagePacket createPeerNamePacket()

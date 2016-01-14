@@ -17,8 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp.Packets
 {
@@ -288,7 +286,7 @@ namespace Imp.CitpSharp.Packets
 
 		private readonly PinfMessageType _messageType;
 
-		public CitpPinfPacket(PinfMessageType messageType)
+		protected CitpPinfPacket(PinfMessageType messageType)
 			: base(CitpLayerType.PeerInformationLayer)
 		{
 			_messageType = messageType;
@@ -329,7 +327,7 @@ namespace Imp.CitpSharp.Packets
 
 		private readonly SdmxMessageType _messageType;
 
-		public CitpSdmxPacket(SdmxMessageType messageType)
+		protected CitpSdmxPacket(SdmxMessageType messageType)
 			: base(CitpLayerType.SendDmxLayer)
 		{
 			_messageType = messageType;
@@ -370,7 +368,7 @@ namespace Imp.CitpSharp.Packets
 
 		private readonly MsexMessageType _messageType;
 
-		public CitpMsexPacket(MsexMessageType messageType)
+		protected CitpMsexPacket(MsexMessageType messageType)
 			: base(CitpLayerType.MediaServerExtensionsLayer)
 		{
 			Version = null;
@@ -402,10 +400,8 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			byte versionHi, versionLo;
-
-			versionHi = reader.ReadByte();
-			versionLo = reader.ReadByte();
+			byte versionHi = reader.ReadByte();
+			byte versionLo = reader.ReadByte();
 
 			if (versionHi == 1 && versionLo == 0)
 				Version = MsexVersion.Version10;

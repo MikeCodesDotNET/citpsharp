@@ -184,11 +184,10 @@ namespace Imp.CitpSharp
 		public string ReadString(bool isUtf8)
 		{
 			var result = new StringBuilder(32);
-			char c;
 
 			for (int i = 0; i < BaseStream.Length; ++i)
 			{
-				c = isUtf8 ? Convert.ToChar(ReadByte()) : ReadChar();
+				char c = isUtf8 ? Convert.ToChar(ReadByte()) : ReadChar();
 
 				if (c == 0)
 					break;

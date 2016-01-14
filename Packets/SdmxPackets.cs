@@ -15,7 +15,7 @@
 
 using System.Collections.Generic;
 
-namespace Imp.CitpSharp.Packets.Sdmx
+namespace Imp.CitpSharp.Packets
 {
 	internal class CapabilitiesMessagePacket : CitpSdmxPacket
 	{
@@ -203,7 +203,7 @@ namespace Imp.CitpSharp.Packets.Sdmx
 		{
 			base.DeserializeFromStream(reader);
 
-			ConnectionString = CitpDmxConnectionString.FromString(reader.ReadString(true));
+			ConnectionString = CitpDmxConnectionString.Parse(reader.ReadString(true));
 		}
 	}
 
@@ -230,7 +230,7 @@ namespace Imp.CitpSharp.Packets.Sdmx
 			base.DeserializeFromStream(reader);
 
 			UniverseIndex = reader.ReadByte();
-			ConnectionString = CitpDmxConnectionString.FromString(reader.ReadString(true));
+			ConnectionString = CitpDmxConnectionString.Parse(reader.ReadString(true));
 		}
 	}
 }

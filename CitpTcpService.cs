@@ -191,7 +191,7 @@ namespace Imp.CitpSharp
 
 				try
 				{
-					await _stream.WriteAsync(data, 0, data.Length);
+					await _stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
 				}
 				catch (IOException)
 				{

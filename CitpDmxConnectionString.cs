@@ -21,7 +21,7 @@ namespace Imp.CitpSharp
 {
 	public struct CitpDmxConnectionString : IEquatable<CitpDmxConnectionString>
 	{
-		public static CitpDmxConnectionString FromString(string s)
+		public static CitpDmxConnectionString Parse(string s)
 		{
 			var dmxString = new CitpDmxConnectionString();
 
@@ -57,7 +57,7 @@ namespace Imp.CitpSharp
 
 				return dmxString;
 			}
-			catch (Exception ex)
+			catch (FormatException ex)
 			{
 				throw new InvalidOperationException("Invalid DmxConnectionString", ex);
 			}

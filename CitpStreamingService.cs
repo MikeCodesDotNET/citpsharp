@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
-using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
@@ -109,7 +109,7 @@ namespace Imp.CitpSharp
 							packet.FragmentInfo.FragmentIndex = (ushort)i;
 							packet.FragmentInfo.FragmentByteOffset = MaximumImageBufferSize * i;
 							packet.FrameBuffer = fragments[i];
-							await _networkService.SendMulticastPacketAsync(packet);
+							await _networkService.SendMulticastPacketAsync(packet).ConfigureAwait(false);
 						}
 					}
 					else
@@ -121,7 +121,7 @@ namespace Imp.CitpSharp
 						}
 
 						packet.FrameBuffer = frameBuffer;
-						await _networkService.SendMulticastPacketAsync(packet);
+						await _networkService.SendMulticastPacketAsync(packet).ConfigureAwait(false);
 					}
 					
 					formatRequest.LastOutput = DateTime.Now;
