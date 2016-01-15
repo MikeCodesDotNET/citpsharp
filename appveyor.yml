@@ -18,4 +18,12 @@ configuration: Release
 
 build:
   project: CitpSharp.sln
+  
+  
+#---------------------------------#
+#           build events          #
+#---------------------------------#
+  
+ before_build:
+  - nuget restore
 
