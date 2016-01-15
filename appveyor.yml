@@ -2,8 +2,6 @@
 #      general configuration      #
 #---------------------------------#
 
-version: 1.0.{GitVersion_SemVer}
-
 branches:
   only:
     - master
