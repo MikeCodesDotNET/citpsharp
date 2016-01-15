@@ -1,0 +1,21 @@
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
+version: 1.0.{GitVersion_SemVer}
+
+branches:
+  only:
+    - master
+
+#---------------------------------#
+#       build configuration       #
+#---------------------------------#
+
+platform: Any CPU
+
+configuration: Release
+
+build:
+  project: CitpSharp.sln
+
