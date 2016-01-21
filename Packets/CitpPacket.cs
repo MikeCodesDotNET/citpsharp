@@ -17,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp.Packets
 {
@@ -85,7 +87,7 @@ namespace Imp.CitpSharp.Packets
 							packet = new PeerNameMessagePacket();
 							break;
 						default:
-							throw new InvalidOperationException("Unimplemented PINF message type");
+							throw new NotImplementedException("Unimplemented PINF message type");
 					}
 
 					break;
@@ -160,14 +162,14 @@ namespace Imp.CitpSharp.Packets
 							packet = new StreamFrameMessagePacket();
 							break;
 						default:
-							throw new InvalidOperationException("Unimplemented MSEX message type");
+							throw new NotImplementedException("Unimplemented MSEX message type");
 					}
 
 					break;
 				}
 
 				default:
-					throw new InvalidOperationException("Unimplemented CITP content type");
+					throw new NotImplementedException("Unimplemented CITP content type");
 			}
 
 
@@ -392,7 +394,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(Version.GetAttributeOfType<CitpVersion>().ToByteArray());
+			writer.Write(Version.GetAttributeOfType<CitpVersionAttribute>().ToByteArray());
 			writer.Write(MessageType.GetAttributeOfType<CitpId>().Id);
 		}
 
@@ -404,11 +406,11 @@ namespace Imp.CitpSharp.Packets
 			byte versionLo = reader.ReadByte();
 
 			if (versionHi == 1 && versionLo == 0)
-				Version = MsexVersion.Version10;
+				Version = MsexVersion.Version1_0;
 			else if (versionHi == 1 && versionLo == 1)
-				Version = MsexVersion.Version11;
+				Version = MsexVersion.Version1_1;
 			else if (versionHi == 1 && versionLo == 2)
-				Version = MsexVersion.Version12;
+				Version = MsexVersion.Version1_2;
 			else
 				Version = MsexVersion.UnsupportedVersion;
 

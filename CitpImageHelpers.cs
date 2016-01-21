@@ -40,7 +40,7 @@ namespace Imp.CitpSharp
 			switch (format)
 			{
 				case MsexImageFormat.Rgb8:
-					if (version == MsexVersion.Version10)
+					if (version == MsexVersion.Version1_0)
 						return image.ToRgb8ByteArray(true);
 					return image.ToRgb8ByteArray();
 
@@ -51,7 +51,7 @@ namespace Imp.CitpSharp
 					return image.ToPngByteArray();
 
 				default:
-					throw new ArgumentOutOfRangeException("image", "Unsupported image format");
+					return null;
 			}
 		}
 
@@ -60,7 +60,7 @@ namespace Imp.CitpSharp
 			var bm = new Bitmap(image);
 
 			if (bm.PixelFormat != PixelFormat.Format32bppArgb)
-				throw new InvalidOperationException("Pixel format of image is not 32bppArgb");
+				return null;
 
 			var bmd = bm.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, bm.PixelFormat);
 
@@ -172,8 +172,9 @@ namespace Imp.CitpSharp
 
 		private static ImageCodecInfo getEncoder(ImageFormat format)
 		{
-			return ImageCodecInfo.GetImageDecoders()
-				.First(codec => codec.FormatID == format.Guid);
+			var codecs = ImageCodecInfo.GetImageDecoders();
+
+			return codecs.FirstOrDefault(codec => codec.FormatID == format.Guid);
 		}
 	}
 }

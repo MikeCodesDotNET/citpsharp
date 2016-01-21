@@ -21,6 +21,8 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
@@ -141,7 +143,7 @@ namespace Imp.CitpSharp
 
 			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 			{
-				var msexPacket = packet as CitpMsexPacket;
+				var msexPacket = (CitpMsexPacket)packet;
 
 				if (peer.MsexVersion.HasValue == false)
 					throw new InvalidOperationException("Peer MSEX version is unknown");
@@ -153,7 +155,7 @@ namespace Imp.CitpSharp
 				}
 				else
 				{
-					(packet as CitpMsexPacket).Version = peer.MsexVersion;
+					((CitpMsexPacket)packet).Version = peer.MsexVersion;
 				}
 			}
 
@@ -221,7 +223,7 @@ namespace Imp.CitpSharp
 				_peers.Add(new CitpPeer(e.RemoteEndPoint));
 
 			await e.SendAsync(createPeerNamePacket().ToByteArray()).ConfigureAwait(false);
-			await e.SendAsync(createServerInfoPacket(MsexVersion.Version10).ToByteArray()).ConfigureAwait(false);
+			await e.SendAsync(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray()).ConfigureAwait(false);
 		}
 
 		private void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
@@ -249,21 +251,27 @@ namespace Imp.CitpSharp
 				_log.LogException(ex);
 				return;
 			}
+			catch (NotImplementedException ex)
+			{
+				_log.LogError(string.Format("Error: Failed to deserialize TCP packet from {0}, CITP content type not implemented", e.Item1));
+				_log.LogException(ex);
+				return;
+			}
 
 			if (packet is PeerNameMessagePacket)
 			{
-				receivedPeerNameMessage(packet as PeerNameMessagePacket, e.Item1);
+				receivedPeerNameMessage((PeerNameMessagePacket)packet, e.Item1);
 				return;
 			}
 
 			var peer = _peers.FirstOrDefault(p => e.Item1.Equals(p.RemoteEndPoint));
 
 			if (peer == null)
-				throw new InvalidOperationException("Message received via TCP from unrecognised peer.");
+				throw new InvalidOperationException("Message received via TCP from unrecognized peer.");
 
 
 			if (packet is ClientInformationMessagePacket)
-				await receivedClientInformationMessageAsync(packet as ClientInformationMessagePacket, peer).ConfigureAwait(false);
+				await receivedClientInformationMessageAsync((ClientInformationMessagePacket)packet, peer).ConfigureAwait(false);
 			else
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
 		}
@@ -285,11 +293,11 @@ namespace Imp.CitpSharp
 
 			if (packet is StreamFrameMessagePacket)
 			{
-				FrameQueue.Enqueue(Tuple.Create(e.Item1, packet as StreamFrameMessagePacket));
+				FrameQueue.Enqueue(Tuple.Create(e.Item1, (StreamFrameMessagePacket)packet));
 			}
 			else if (packet is PeerLocationMessagePacket)
 			{
-				receivedPeerLocationMessage(packet as PeerLocationMessagePacket, e.Item1);
+				receivedPeerLocationMessage((PeerLocationMessagePacket)packet, e.Item1);
 			}
 			else
 			{
@@ -325,7 +333,10 @@ namespace Imp.CitpSharp
 			var peer = _peers.FirstOrDefault(p => remoteEndPoint.Address.Equals(p.Ip));
 
 			if (peer == null)
-				throw new InvalidOperationException("Received peer name message for unconnected peer");
+			{
+				peer = new CitpPeer(remoteEndPoint.Address, message.Name);
+				_peers.Add(peer);
+			}
 
 			peer.Name = message.Name;
 			peer.LastUpdateReceived = DateTime.Now;
@@ -333,7 +344,7 @@ namespace Imp.CitpSharp
 
 		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IPAddress remoteIp)
 		{
-			// Filter out this CITP peer
+			// Filter out the local CITP peer
 			if (remoteIp.Equals(_nicAddress) && message.Name == _serverInfo.PeerName
 			    && message.ListeningTcpPort == LocalTcpListenPort)
 				return;
@@ -351,14 +362,14 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		private async Task receivedClientInformationMessageAsync(ClientInformationMessagePacket message, CitpPeer peer)
+		private Task receivedClientInformationMessageAsync(ClientInformationMessagePacket message, CitpPeer peer)
 		{
-			if (message.SupportedMsexVersions.Contains(MsexVersion.Version12))
-			{
-				peer.MsexVersion = MsexVersion.Version12;
-				var packet = createServerInfoPacket(MsexVersion.Version12);
-				await SendPacketAsync(packet, peer, message.RequestResponseIndex).ConfigureAwait(false);
-			}
+			if (!message.SupportedMsexVersions.Contains(MsexVersion.Version1_2))
+				return Task.FromResult(false);
+
+			peer.MsexVersion = MsexVersion.Version1_2;
+
+			return SendPacketAsync(createServerInfoPacket(MsexVersion.Version1_2), peer, message.RequestResponseIndex);
 		}
 
 		private void removeInactivePeers()
@@ -367,13 +378,13 @@ namespace Imp.CitpSharp
 				p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CitpPeerExpiryTime);
 		}
 
-		private async Task<bool> sendDataToPeerAsync(CitpPeer peer, byte[] data)
+		private Task<bool> sendDataToPeerAsync(CitpPeer peer, byte[] data)
 		{
 			ICitpTcpClient client;
-			if (_tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) == false)
-				return false;
 
-			return await client.SendAsync(data).ConfigureAwait(false);
+			return _tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) 
+				? client.SendAsync(data) 
+				: Task.FromResult(false);
 		}
 
 		private PeerNameMessagePacket createPeerNamePacket()

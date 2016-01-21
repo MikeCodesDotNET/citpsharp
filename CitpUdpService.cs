@@ -98,7 +98,8 @@ namespace Imp.CitpSharp
 
 			try
 			{
-				await _client.SendAsync(data, data.Length, _useOriginalMulticastIp ? CitpMulticastOriginalEndpoint : CitpMulticastEndpoint)
+				await _client.SendAsync(data, data.Length, 
+					_useOriginalMulticastIp ? CitpMulticastOriginalEndpoint : CitpMulticastEndpoint)
 					.ConfigureAwait(false);
 			}
 			catch (ObjectDisposedException)

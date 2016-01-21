@@ -16,10 +16,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace Imp.CitpSharp.Packets
+namespace Imp.CitpSharp.Packets.Msex
 {
 	internal class ClientInformationMessagePacket : CitpMsexPacket
 	{
@@ -34,7 +33,7 @@ namespace Imp.CitpSharp.Packets
 
 			writer.Write((byte)SupportedMsexVersions.Count);
 			foreach (var v in SupportedMsexVersions)
-				writer.Write(v.GetAttributeOfType<CitpVersion>().ToByteArray());
+				writer.Write(v.GetAttributeOfType<CitpVersionAttribute>().ToByteArray());
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
@@ -49,11 +48,11 @@ namespace Imp.CitpSharp.Packets
 				byte versionMajor = reader.ReadByte();
 
 				if (versionMajor == 1 && versionMinor == 0)
-					SupportedMsexVersions.Add(MsexVersion.Version10);
+					SupportedMsexVersions.Add(MsexVersion.Version1_0);
 				else if (versionMajor == 1 && versionMinor == 1)
-					SupportedMsexVersions.Add(MsexVersion.Version11);
+					SupportedMsexVersions.Add(MsexVersion.Version1_1);
 				else if (versionMajor == 1 && versionMinor == 2)
-					SupportedMsexVersions.Add(MsexVersion.Version12);
+					SupportedMsexVersions.Add(MsexVersion.Version1_2);
 				else
 					SupportedMsexVersions.Add(MsexVersion.UnsupportedVersion);
 			}
@@ -88,7 +87,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10 || Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				writer.Write(ProductName);
 				writer.Write(ProductVersionMajor);
@@ -98,7 +97,7 @@ namespace Imp.CitpSharp.Packets
 				foreach (var d in LayerDmxSources)
 					writer.Write(d.ToUtf8ByteArray());
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write(Encoding.UTF8.GetBytes(Uuid.ToString("D")));
 				writer.Write(ProductName);
@@ -109,10 +108,11 @@ namespace Imp.CitpSharp.Packets
 
 				writer.Write((byte)SupportedMsexVersions.Count);
 				foreach (var v in SupportedMsexVersions)
-					writer.Write(v.GetAttributeOfType<CitpVersion>().ToByteArray());
+					writer.Write(v.GetAttributeOfType<CitpVersionAttribute>().ToByteArray());
 
-				ushort supportedLibraryTypes = 
-					SupportedLibraryTypes.Aggregate<MsexLibraryType, ushort>(0, (cur, t) => (ushort)(cur | (ushort)(2 ^ (int)t)));
+				ushort supportedLibraryTypes = 0;
+				foreach (var t in SupportedLibraryTypes)
+					supportedLibraryTypes |= (ushort)(2 ^ (int)t);
 				writer.Write(supportedLibraryTypes);
 
 				writer.Write((byte)ThumbnailFormats.Count);
@@ -133,7 +133,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10 || Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				ProductName = reader.ReadString();
 				ProductVersionMajor = reader.ReadByte();
@@ -144,7 +144,7 @@ namespace Imp.CitpSharp.Packets
 				for (int i = 0; i < dmxSourcesCount; ++i)
 					LayerDmxSources.Add(CitpDmxConnectionString.Parse(reader.ReadString(true)));
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				Uuid = new Guid(reader.ReadString(true));
 
@@ -161,11 +161,11 @@ namespace Imp.CitpSharp.Packets
 					byte versionMinor = reader.ReadByte();
 
 					if (versionMajor == 1 && versionMinor == 0)
-						SupportedMsexVersions.Add(MsexVersion.Version10);
+						SupportedMsexVersions.Add(MsexVersion.Version1_0);
 					else if (versionMajor == 1 && versionMinor == 1)
-						SupportedMsexVersions.Add(MsexVersion.Version11);
+						SupportedMsexVersions.Add(MsexVersion.Version1_1);
 					else if (versionMajor == 1 && versionMinor == 2)
-						SupportedMsexVersions.Add(MsexVersion.Version12);
+						SupportedMsexVersions.Add(MsexVersion.Version1_2);
 					else
 						SupportedMsexVersions.Add(MsexVersion.UnsupportedVersion);
 				}
@@ -233,7 +233,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10 || Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LayerStatuses.Count);
 				foreach (var l in LayerStatuses)
@@ -249,7 +249,7 @@ namespace Imp.CitpSharp.Packets
 					writer.Write((uint)l.LayerStatusFlags);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LayerStatuses.Count);
 				foreach (var l in LayerStatuses)
@@ -272,7 +272,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10 || Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				int layerStatusCount = reader.ReadByte();
 				LayerStatuses = new List<LayerStatus>(layerStatusCount);
@@ -292,7 +292,7 @@ namespace Imp.CitpSharp.Packets
 					});
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				int layerStatusCount = reader.ReadByte();
 				LayerStatuses = new List<LayerStatus>(layerStatusCount);
@@ -353,7 +353,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write((byte)LibraryType);
 
@@ -368,7 +368,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(n);
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryParentId.Value.ToByteArray());
@@ -384,7 +384,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(n);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryParentId.Value.ToByteArray());
@@ -406,7 +406,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
@@ -418,7 +418,7 @@ namespace Imp.CitpSharp.Packets
 				if (libraryNumberCount == 0)
 					ShouldRequestAllLibraries = true;
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryParentId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -431,7 +431,7 @@ namespace Imp.CitpSharp.Packets
 				if (libraryNumberCount == 0)
 					ShouldRequestAllLibraries = true;
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryParentId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -462,7 +462,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write((byte)LibraryType);
 
@@ -476,7 +476,7 @@ namespace Imp.CitpSharp.Packets
 					writer.Write((byte)e.ElementCount);
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
 
@@ -491,7 +491,7 @@ namespace Imp.CitpSharp.Packets
 					writer.Write((byte)e.ElementCount);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 
@@ -513,7 +513,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
@@ -531,7 +531,7 @@ namespace Imp.CitpSharp.Packets
 					});
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
@@ -550,7 +550,7 @@ namespace Imp.CitpSharp.Packets
 					});
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 
@@ -592,21 +592,21 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryNumber);
 
 				writer.Write((byte)UpdateFlags);
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				writer.Write((byte)UpdateFlags);
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.Value.ToByteArray());
@@ -633,19 +633,19 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryNumber = reader.ReadByte();
 				UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 				UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -688,7 +688,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryNumber);
@@ -701,7 +701,7 @@ namespace Imp.CitpSharp.Packets
 				foreach (byte e in RequestedElementNumbers)
 					writer.Write(e);
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.Value.ToByteArray());
@@ -714,7 +714,7 @@ namespace Imp.CitpSharp.Packets
 				foreach (byte e in RequestedElementNumbers)
 					writer.Write(e);
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.Value.ToByteArray());
@@ -733,7 +733,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryNumber = reader.ReadByte();
@@ -746,7 +746,7 @@ namespace Imp.CitpSharp.Packets
 				if (requestedElementNumbersCount == 0)
 					ShouldRequestAllElements = true;
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -759,7 +759,7 @@ namespace Imp.CitpSharp.Packets
 				if (requestedElementNumbersCount == 0)
 					ShouldRequestAllElements = true;
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -791,7 +791,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write(LibraryNumber);
 				writer.Write((byte)Media.Count);
@@ -809,7 +809,7 @@ namespace Imp.CitpSharp.Packets
 					writer.Write(m.MediaFps);
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write(LibraryId.Value.ToByteArray());
 				writer.Write((byte)Media.Count);
@@ -827,7 +827,7 @@ namespace Imp.CitpSharp.Packets
 					writer.Write(m.MediaFps);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write(LibraryId.Value.ToByteArray());
 				writer.Write((ushort)Media.Count);
@@ -852,7 +852,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryNumber = reader.ReadByte();
 
@@ -874,7 +874,7 @@ namespace Imp.CitpSharp.Packets
 					});
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
@@ -896,7 +896,7 @@ namespace Imp.CitpSharp.Packets
 					});
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
@@ -938,7 +938,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write(LibraryNumber);
 
@@ -955,7 +955,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(n);
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write(LibraryId.Value.ToByteArray());
 
@@ -972,7 +972,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(n);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write(LibraryId.Value.ToByteArray());
 
@@ -996,7 +996,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryNumber = reader.ReadByte();
 
@@ -1020,7 +1020,7 @@ namespace Imp.CitpSharp.Packets
 					Effects.Add(e);
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
@@ -1044,7 +1044,7 @@ namespace Imp.CitpSharp.Packets
 					Effects.Add(e);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
@@ -1088,7 +1088,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write(LibraryId.ToByteArray());
 
@@ -1102,7 +1102,7 @@ namespace Imp.CitpSharp.Packets
 					writer.Write(DateTimeHelpers.ConvertToUnixTimestamp(i.VersionTimestamp));
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.ToByteArray());
@@ -1124,7 +1124,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_1)
 			{
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
@@ -1142,7 +1142,7 @@ namespace Imp.CitpSharp.Packets
 					});
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
 
@@ -1188,7 +1188,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
@@ -1209,7 +1209,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(l.ToByteArray());
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
@@ -1230,7 +1230,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(l.ToByteArray());
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
@@ -1257,7 +1257,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
@@ -1273,7 +1273,7 @@ namespace Imp.CitpSharp.Packets
 				if (libraryNumberCount == 0)
 					ShouldRequestAllThumbnails = true;
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
@@ -1289,7 +1289,7 @@ namespace Imp.CitpSharp.Packets
 				if (libraryIdCount == 0)
 					ShouldRequestAllThumbnails = true;
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
@@ -1329,7 +1329,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryNumber);
@@ -1340,7 +1340,7 @@ namespace Imp.CitpSharp.Packets
 				writer.Write(ThumbnailHeight);
 				writer.Write((ushort)ThumbnailBuffer.Length);
 			}
-			else if (Version == MsexVersion.Version11 || Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_1 || Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.Value.ToByteArray());
@@ -1357,7 +1357,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryNumber = reader.ReadByte();
@@ -1370,7 +1370,7 @@ namespace Imp.CitpSharp.Packets
 				int thumbnailBufferLength = reader.ReadUInt16();
 				ThumbnailBuffer = reader.ReadBytes(thumbnailBufferLength);
 			}
-			else if (Version == MsexVersion.Version11 || Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_1 || Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -1411,7 +1411,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
 
@@ -1434,7 +1434,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(e);
 				}
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
 
@@ -1457,7 +1457,7 @@ namespace Imp.CitpSharp.Packets
 						writer.Write(e);
 				}
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
 
@@ -1486,7 +1486,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
@@ -1503,7 +1503,7 @@ namespace Imp.CitpSharp.Packets
 				if (elementNumberCount == 0)
 					ShouldRequestAllThumbnails = true;
 			}
-			else if (Version == MsexVersion.Version11)
+			else if (Version == MsexVersion.Version1_1)
 			{
 				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
@@ -1520,7 +1520,7 @@ namespace Imp.CitpSharp.Packets
 				if (elementNumberCount == 0)
 					ShouldRequestAllThumbnails = true;
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 				ThumbnailWidth = reader.ReadUInt16();
@@ -1562,7 +1562,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryNumber);
@@ -1573,7 +1573,7 @@ namespace Imp.CitpSharp.Packets
 				writer.Write((ushort)ThumbnailBuffer.Length);
 				writer.Write(ThumbnailBuffer);
 			}
-			else if (Version == MsexVersion.Version11 || Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_1 || Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryId.Value.ToByteArray());
@@ -1590,7 +1590,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10)
+			if (Version == MsexVersion.Version1_0)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryNumber = reader.ReadByte();
@@ -1604,7 +1604,7 @@ namespace Imp.CitpSharp.Packets
 				int thumbnailBufferLength = reader.ReadUInt16();
 				ThumbnailBuffer = reader.ReadBytes(thumbnailBufferLength);
 			}
-			else if (Version == MsexVersion.Version11 || Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_1 || Version == MsexVersion.Version1_2)
 			{
 				LibraryType = (MsexLibraryType)reader.ReadByte();
 				LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
@@ -1749,7 +1749,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			if (Version == MsexVersion.Version10 || Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				writer.Write(SourceIdentifier);
 				writer.Write(FrameFormat.GetAttributeOfType<CitpId>().Id);
@@ -1758,7 +1758,7 @@ namespace Imp.CitpSharp.Packets
 				writer.Write((ushort)FrameBuffer.Length);
 				writer.Write(FrameBuffer);
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write(MediaServerUuid);
 				writer.Write(SourceIdentifier);
@@ -1791,7 +1791,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			if (Version == MsexVersion.Version10 || Version == MsexVersion.Version11)
+			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				SourceIdentifier = reader.ReadUInt16();
 				FrameFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
@@ -1801,7 +1801,7 @@ namespace Imp.CitpSharp.Packets
 				int frameBufferLength = reader.ReadUInt16();
 				FrameBuffer = reader.ReadBytes(frameBufferLength);
 			}
-			else if (Version == MsexVersion.Version12)
+			else if (Version == MsexVersion.Version1_2)
 			{
 				MediaServerUuid = reader.ReadGuid();
 				SourceIdentifier = reader.ReadUInt16();

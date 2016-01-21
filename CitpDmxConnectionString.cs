@@ -53,6 +53,9 @@ namespace Imp.CitpSharp
 						dmxString.Universe = int.Parse(tokens[2]);
 						dmxString.Channel = int.Parse(tokens[3]);
 						break;
+
+					default:
+						throw new FormatException("Invalid DmxConnectionString");
 				}
 
 				return dmxString;
@@ -136,56 +139,39 @@ namespace Imp.CitpSharp
 			return Encoding.UTF8.GetBytes(ToString());
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public bool Equals(CitpDmxConnectionString other)
 		{
-			if (!(obj is CitpDmxConnectionString))
-				return false;
-
-			return Equals((CitpDmxConnectionString)obj);
+			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe && Channel == other.Channel;
 		}
 
-		public bool Equals(CitpDmxConnectionString obj)
+		public override bool Equals([CanBeNull] object obj)
 		{
-			switch (Protocol)
-			{
-				case DmxProtocol.ArtNet:
-					return obj.Protocol == DmxProtocol.ArtNet && obj.Net == Net && obj.Universe == Universe && obj.Channel == Channel;
-				case DmxProtocol.Bsre131:
-					return obj.Protocol == DmxProtocol.Bsre131 && obj.Universe == Universe && obj.Channel == Channel;
-				case DmxProtocol.EtcNet2:
-					return obj.Protocol == DmxProtocol.EtcNet2 && obj.Channel == Channel;
-				case DmxProtocol.MaNet:
-					return obj.Protocol == DmxProtocol.MaNet && obj.Type == Type && obj.Universe == Universe && obj.Channel == Channel;
-				default:
-					return false;
-			}
+			if (ReferenceEquals(null, obj))
+				return false;
+			return obj is CitpDmxConnectionString && Equals((CitpDmxConnectionString)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			switch (Protocol)
+			unchecked
 			{
-				case DmxProtocol.ArtNet:
-					return Protocol.GetHashCode() ^ Net.GetHashCode() ^ Universe.GetHashCode() ^ Channel.GetHashCode();
-				case DmxProtocol.Bsre131:
-					return Protocol.GetHashCode() ^ Universe.GetHashCode() ^ Channel.GetHashCode();
-				case DmxProtocol.EtcNet2:
-					return Protocol.GetHashCode() ^ Channel.GetHashCode();
-				case DmxProtocol.MaNet:
-					return Protocol.GetHashCode() ^ Type.GetHashCode() ^ Universe.GetHashCode() ^ Channel.GetHashCode();
-				default:
-					return Protocol.GetHashCode();
+				int hashCode = (int)Protocol;
+				hashCode = (hashCode * 397) ^ Net;
+				hashCode = (hashCode * 397) ^ Type;
+				hashCode = (hashCode * 397) ^ Universe;
+				hashCode = (hashCode * 397) ^ Channel;
+				return hashCode;
 			}
 		}
 
-		public static bool operator ==(CitpDmxConnectionString a, CitpDmxConnectionString b)
+		public static bool operator ==(CitpDmxConnectionString left, CitpDmxConnectionString right)
 		{
-			return a.Equals(b);
+			return left.Equals(right);
 		}
 
-		public static bool operator !=(CitpDmxConnectionString a, CitpDmxConnectionString b)
+		public static bool operator !=(CitpDmxConnectionString left, CitpDmxConnectionString right)
 		{
-			return !(a == b);
+			return !left.Equals(right);
 		}
 	}
 }

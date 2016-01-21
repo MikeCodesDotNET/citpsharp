@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Imp.CitpSharp.Packets;
-using JetBrains.Annotations;
+using Imp.CitpSharp.Packets.Msex;
 
 namespace Imp.CitpSharp
 {
@@ -16,7 +15,7 @@ namespace Imp.CitpSharp
 		public ushort LibraryCount { get; set; }
 		public ushort ElementCount { get; set; }
 
-		public bool Equals([CanBeNull]CitpElementLibraryInformation other)
+		public bool Equals(CitpElementLibraryInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -25,7 +24,7 @@ namespace Imp.CitpSharp
 			return Number == other.Number && Id.Equals(other.Id) && SerialNumber == other.SerialNumber && DmxRangeMin == other.DmxRangeMin && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name) && LibraryCount == other.LibraryCount && ElementCount == other.ElementCount;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -64,7 +63,7 @@ namespace Imp.CitpSharp
 		public List<byte> AffectedElements { get; set; }
 		public List<byte> AffectedLibraries { get; set; }
 
-		public bool Equals([CanBeNull] CitpElementLibraryUpdatedInformation other)
+		public bool Equals(CitpElementLibraryUpdatedInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -78,7 +77,7 @@ namespace Imp.CitpSharp
 				&& SequenceComparison.SequenceEqual(AffectedLibraries, other.AffectedLibraries);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -125,7 +124,7 @@ namespace Imp.CitpSharp
 		public byte DmxRangeMax { get; set; }
 		public string Name { get; set; }
 
-		protected bool Equals([CanBeNull] CitpElementInformation other)
+		protected bool Equals(CitpElementInformation other)
 		{
 			if (other == null)
 				return false;
@@ -158,7 +157,7 @@ namespace Imp.CitpSharp
 		public uint MediaLength { get; set; }
 		public byte MediaFps { get; set; }
 
-		public bool Equals([CanBeNull] CitpMediaInformation other)
+		public bool Equals(CitpMediaInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -167,7 +166,7 @@ namespace Imp.CitpSharp
 			return MediaVersionTimestamp.Equals(other.MediaVersionTimestamp) && MediaWidth == other.MediaWidth && MediaHeight == other.MediaHeight && MediaLength == other.MediaLength && MediaFps == other.MediaFps;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -197,14 +196,14 @@ namespace Imp.CitpSharp
 	{
 		public List<string> EffectParameterNames { get; set; }
 
-		public bool Equals([CanBeNull] CitpEffectInformation other)
+		public bool Equals(CitpEffectInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
 			return ReferenceEquals(this, other) || SequenceComparison.SequenceEqual(EffectParameterNames, other.EffectParameterNames);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -228,14 +227,14 @@ namespace Imp.CitpSharp
 	{
 		public DateTime VersionTimestamp { get; set; }
 
-		public bool Equals([CanBeNull] CitpGenericInformation other)
+		public bool Equals(CitpGenericInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
 			return ReferenceEquals(this, other) || VersionTimestamp.Equals(other.VersionTimestamp);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -268,7 +267,7 @@ namespace Imp.CitpSharp
 		public ushort Width { get; set; }
 		public ushort Height { get; set; }
 
-		public bool Equals([CanBeNull] CitpVideoSourceInformation other)
+		public bool Equals(CitpVideoSourceInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -277,7 +276,7 @@ namespace Imp.CitpSharp
 			return SourceIdentifier == other.SourceIdentifier && string.Equals(SourceName, other.SourceName) && PhysicalOutput == other.PhysicalOutput && LayerNumber == other.LayerNumber && Flags == other.Flags && Width == other.Width && Height == other.Height;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

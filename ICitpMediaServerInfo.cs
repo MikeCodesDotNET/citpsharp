@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -57,7 +56,6 @@ namespace Imp.CitpSharp
 		List<Tuple<MsexId, Image>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
 		List<Tuple<byte, Image>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
 
-		[CanBeNull]
 		Image GetVideoSourceFrame(int sourceId, int frameWidth, int frameHeight);
 	}
 

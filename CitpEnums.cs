@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
@@ -187,9 +188,9 @@ namespace Imp.CitpSharp
 
 
 
-	internal class CitpVersion : Attribute, IEquatable<CitpVersion>
+	internal class CitpVersionAttribute : Attribute, IEquatable<CitpVersionAttribute>
 	{
-		public CitpVersion(byte majorVersion, byte minorVersion)
+		public CitpVersionAttribute(byte majorVersion, byte minorVersion)
 		{
 			MajorVersion = majorVersion;
 			MinorVersion = minorVersion;
@@ -198,12 +199,13 @@ namespace Imp.CitpSharp
 		public byte MajorVersion { get; private set; }
 		public byte MinorVersion { get; private set; }
 
-		public bool Equals([CanBeNull] CitpVersion other)
+		public bool Equals([CanBeNull] CitpVersionAttribute other)
 		{
-			if (other == null)
+			if (ReferenceEquals(null, other))
 				return false;
-
-			return MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion;
+			if (ReferenceEquals(this, other))
+				return true;
+			return base.Equals(other) && MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion;
 		}
 
 		public byte[] ToByteArray()
@@ -213,28 +215,34 @@ namespace Imp.CitpSharp
 
 		public override bool Equals([CanBeNull] object obj)
 		{
-			var m = obj as CitpElementLibraryInformation;
-			if (m == null)
+			if (ReferenceEquals(null, obj))
 				return false;
-
-			return Equals(m);
+			if (ReferenceEquals(this, obj))
+				return true;
+			return obj.GetType() == this.GetType() && Equals((CitpVersionAttribute)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return MajorVersion.GetHashCode()
-			       ^ MinorVersion.GetHashCode();
+			unchecked
+			{
+				int hashCode = base.GetHashCode();
+				hashCode = (hashCode * 397) ^ MajorVersion.GetHashCode();
+				hashCode = (hashCode * 397) ^ MinorVersion.GetHashCode();
+				return hashCode;
+			}
 		}
 	}
 
 
 
+	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	public enum MsexVersion
 	{
 		[CitpVersion(0, 0)] UnsupportedVersion,
-		[CitpVersion(1, 0)] Version10,
-		[CitpVersion(1, 1)] Version11,
-		[CitpVersion(1, 2)] Version12
+		[CitpVersion(1, 0)] Version1_0,
+		[CitpVersion(1, 1)] Version1_1,
+		[CitpVersion(1, 2)] Version1_2
 	}
 
 

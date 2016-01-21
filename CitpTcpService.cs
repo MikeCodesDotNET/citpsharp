@@ -136,7 +136,7 @@ namespace Imp.CitpSharp
 		private void citpClient_Disconnected(object sender, EventArgs e)
 		{
 			ICitpTcpClient removedClient;
-			_clients.TryRemove(((CitpTcpClient)sender).RemoteEndPoint, out removedClient);
+			_clients.TryRemove((sender as CitpTcpClient).RemoteEndPoint, out removedClient);
 
 			if (ClientDisconnected != null)
 				ClientDisconnected(this, removedClient.RemoteEndPoint);
@@ -145,7 +145,7 @@ namespace Imp.CitpSharp
 		private void citpClient_PacketReceieved(object sender, byte[] e)
 		{
 			if (PacketReceieved != null)
-				PacketReceieved(this, Tuple.Create(((CitpTcpClient)sender).RemoteEndPoint, e));
+				PacketReceieved(this, Tuple.Create((sender as CitpTcpClient).RemoteEndPoint, e));
 		}
 
 

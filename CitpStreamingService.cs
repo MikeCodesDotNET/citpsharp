@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
-using Imp.CitpSharp.Packets;
-using JetBrains.Annotations;
+using Imp.CitpSharp.Packets.Msex;
 
 namespace Imp.CitpSharp
 {
@@ -35,7 +34,7 @@ namespace Imp.CitpSharp
 				_streamRequests.Add(requestPacket.SourceIdentifier, request);
 			}
 
-			request.AddRequestFormat(peerMsexVersion ?? MsexVersion.Version10, requestPacket);
+			request.AddRequestFormat(peerMsexVersion ?? MsexVersion.Version1_0, requestPacket);
 		}
 
 		public async Task ProcessStreamRequestsAsync()
@@ -62,7 +61,7 @@ namespace Imp.CitpSharp
 					switch (formatRequest.FrameFormat)
 					{
 						case MsexImageFormat.Rgb8:
-							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version10);
+							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version1_0);
 							break;
 						case MsexImageFormat.Jpeg:
 						case MsexImageFormat.FragmentedJpeg:
@@ -179,7 +178,7 @@ namespace Imp.CitpSharp
 
 
 				var format = _formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat
-				                                           && r.IsVersion12 == (peerMsexVersion == MsexVersion.Version12));
+				                                           && r.IsVersion12 == (peerMsexVersion == MsexVersion.Version1_2));
 
 				if (format != null)
 				{
@@ -229,10 +228,10 @@ namespace Imp.CitpSharp
 
 				public bool IsVersion12
 				{
-					get { return Version == MsexVersion.Version12; }
+					get { return Version == MsexVersion.Version1_2; }
 				}
 
-				public bool Equals([CanBeNull] RequestFormat other)
+				public bool Equals(RequestFormat other)
 				{
 					if (ReferenceEquals(null, other))
 						return false;
@@ -241,7 +240,7 @@ namespace Imp.CitpSharp
 					return FrameFormat == other.FrameFormat && IsVersion12 == other.IsVersion12;
 				}
 
-				public override bool Equals([CanBeNull] object obj)
+				public override bool Equals(object obj)
 				{
 					if (ReferenceEquals(null, obj))
 						return false;

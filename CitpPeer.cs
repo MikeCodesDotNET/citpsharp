@@ -15,7 +15,6 @@
 
 using System;
 using System.Net;
-using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -61,7 +60,7 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public bool Equals([CanBeNull] CitpPeer other)
+		public bool Equals(CitpPeer other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -85,7 +84,7 @@ namespace Imp.CitpSharp
 			IsConnected = false;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
