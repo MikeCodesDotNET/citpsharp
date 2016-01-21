@@ -19,6 +19,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -51,7 +52,7 @@ namespace Imp.CitpSharp
 					return image.ToPngByteArray();
 
 				default:
-					return null;
+					throw new InvalidOperationException("Unsupported MsexImageFormat");
 			}
 		}
 
@@ -60,7 +61,7 @@ namespace Imp.CitpSharp
 			var bm = new Bitmap(image);
 
 			if (bm.PixelFormat != PixelFormat.Format32bppArgb)
-				return null;
+				throw new InvalidOperationException("Unsupported PixelFormat. Must be PixelFormat.Format32bppArgb");
 
 			var bmd = bm.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, bm.PixelFormat);
 
@@ -170,11 +171,10 @@ namespace Imp.CitpSharp
 
 
 
+		[CanBeNull]
 		private static ImageCodecInfo getEncoder(ImageFormat format)
 		{
-			var codecs = ImageCodecInfo.GetImageDecoders();
-
-			return codecs.FirstOrDefault(codec => codec.FormatID == format.Guid);
+			return ImageCodecInfo.GetImageDecoders().FirstOrDefault(codec => codec.FormatID == format.Guid);
 		}
 	}
 }

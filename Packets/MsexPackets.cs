@@ -18,7 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Imp.CitpSharp.Packets.Msex
+namespace Imp.CitpSharp.Packets
 {
 	internal class ClientInformationMessagePacket : CitpMsexPacket
 	{
@@ -33,7 +33,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 			writer.Write((byte)SupportedMsexVersions.Count);
 			foreach (var v in SupportedMsexVersions)
-				writer.Write(v.GetAttributeOfType<CitpVersionAttribute>().ToByteArray());
+				writer.Write(v.GetCustomAttribute<CitpVersionAttribute>().ToByteArray());
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
@@ -108,7 +108,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 				writer.Write((byte)SupportedMsexVersions.Count);
 				foreach (var v in SupportedMsexVersions)
-					writer.Write(v.GetAttributeOfType<CitpVersionAttribute>().ToByteArray());
+					writer.Write(v.GetCustomAttribute<CitpVersionAttribute>().ToByteArray());
 
 				ushort supportedLibraryTypes = 0;
 				foreach (var t in SupportedLibraryTypes)
@@ -117,11 +117,11 @@ namespace Imp.CitpSharp.Packets.Msex
 
 				writer.Write((byte)ThumbnailFormats.Count);
 				foreach (var f in ThumbnailFormats)
-					writer.Write(f.GetAttributeOfType<CitpId>().Id);
+					writer.Write(f.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write((byte)StreamFormats.Count);
 				foreach (var f in StreamFormats)
-					writer.Write(f.GetAttributeOfType<CitpId>().Id);
+					writer.Write(f.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write((byte)LayerDmxSources.Count);
 				foreach (var d in LayerDmxSources)
@@ -209,7 +209,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(ReceivedContentType.GetAttributeOfType<CitpId>().Id);
+			writer.Write(ReceivedContentType.GetCustomAttribute<CitpId>().Id);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
@@ -257,6 +257,10 @@ namespace Imp.CitpSharp.Packets.Msex
 					writer.Write(l.LayerNumber);
 					writer.Write(l.PhysicalOutput);
 					writer.Write((byte)l.MediaLibraryType);
+
+					if (!l.MediaLibraryId.HasValue)
+						throw new InvalidOperationException("MediaLibraryId has no value. Required for MSEX V1.2");
+
 					writer.Write(l.MediaLibraryId.Value.ToByteArray());
 					writer.Write(l.MediaNumber);
 					writer.Write(l.MediaName);
@@ -371,6 +375,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryParentId.HasValue)
+					throw new InvalidOperationException("LibraryParentId has no value. Required for MSEX V1.1");
+
 				writer.Write(LibraryParentId.Value.ToByteArray());
 
 				if (ShouldRequestAllLibraries)
@@ -387,6 +395,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryParentId.HasValue)
+					throw new InvalidOperationException("LibraryParentId has no value. Required for MSEX V1.2");
+
 				writer.Write(LibraryParentId.Value.ToByteArray());
 
 				if (ShouldRequestAllLibraries)
@@ -483,6 +495,9 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((byte)Elements.Count);
 				foreach (var e in Elements)
 				{
+					if (!e.Id.HasValue)
+						throw new InvalidOperationException("Element Id has no value. Required for MSEX V1.1");
+
 					writer.Write(e.Id.Value.ToByteArray());
 					writer.Write(e.DmxRangeMin);
 					writer.Write(e.DmxRangeMax);
@@ -498,6 +513,9 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((ushort)Elements.Count);
 				foreach (var e in Elements)
 				{
+					if (!e.Id.HasValue)
+						throw new InvalidOperationException("Element Id has no value. Required for MSEX V1.2");
+
 					writer.Write(e.Id.Value.ToByteArray());
 					writer.Write(e.SerialNumber);
 					writer.Write(e.DmxRangeMin);
@@ -602,6 +620,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				writer.Write((byte)UpdateFlags);
@@ -609,6 +631,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				writer.Write((byte)UpdateFlags);
@@ -704,6 +730,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_1)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				if (ShouldRequestAllElements)
@@ -717,6 +747,10 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				if (ShouldRequestAllElements)
@@ -811,6 +845,9 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 				writer.Write((byte)Media.Count);
 
@@ -829,6 +866,9 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 				writer.Write((ushort)Media.Count);
 
@@ -957,6 +997,9 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				writer.Write((byte)Effects.Count);
@@ -974,6 +1017,9 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				writer.Write((ushort)Effects.Count);
@@ -1190,7 +1236,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 			if (Version == MsexVersion.Version1_0)
 			{
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
 
@@ -1211,7 +1257,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
 
@@ -1232,7 +1278,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
 
@@ -1334,7 +1380,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryNumber);
 
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
@@ -1343,9 +1389,13 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_1 || Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1 & V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
@@ -1413,7 +1463,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 			if (Version == MsexVersion.Version1_0)
 			{
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
@@ -1436,7 +1486,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_1)
 			{
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
@@ -1444,6 +1494,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((byte)ThumbnailFlags);
 
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				if (ShouldRequestAllThumbnails)
@@ -1459,7 +1513,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			}
 			else if (Version == MsexVersion.Version1_2)
 			{
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
@@ -1467,6 +1521,10 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((byte)ThumbnailFlags);
 
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 
 				if (ShouldRequestAllThumbnails)
@@ -1567,7 +1625,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((byte)LibraryType);
 				writer.Write(LibraryNumber);
 				writer.Write(ElementNumber);
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
 				writer.Write((ushort)ThumbnailBuffer.Length);
@@ -1576,9 +1634,13 @@ namespace Imp.CitpSharp.Packets.Msex
 			else if (Version == MsexVersion.Version1_1 || Version == MsexVersion.Version1_2)
 			{
 				writer.Write((byte)LibraryType);
+
+				if (!LibraryId.HasValue)
+					throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1 & V1.2");
+
 				writer.Write(LibraryId.Value.ToByteArray());
 				writer.Write(ElementNumber);
-				writer.Write(ThumbnailFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(ThumbnailWidth);
 				writer.Write(ThumbnailHeight);
 				writer.Write((ushort)ThumbnailBuffer.Length);
@@ -1710,7 +1772,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.SerializeToStream(writer);
 
 			writer.Write(SourceIdentifier);
-			writer.Write(FrameFormat.GetAttributeOfType<CitpId>().Id);
+			writer.Write(FrameFormat.GetCustomAttribute<CitpId>().Id);
 			writer.Write(FrameWidth);
 			writer.Write(FrameHeight);
 			writer.Write(Fps);
@@ -1752,7 +1814,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			if (Version == MsexVersion.Version1_0 || Version == MsexVersion.Version1_1)
 			{
 				writer.Write(SourceIdentifier);
-				writer.Write(FrameFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(FrameFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(FrameWidth);
 				writer.Write(FrameHeight);
 				writer.Write((ushort)FrameBuffer.Length);
@@ -1762,7 +1824,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			{
 				writer.Write(MediaServerUuid);
 				writer.Write(SourceIdentifier);
-				writer.Write(FrameFormat.GetAttributeOfType<CitpId>().Id);
+				writer.Write(FrameFormat.GetCustomAttribute<CitpId>().Id);
 				writer.Write(FrameWidth);
 				writer.Write(FrameHeight);
 				

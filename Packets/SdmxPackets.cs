@@ -15,7 +15,7 @@
 
 using System.Collections.Generic;
 
-namespace Imp.CitpSharp.Packets.Sdmx
+namespace Imp.CitpSharp.Packets
 {
 	internal class CapabilitiesMessagePacket : CitpSdmxPacket
 	{

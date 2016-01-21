@@ -14,9 +14,11 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	[PublicAPI]
 	public struct MsexLibraryId : IEquatable<MsexLibraryId>
 	{
 		public byte Level { get; private set; }
@@ -39,7 +41,7 @@ namespace Imp.CitpSharp
 				   && SubLevel3 == other.SubLevel3;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals([CanBeNull] object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

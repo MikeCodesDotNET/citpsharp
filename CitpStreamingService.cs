@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
-using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -45,7 +46,7 @@ namespace Imp.CitpSharp
 
 				foreach (var formatRequest in request.Formats)
 				{
-					if (request.Fps == 0 || DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
+					if (Math.Abs(request.Fps) < float.Epsilon || DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
 						break;
 
 					if (frame == null)
@@ -231,7 +232,7 @@ namespace Imp.CitpSharp
 					get { return Version == MsexVersion.Version1_2; }
 				}
 
-				public bool Equals(RequestFormat other)
+				public bool Equals([CanBeNull] RequestFormat other)
 				{
 					if (ReferenceEquals(null, other))
 						return false;
@@ -240,7 +241,7 @@ namespace Imp.CitpSharp
 					return FrameFormat == other.FrameFormat && IsVersion12 == other.IsVersion12;
 				}
 
-				public override bool Equals(object obj)
+				public override bool Equals([CanBeNull] object obj)
 				{
 					if (ReferenceEquals(null, obj))
 						return false;

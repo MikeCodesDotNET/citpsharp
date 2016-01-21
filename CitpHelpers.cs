@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -66,59 +67,59 @@ namespace Imp.CitpSharp
 
 	internal static class SequenceComparison
 	{
-		public static bool SequenceEqual<T>(IEnumerable<T> a, IEnumerable<T> b)
+		public static bool SequenceEqual<T>([CanBeNull] IEnumerable<T> a, [CanBeNull] IEnumerable<T> b)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
 
 			if (a == null || b == null)
-				return a == null && b == null;
+				return false;
 
 			return a.SequenceEqual(b);
 		}
 
-		public static bool SequenceEqual<T>(IEnumerable<T> a, IEnumerable<T> b, IEqualityComparer<T> comparer)
+		public static bool SequenceEqual<T>([CanBeNull] IEnumerable<T> a, [CanBeNull] IEnumerable<T> b, IEqualityComparer<T> comparer)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
 
 			if (a == null || b == null)
-				return a == null && b == null;
+				return false;
 
 			return a.SequenceEqual(b, comparer);
 		}
 
-		public static bool SequenceEqual<T>(ICollection<T> a, ICollection<T> b)
+		public static bool SequenceEqual<T>([CanBeNull] ICollection<T> a, [CanBeNull] ICollection<T> b)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
 
 			if (a == null || b == null)
-				return a == null && b == null;
+				return false;
 
 			return a.Count == b.Count && a.SequenceEqual(b);
 		}
 
-		public static bool SequenceEqual<T>(ICollection<T> a, ICollection<T> b, IEqualityComparer<T> comparer)
+		public static bool SequenceEqual<T>([CanBeNull] ICollection<T> a, [CanBeNull] ICollection<T> b, IEqualityComparer<T> comparer)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
 
 			if (a == null || b == null)
-				return a == null && b == null;
+				return false;
 
 			return a.Count == b.Count && a.SequenceEqual(b, comparer);
 		}
 	}
 
 
-
+	[PublicAPI]
 	public struct MsexId
 	{
-		public MsexId(MsexLibraryId? libraryId, byte libaryNumber)
+		public MsexId(MsexLibraryId? libraryId, byte libraryNumber)
 		{
 			LibraryId = libraryId;
-			LibraryNumber = libaryNumber;
+			LibraryNumber = libraryNumber;
 		}
 
 		public MsexId(MsexLibraryId? libraryId, int libraryNumber)
@@ -155,7 +156,7 @@ namespace Imp.CitpSharp
 			Write(value, false);
 		}
 
-		public void Write(string value, bool isUtf8)
+		public void Write([CanBeNull] string value, bool isUtf8)
 		{
 			Write(isUtf8
 				? Encoding.UTF8.GetBytes((value ?? string.Empty) + "\0")

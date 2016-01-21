@@ -14,9 +14,11 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	[PublicAPI]
 	public enum CitpLoggerLevel
 	{
 		Debug = 0,
@@ -27,7 +29,7 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	[PublicAPI]
 	public interface ICitpLogService
 	{
 		void LogDebug(string message);
@@ -80,7 +82,7 @@ namespace Imp.CitpSharp
 
 		private void writeToConsole(CitpLoggerLevel level, string message)
 		{
-			Console.WriteLine("CitpLib ({0}): {1}", level, message);
+			Console.WriteLine("CitpSharp ({0}): {1}", level, message);
 		}
 	}
 }

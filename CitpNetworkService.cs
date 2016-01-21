@@ -21,8 +21,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
@@ -170,7 +168,7 @@ namespace Imp.CitpSharp
 			// run this special routine to avoid serializing the packet more than once for each version.
 			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 			{
-				var msexPacket = packet as CitpMsexPacket;
+				var msexPacket = (CitpMsexPacket)packet;
 
 				if (msexPacket.Version.HasValue == false)
 				{

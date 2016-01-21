@@ -17,8 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp.Packets
 {
@@ -267,7 +265,7 @@ namespace Imp.CitpSharp.Packets
 				data[15] = (byte)(messagePart >> 8);
 			}
 
-			Buffer.BlockCopy(LayerType.GetAttributeOfType<CitpId>().Id, 0, data, 16, 4);
+			Buffer.BlockCopy(LayerType.GetCustomAttribute<CitpId>().Id, 0, data, 16, 4);
 		}
 
 
@@ -276,7 +274,8 @@ namespace Imp.CitpSharp.Packets
 
 		protected virtual void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			var header = reader.ReadBytes(20);
+			// Read Header
+			reader.ReadBytes(CitpHeaderLength);
 		}
 	}
 
@@ -309,7 +308,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(MessageType.GetAttributeOfType<CitpId>().Id);
+			writer.Write(MessageType.GetCustomAttribute<CitpId>().Id);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
@@ -350,7 +349,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(MessageType.GetAttributeOfType<CitpId>().Id);
+			writer.Write(MessageType.GetCustomAttribute<CitpId>().Id);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
@@ -394,8 +393,11 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(Version.GetAttributeOfType<CitpVersionAttribute>().ToByteArray());
-			writer.Write(MessageType.GetAttributeOfType<CitpId>().Id);
+			if (!Version.HasValue)
+				throw new InvalidOperationException("Version has no value. Required for MSEX packets");
+
+			writer.Write(Version.GetCustomAttribute<CitpVersionAttribute>().ToByteArray());
+			writer.Write(MessageType.GetCustomAttribute<CitpId>().Id);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)

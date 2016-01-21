@@ -17,8 +17,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
+
+// ReSharper disable UnusedMember.Global
 
 namespace Imp.CitpSharp
 {
@@ -50,27 +53,29 @@ namespace Imp.CitpSharp
 		/// <typeparam name="T">The type of the attribute you want to retrieve</typeparam>
 		/// <param name="enumVal">The enum value</param>
 		/// <returns>The attribute of type T that exists on the enum value</returns>
-		[CanBeNull]
-		public static T GetAttributeOfType<T>(this Enum enumVal) where T : Attribute
+		public static T GetCustomAttribute<T>(this Enum enumVal) where T : Attribute
 		{
-			var type = enumVal.GetType();
-			var memInfo = type.GetMember(enumVal.ToString());
-			var attributes = memInfo[0].GetCustomAttributes(typeof(T), false);
-			return attributes.Length > 0 ? (T)attributes[0] : null;
+			return enumVal
+				.GetType()
+				.GetMember(enumVal.ToString())
+				.First()
+				.GetCustomAttribute<T>(false);
 		}
 
 		public static T GetEnumFromIdString<T>(string s) where T : struct, IConvertible
 		{
+			var typeT = typeof(T);
+
 			Dictionary<string, Enum> map;
 
-			if (CitpIdMaps.TryGetValue(typeof(T), out map))
+			if (CitpIdMaps.TryGetValue(typeT, out map))
 				return (T)(object)map[s];
 
-			var values = Enum.GetValues(typeof(T)).Cast<Enum>();
+			var values = Enum.GetValues(typeT).Cast<Enum>();
 
-			map = values.ToDictionary(v => v.GetAttributeOfType<CitpId>().IdString);
+			map = values.ToDictionary(v => v.GetCustomAttribute<CitpId>().IdString);
 
-			CitpIdMaps.Add(typeof(T), map);
+			CitpIdMaps.Add(typeT, map);
 
 			return (T)(object)map[s];
 		}

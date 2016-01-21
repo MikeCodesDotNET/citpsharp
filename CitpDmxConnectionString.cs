@@ -19,6 +19,7 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	[PublicAPI]
 	public struct CitpDmxConnectionString : IEquatable<CitpDmxConnectionString>
 	{
 		public static CitpDmxConnectionString Parse(string s)

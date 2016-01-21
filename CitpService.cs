@@ -21,11 +21,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	[PublicAPI]
 	public sealed class CitpService : IDisposable
 	{
 		private const int CitpPlocFrequency = 1000;
@@ -34,10 +34,9 @@ namespace Imp.CitpSharp
 		private readonly ICitpLogService _log;
 		private readonly ICitpMediaServerInfo _serverInfo;
 		private readonly CitpStreamingService _streamingService;
+
 		private DateTime _layerStatusMessageLastSent;
-
 		private CitpNetworkService _networkService;
-
 		private DateTime _peerLocationMessageLastSent;
 
 
@@ -86,15 +85,13 @@ namespace Imp.CitpSharp
 		{
 			_log.LogDebug("Started processing messages");
 
-			if (_peerLocationMessageLastSent == null
-			    || (DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpPlocFrequency)
+			if ((DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpPlocFrequency)
 			{
 				await sendPeerLocationPacketAsync().ConfigureAwait(false);
 				_peerLocationMessageLastSent = DateTime.Now;
 			}
 
-			if (_layerStatusMessageLastSent == null
-			    || (DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpLstaFrequency)
+			if ((DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpLstaFrequency)
 			{
 				await sendLayerStatusPacketAsync().ConfigureAwait(false);
 				_layerStatusMessageLastSent = DateTime.Now;
@@ -321,9 +318,16 @@ namespace Imp.CitpSharp
 
 		private async Task getElementThumbnailAsync(CitpPeer peer, GetElementThumbnailMessagePacket requestPacket)
 		{
-			var msexId = requestPacket.Version == MsexVersion.Version1_0 
-				? new MsexId(requestPacket.LibraryNumber) 
-				: new MsexId(requestPacket.LibraryId.Value);
+			MsexId msexId;
+			if (requestPacket.Version == MsexVersion.Version1_0)
+			{
+				msexId = new MsexId(requestPacket.LibraryNumber);
+			}
+			else
+			{
+				Debug.Assert(requestPacket.LibraryId.HasValue, "LibraryId must have value for MSEX 1.1 or 1.2");
+				msexId = new MsexId(requestPacket.LibraryId.Value);
+			}
 
 			var thumbs = _serverInfo.GetElementThumbnails(requestPacket.LibraryType, msexId, requestPacket.ElementNumbers);
 

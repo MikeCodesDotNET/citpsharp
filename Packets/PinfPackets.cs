@@ -15,7 +15,7 @@
 
 using System;
 
-namespace Imp.CitpSharp.Packets.Pinf
+namespace Imp.CitpSharp.Packets
 {
 	internal class PeerNameMessagePacket : CitpPinfPacket
 	{
