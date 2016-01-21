@@ -17,10 +17,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Sockets;
 
 namespace Imp.CitpSharp
 {
@@ -32,15 +31,15 @@ namespace Imp.CitpSharp
 	{
 		private static readonly int CitpPeerExpiryTime = 10;
 
-		private readonly ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> _frameQueue =
-			new ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>>();
+		private readonly ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> _frameQueue =
+			new ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>>();
 
 		private readonly ICitpLogService _log;
 
 		private readonly ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> _messageQueue =
 			new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
 
-		private readonly IPAddress _nicAddress;
+		private readonly IpAddress _nicAddress;
 
 
 
@@ -54,7 +53,7 @@ namespace Imp.CitpSharp
 
 
 
-		private CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp)
+		private CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp)
 		{
 			_nicAddress = nicAddress;
 			_useOriginalMulticastIp = useOriginalMulticastIp;
@@ -62,7 +61,7 @@ namespace Imp.CitpSharp
 		}
 
 
-		public CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp,
+		public CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp,
 			ICitpMediaServerInfo serverInfo)
 			: this(log, nicAddress, useOriginalMulticastIp)
 		{
@@ -82,7 +81,7 @@ namespace Imp.CitpSharp
 			get { return _messageQueue; }
 		}
 
-		public ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> FrameQueue
+		public ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> FrameQueue
 		{
 			get { return _frameQueue; }
 		}
@@ -106,9 +105,9 @@ namespace Imp.CitpSharp
 		public bool Start()
 		{
 			_udpService = new CitpUdpService(_log, _nicAddress, _useOriginalMulticastIp);
-			_udpService.PacketReceived += udpService_PacketReceived;
+			_udpService.MessageReceived += udpServiceMessageReceived;
 
-			bool udpResult = _udpService.Start();
+			bool udpResult = _udpService.StartAsync();
 
 			if (udpResult == false)
 				return false;
@@ -118,9 +117,9 @@ namespace Imp.CitpSharp
 			_tcpListenService = new CitpTcpService(_log, _nicAddress, LocalTcpListenPort);
 			_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
 			_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
-			_tcpListenService.PacketReceieved += tcpListenService_PacketReceived;
+			_tcpListenService.MessageReceived += tcpListenService_PacketReceived;
 
-			bool tcpResult = _tcpListenService.StartListening();
+			bool tcpResult = _tcpListenService.StartAsync();
 
 			if (tcpResult == false)
 				return false;
@@ -224,7 +223,7 @@ namespace Imp.CitpSharp
 			await e.SendAsync(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray()).ConfigureAwait(false);
 		}
 
-		private void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
+		private void tcpListenService_ClientDisconnect(object sender, IpEndpoint e)
 		{
 			var peer = Peers.FirstOrDefault(p => e.Equals(p.RemoteEndPoint));
 
@@ -235,7 +234,7 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		private async void tcpListenService_PacketReceived(object sender, Tuple<IPEndPoint, byte[]> e)
+		private async void tcpListenService_PacketReceived(object sender, Tuple<IpEndpoint, byte[]> e)
 		{
 			CitpPacket packet;
 
@@ -274,7 +273,7 @@ namespace Imp.CitpSharp
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
 		}
 
-		private void udpService_PacketReceived(object sender, Tuple<IPAddress, byte[]> e)
+		private void udpServiceMessageReceived(object sender, Tuple<IpAddress, byte[]> e)
 		{
 			CitpPacket packet;
 
@@ -326,7 +325,7 @@ namespace Imp.CitpSharp
 			return unusedPort;
 		}
 
-		private void receivedPeerNameMessage(PeerNameMessagePacket message, IPEndPoint remoteEndPoint)
+		private void receivedPeerNameMessage(PeerNameMessagePacket message, IpEndpoint remoteEndPoint)
 		{
 			var peer = _peers.FirstOrDefault(p => remoteEndPoint.Address.Equals(p.Ip));
 
@@ -340,7 +339,7 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IPAddress remoteIp)
+		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IpAddress remoteIp)
 		{
 			// Filter out the local CITP peer
 			if (remoteIp.Equals(_nicAddress) && message.Name == _serverInfo.PeerName

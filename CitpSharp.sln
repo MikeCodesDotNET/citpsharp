@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CitpSharp", "CitpSharp.csproj", "{53EFB8AF-A3E6-4916-82CC-11D6C9223B64}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CitpSharp", "src\CitpSharp.csproj", "{957FA64A-8017-4211-A144-ADF89DF2C89B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CitpSharp.Tests", "tests\CitpSharp.Tests.csproj", "{C7934787-AF72-45C8-B0D3-9D00C6726040}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{53EFB8AF-A3E6-4916-82CC-11D6C9223B64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{53EFB8AF-A3E6-4916-82CC-11D6C9223B64}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{53EFB8AF-A3E6-4916-82CC-11D6C9223B64}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{53EFB8AF-A3E6-4916-82CC-11D6C9223B64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{957FA64A-8017-4211-A144-ADF89DF2C89B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{957FA64A-8017-4211-A144-ADF89DF2C89B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{957FA64A-8017-4211-A144-ADF89DF2C89B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{957FA64A-8017-4211-A144-ADF89DF2C89B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7934787-AF72-45C8-B0D3-9D00C6726040}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7934787-AF72-45C8-B0D3-9D00C6726040}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7934787-AF72-45C8-B0D3-9D00C6726040}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7934787-AF72-45C8-B0D3-9D00C6726040}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

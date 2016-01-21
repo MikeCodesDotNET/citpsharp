@@ -17,19 +17,17 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Imp.CitpSharp.Sockets;
+using Sockets.Plugin;
+using Sockets.Plugin.Abstractions;
 
 namespace Imp.CitpSharp
 {
 	internal interface ICitpTcpClient
 	{
-		IPEndPoint RemoteEndPoint { get; }
-		event EventHandler Disconnected;
-
-		event EventHandler<byte[]> PacketReceieved;
+		IpEndpoint RemoteEndPoint { get; }
 		Task<bool> SendAsync(byte[] data);
 	}
 
@@ -37,169 +35,131 @@ namespace Imp.CitpSharp
 
 	internal sealed class CitpTcpService : IDisposable
 	{
-		private readonly CancellationTokenSource _cancelTokenSource = new CancellationTokenSource();
+		private readonly ConcurrentDictionary<IpEndpoint, ICitpTcpClient> _clients =
+			new ConcurrentDictionary<IpEndpoint, ICitpTcpClient>();
 
-		private readonly ConcurrentDictionary<IPEndPoint, ICitpTcpClient> _clients =
-			new ConcurrentDictionary<IPEndPoint, ICitpTcpClient>();
-
-		private readonly IPEndPoint _localEndpoint;
+		private readonly IpEndpoint _localEndpoint;
 		private readonly ICitpLogService _log;
-		private TcpListener _listener;
+		private readonly TcpSocketListener _listener;
 
 
 
-		public CitpTcpService(ICitpLogService log, IPAddress nicAddress, int port)
+		public CitpTcpService(ICitpLogService log, IpAddress nicAddress, int port)
 		{
 			_log = log;
-			_localEndpoint = new IPEndPoint(nicAddress, port);
+			_localEndpoint = new IpEndpoint(nicAddress, port);
+			_listener = new TcpSocketListener();
+			_listener.ConnectionReceived += connectionReceived;
 		}
 
-
-
-		public ConcurrentDictionary<IPEndPoint, ICitpTcpClient> Clients
+		public ConcurrentDictionary<IpEndpoint, ICitpTcpClient> Clients
 		{
 			get { return _clients; }
 		}
 
 		public void Dispose()
 		{
-			if (_listener != null)
-				Close();
-
-			if (_cancelTokenSource != null)
-				_cancelTokenSource.Dispose();
+			_listener.Dispose();
 		}
 
 
 
 		public event EventHandler<ICitpTcpClient> ClientConnected;
 
-		public event EventHandler<IPEndPoint> ClientDisconnected;
+		public event EventHandler<IpEndpoint> ClientDisconnected;
 
-		public event EventHandler<Tuple<IPEndPoint, byte[]>> PacketReceieved;
+		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
 
-
-		public void Close()
+		public async Task<bool> StartAsync()
 		{
-			_cancelTokenSource.Cancel();
-			_listener.Stop();
-		}
+			var interfaces = await CommsInterface.GetAllInterfacesAsync().ConfigureAwait(false);
 
-		public bool StartListening()
-		{
-			_listener = new TcpListener(_localEndpoint);
+			var nicInterface = interfaces.FirstOrDefault(i => i.IpAddress == _localEndpoint.Address.ToString());
 
-			try
+			if (nicInterface == null)
 			{
-				_listener.Start();
-			}
-			catch (SocketException ex)
-			{
-				_log.LogError(string.Format("Failed to start listening on TCP port {0}, socket exception.", _localEndpoint.Port));
-				_log.LogException(ex);
+				_log.LogError($"Could not locate network interface with IP '{_localEndpoint.Address}'");
 				return false;
 			}
 
-			acceptClientsAsync(_cancelTokenSource.Token);
+			await _listener.StartListeningAsync(_localEndpoint.Port, nicInterface).ConfigureAwait(false);
 
 			return true;
 		}
 
-
-
-		private async void acceptClientsAsync(CancellationToken cancelToken)
+		private void connectionReceived(object sender, TcpSocketListenerConnectEventArgs e)
 		{
-			try
-			{
-				while (!cancelToken.IsCancellationRequested)
-				{
-					var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
+			var citpClient = new CitpTcpClient(_log, e.SocketClient);
 
-					var citpClient = new CitpTcpClient(_log, client);
+			citpClient.Disconnected += clientDisconnected;
+			citpClient.MessageReceived += clientMessageReceived;
+			_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
 
-
-					citpClient.Disconnected += citpClient_Disconnected;
-					citpClient.PacketReceieved += citpClient_PacketReceieved;
-
-					_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
-
-					citpClient.OpenStream(cancelToken);
-
-					if (ClientConnected != null)
-						ClientConnected(this, citpClient);
-				}
-			}
-			catch (ObjectDisposedException) { }
+			ClientConnected?.Invoke(this, citpClient);
 		}
 
-		private void citpClient_Disconnected(object sender, EventArgs e)
+		private void clientDisconnected(object sender, EventArgs e)
 		{
 			ICitpTcpClient removedClient;
 			_clients.TryRemove(((CitpTcpClient)sender).RemoteEndPoint, out removedClient);
 
-			if (ClientDisconnected != null)
-				ClientDisconnected(this, removedClient.RemoteEndPoint);
+			ClientDisconnected?.Invoke(this, removedClient.RemoteEndPoint);
 		}
 
-		private void citpClient_PacketReceieved(object sender, byte[] e)
+		private void clientMessageReceived(object sender, byte[] e)
 		{
-			if (PacketReceieved != null)
-				PacketReceieved(this, Tuple.Create(((CitpTcpClient)sender).RemoteEndPoint, e));
+			MessageReceived?.Invoke(this, new MessageReceivedEventArgs(((CitpTcpClient)sender).RemoteEndPoint, e));
 		}
 
+
+
+		public class MessageReceivedEventArgs : EventArgs
+		{
+			public MessageReceivedEventArgs(IpEndpoint endpoint, byte[] data)
+			{
+				Endpoint = endpoint;
+				Data = data;
+			}
+
+			public IpEndpoint Endpoint { get; }
+			public byte[] Data { get; }
+		}
 
 
 		private class CitpTcpClient : ICitpTcpClient
 		{
 			private static readonly byte[] CitpSearchPattern = {0x43, 0x49, 0x54, 0x50, 0x01, 0x00};
 
-			private readonly TcpClient _client;
+			private readonly ITcpSocketClient _client;
 			private readonly ICitpLogService _log;
-			private readonly IPEndPoint _remoteEndPoint;
 
 			private byte[] _currentPacket;
 			private int _packetBytesRemaining;
 
-			private NetworkStream _stream;
 
-
-			public CitpTcpClient(ICitpLogService log, TcpClient client)
+			public CitpTcpClient(ICitpLogService log, ITcpSocketClient client)
 			{
 				_log = log;
 				_client = client;
-				_remoteEndPoint = _client.Client.RemoteEndPoint as IPEndPoint;
+				RemoteEndPoint = IpEndpoint.Parse(client.RemoteAddress);
 			}
 
 
 
 			public event EventHandler Disconnected;
 
-			public event EventHandler<byte[]> PacketReceieved;
+			public event EventHandler<byte[]> MessageReceived;
 
 
 
-			public IPEndPoint RemoteEndPoint
-			{
-				get { return _remoteEndPoint; }
-			}
+			public IpEndpoint RemoteEndPoint { get; }
 
 			public async Task<bool> SendAsync(byte[] data)
 			{
-				if (_stream == null)
-					throw new InvalidOperationException("Client is not ready to send data");
-
 				try
 				{
-					await _stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
-				}
-				catch (IOException)
-				{
-					return false;
-				}
-				catch (SocketException)
-				{
-					return false;
+					await _client.WriteStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
 				}
 				catch (InvalidOperationException)
 				{
@@ -266,8 +226,7 @@ namespace Imp.CitpSharp
 						_stream.Dispose();
 						_stream = null;
 
-						if (Disconnected != null)
-							Disconnected(this, EventArgs.Empty);
+						Disconnected?.Invoke(this, EventArgs.Empty);
 					}
 				}
 			}
@@ -284,8 +243,8 @@ namespace Imp.CitpSharp
 
 				if (_packetBytesRemaining == 0)
 				{
-					if (PacketReceieved != null)
-						PacketReceieved(this, _currentPacket);
+					if (MessageReceived != null)
+						MessageReceived(this, _currentPacket);
 
 					_currentPacket = null;
 				}
