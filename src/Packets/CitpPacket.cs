@@ -58,8 +58,7 @@ namespace Imp.CitpSharp.Packets
 			{
 				var layerTypeArray = new byte[4];
 				Buffer.BlockCopy(data, CitpContentTypePosition, layerTypeArray, 0, 4);
-				throw new InvalidOperationException(string.Format("Unrecognised CITP content type: {0}",
-					Encoding.UTF8.GetString(layerTypeArray)));
+				throw new InvalidOperationException($"Unrecognised CITP content type: {Encoding.UTF8.GetString(layerTypeArray, 0, layerTypeArray.Length)}");
 			}
 
 			switch (layerType)
@@ -72,8 +71,7 @@ namespace Imp.CitpSharp.Packets
 					{
 						var messageTypeArray = new byte[4];
 						Buffer.BlockCopy(data, CitpPinfPacket.CitpMessageTypePosition, messageTypeArray, 0, 4);
-						throw new InvalidOperationException(string.Format("Unrecognised PING message type: {0}",
-							Encoding.UTF8.GetString(messageTypeArray)));
+						throw new InvalidOperationException($"Unrecognised PING message type: {Encoding.UTF8.GetString(messageTypeArray, 0, messageTypeArray.Length)}");
 					}
 
 					switch (messageType)
@@ -99,8 +97,7 @@ namespace Imp.CitpSharp.Packets
 					{
 						var messageTypeArray = new byte[4];
 						Buffer.BlockCopy(data, CitpMsexPacket.CitpMessageTypePosition, messageTypeArray, 0, 4);
-						throw new InvalidOperationException(string.Format("Unrecognised MSEX message type: {0}",
-							Encoding.UTF8.GetString(messageTypeArray)));
+						throw new InvalidOperationException($"Unrecognised MSEX message type: {Encoding.UTF8.GetString(messageTypeArray, 0, messageTypeArray.Length)}");
 					}
 
 					switch (messageType)

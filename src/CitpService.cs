@@ -15,13 +15,12 @@
 
 using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Sockets;
 using JetBrains.Annotations;
+using Sockets.Plugin.Abstractions;
 
 namespace Imp.CitpSharp
 {
@@ -41,7 +40,7 @@ namespace Imp.CitpSharp
 
 
 
-		public CitpService(IPAddress nicAddress,
+		public CitpService(string nicAddress,
 			bool useOriginalMulticastIp,
 			ICitpMediaServerInfo serverInfo, bool isStreamingEnabled,
 			ICitpLogService log = null)
@@ -50,7 +49,9 @@ namespace Imp.CitpSharp
 
 			_serverInfo = serverInfo;
 
-			_networkService = new CitpNetworkService(_log, nicAddress, useOriginalMulticastIp, _serverInfo);
+			var nicIp = IpAddress.Parse(nicAddress);
+
+			_networkService = new CitpNetworkService(_log, nicIp, useOriginalMulticastIp, _serverInfo);
 
 			IsStreamingEnabled = isStreamingEnabled;
 
@@ -72,9 +73,9 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public bool Start()
+		public Task<bool> StartAsync()
 		{
-			return _networkService.Start();
+			return _networkService.StartAsync();
 		}
 
 

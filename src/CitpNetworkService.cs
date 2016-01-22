@@ -31,33 +31,29 @@ namespace Imp.CitpSharp
 	{
 		private static readonly int CitpPeerExpiryTime = 10;
 
-		private readonly ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> _frameQueue =
-			new ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>>();
-
 		private readonly ICitpLogService _log;
-
-		private readonly ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> _messageQueue =
-			new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
-
 		private readonly IpAddress _nicAddress;
-
-
 
 		private readonly List<CitpPeer> _peers = new List<CitpPeer>();
 		private readonly ICitpMediaServerInfo _serverInfo;
-		private readonly bool _useOriginalMulticastIp;
 
-		private CitpTcpService _tcpListenService;
-
-		private CitpUdpService _udpService;
+		private readonly CitpTcpService _tcpListenService;
+		private readonly CitpUdpService _udpService;
 
 
 
 		private CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp)
 		{
 			_nicAddress = nicAddress;
-			_useOriginalMulticastIp = useOriginalMulticastIp;
 			_log = log;
+
+			_tcpListenService = new CitpTcpService(_log, _nicAddress);
+			_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
+			_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
+			_tcpListenService.MessageReceived += tcpListenService_PacketReceived;
+
+			_udpService = new CitpUdpService(_log, _nicAddress, useOriginalMulticastIp);
+			_udpService.MessageReceived += udpServiceMessageReceived;
 		}
 
 
@@ -68,58 +64,36 @@ namespace Imp.CitpSharp
 			_serverInfo = serverInfo;
 		}
 
+		public void Dispose()
+		{
+			_tcpListenService.Dispose();
+			_udpService.Dispose();
+		}
 
-		public int LocalTcpListenPort { get; private set; }
+
+
+		public int LocalTcpListenPort => _tcpListenService.ListenPort;
 
 		public IReadOnlyList<CitpPeer> Peers
 		{
 			get { return _peers; }
 		}
 
-		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue
+		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue { get; } = new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
+
+		public ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> FrameQueue { get; } = new ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>>();
+
+		
+
+
+		public async Task<bool> StartAsync()
 		{
-			get { return _messageQueue; }
-		}
-
-		public ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> FrameQueue
-		{
-			get { return _frameQueue; }
-		}
-
-		public void Dispose()
-		{
-			if (_tcpListenService != null)
-			{
-				_tcpListenService.Dispose();
-				_tcpListenService = null;
-			}
-
-			if (_udpService != null)
-			{
-				_udpService.Dispose();
-				_udpService = null;
-			}
-		}
-
-
-		public bool Start()
-		{
-			_udpService = new CitpUdpService(_log, _nicAddress, _useOriginalMulticastIp);
-			_udpService.MessageReceived += udpServiceMessageReceived;
-
-			bool udpResult = _udpService.StartAsync();
+			bool udpResult = await _udpService.StartAsync().ConfigureAwait(false);
 
 			if (udpResult == false)
 				return false;
 
-			LocalTcpListenPort = getAvailableTcpPort();
-
-			_tcpListenService = new CitpTcpService(_log, _nicAddress, LocalTcpListenPort);
-			_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
-			_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
-			_tcpListenService.MessageReceived += tcpListenService_PacketReceived;
-
-			bool tcpResult = _tcpListenService.StartAsync();
+			bool tcpResult = await _tcpListenService.StartAsync().ConfigureAwait(false);
 
 			if (tcpResult == false)
 				return false;
@@ -210,7 +184,7 @@ namespace Imp.CitpSharp
 
 
 
-		private async void tcpListenService_ClientConnect(object sender, ICitpTcpClient e)
+		private async void tcpListenService_ClientConnect(object sender, IRemoteCitpTcpClient e)
 		{
 			var peer = _peers.FirstOrDefault(p => e.RemoteEndPoint.Address.Equals(p.Ip));
 
@@ -234,34 +208,34 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		private async void tcpListenService_PacketReceived(object sender, Tuple<IpEndpoint, byte[]> e)
+		private async void tcpListenService_PacketReceived(object sender, CitpTcpService.MessageReceivedEventArgs e)
 		{
 			CitpPacket packet;
 
 			try
 			{
-				packet = CitpPacket.FromByteArray(e.Item2);
+				packet = CitpPacket.FromByteArray(e.Data);
 			}
 			catch (InvalidOperationException ex)
 			{
-				_log.LogError(string.Format("Error: Failed to deserialize TCP packet from {0}", e.Item1));
+				_log.LogError($"Error: Failed to deserialize TCP packet from {e.Endpoint}");
 				_log.LogException(ex);
 				return;
 			}
 			catch (NotImplementedException ex)
 			{
-				_log.LogError(string.Format("Error: Failed to deserialize TCP packet from {0}, CITP content type not implemented", e.Item1));
+				_log.LogError($"Error: Failed to deserialize TCP packet from {e.Endpoint}, CITP content type not implemented");
 				_log.LogException(ex);
 				return;
 			}
 
 			if (packet is PeerNameMessagePacket)
 			{
-				receivedPeerNameMessage((PeerNameMessagePacket)packet, e.Item1);
+				receivedPeerNameMessage((PeerNameMessagePacket)packet, e.Endpoint);
 				return;
 			}
 
-			var peer = _peers.FirstOrDefault(p => e.Item1.Equals(p.RemoteEndPoint));
+			var peer = _peers.FirstOrDefault(p => e.Endpoint == p.RemoteEndPoint);
 
 			if (peer == null)
 				throw new InvalidOperationException("Message received via TCP from unrecognized peer.");
@@ -273,56 +247,33 @@ namespace Imp.CitpSharp
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
 		}
 
-		private void udpServiceMessageReceived(object sender, Tuple<IpAddress, byte[]> e)
+		private void udpServiceMessageReceived(object sender, CitpUdpService.MessageReceivedEventArgs e)
 		{
 			CitpPacket packet;
 
 			try
 			{
-				packet = CitpPacket.FromByteArray(e.Item2);
+				packet = CitpPacket.FromByteArray(e.Data);
 			}
 			catch (InvalidOperationException ex)
 			{
-				_log.LogError(string.Format("Failed to deserialize UDP packet from {0}", e.Item1));
+				_log.LogError($"Failed to deserialize UDP packet from {e.Endpoint}");
 				_log.LogException(ex);
 				return;
 			}
 
 			if (packet is StreamFrameMessagePacket)
 			{
-				FrameQueue.Enqueue(Tuple.Create(e.Item1, (StreamFrameMessagePacket)packet));
+				FrameQueue.Enqueue(Tuple.Create(e.Endpoint.Address, (StreamFrameMessagePacket)packet));
 			}
 			else if (packet is PeerLocationMessagePacket)
 			{
-				receivedPeerLocationMessage((PeerLocationMessagePacket)packet, e.Item1);
+				receivedPeerLocationMessage((PeerLocationMessagePacket)packet, e.Endpoint.Address);
 			}
 			else
 			{
-				_log.LogError(string.Format("Invalid packet received via UDP from {0}", e.Item1));
+				_log.LogError($"Invalid packet received via UDP from {e.Endpoint}");
 			}
-		}
-
-
-
-		private static int getAvailableTcpPort()
-		{
-			const int portStartIndex = 1024;
-			const int portEndIndex = 49151;
-			var properties = IPGlobalProperties.GetIPGlobalProperties();
-			var tcpEndPoints = properties.GetActiveTcpListeners();
-
-			var usedPorts = tcpEndPoints.Select(p => p.Port).ToList();
-			int unusedPort = 0;
-
-			for (int port = portStartIndex; port < portEndIndex; ++port)
-			{
-				if (!usedPorts.Contains(port))
-				{
-					unusedPort = port;
-					break;
-				}
-			}
-			return unusedPort;
 		}
 
 		private void receivedPeerNameMessage(PeerNameMessagePacket message, IpEndpoint remoteEndPoint)
@@ -377,7 +328,7 @@ namespace Imp.CitpSharp
 
 		private Task<bool> sendDataToPeerAsync(CitpPeer peer, byte[] data)
 		{
-			ICitpTcpClient client;
+			IRemoteCitpTcpClient client;
 
 			return _tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) 
 				? client.SendAsync(data) 

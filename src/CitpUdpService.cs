@@ -88,23 +88,8 @@ namespace Imp.CitpSharp
 			if (_client == null)
 				return false;
 
-			try
-			{
-				await _client.SendAsync(data, data.Length, 
-					_useOriginalMulticastIp ? CitpMulticastOriginalEndpoint : CitpMulticastEndpoint)
-					.ConfigureAwait(false);
-			}
-			catch (ObjectDisposedException)
-			{
-				return false;
-			}
-			catch (SocketException ex)
-			{
-				_log.LogError("Failed to send data via UDP");
-				_log.LogException(ex);
-				return false;
-			}
-
+			await _client.SendMulticastAsync(data).ConfigureAwait(false);
+			
 			return true;
 		}
 

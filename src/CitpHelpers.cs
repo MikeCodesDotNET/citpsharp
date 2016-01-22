@@ -200,12 +200,12 @@ namespace Imp.CitpSharp
 
 		public string ReadIdString()
 		{
-			return Encoding.UTF8.GetString(ReadBytes(4));
+			return Encoding.UTF8.GetString(ReadBytes(4), 0, 4);
 		}
 
 		public Guid ReadGuid()
 		{
-			return Guid.Parse(Encoding.UTF8.GetString(ReadBytes(36)));
+			return Guid.Parse(Encoding.UTF8.GetString(ReadBytes(36), 0, 36));
 		}
 	}
 }

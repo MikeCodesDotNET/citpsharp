@@ -82,7 +82,7 @@ namespace Imp.CitpSharp
 
 		private void writeToConsole(CitpLoggerLevel level, string message)
 		{
-			Console.WriteLine("CitpSharp ({0}): {1}", level, message);
+			//Console.WriteLine("CitpSharp ({0}): {1}", level, message);
 		}
 	}
 }

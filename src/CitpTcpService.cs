@@ -25,7 +25,7 @@ using Sockets.Plugin.Abstractions;
 
 namespace Imp.CitpSharp
 {
-	internal interface ICitpTcpClient
+	internal interface IRemoteCitpTcpClient
 	{
 		IpEndpoint RemoteEndPoint { get; }
 		Task<bool> SendAsync(byte[] data);
@@ -35,26 +35,23 @@ namespace Imp.CitpSharp
 
 	internal sealed class CitpTcpService : IDisposable
 	{
-		private readonly ConcurrentDictionary<IpEndpoint, ICitpTcpClient> _clients =
-			new ConcurrentDictionary<IpEndpoint, ICitpTcpClient>();
+		private readonly ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient> _clients =
+			new ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient>();
 
-		private readonly IpEndpoint _localEndpoint;
+		private readonly IpAddress _nicAddress;
 		private readonly ICitpLogService _log;
 		private readonly TcpSocketListener _listener;
+		private readonly CancellationTokenSource _cancellationTokenSource;
 
 
 
-		public CitpTcpService(ICitpLogService log, IpAddress nicAddress, int port)
+		public CitpTcpService(ICitpLogService log, IpAddress nicAddress)
 		{
 			_log = log;
-			_localEndpoint = new IpEndpoint(nicAddress, port);
+			_nicAddress = nicAddress;
 			_listener = new TcpSocketListener();
 			_listener.ConnectionReceived += connectionReceived;
-		}
-
-		public ConcurrentDictionary<IpEndpoint, ICitpTcpClient> Clients
-		{
-			get { return _clients; }
+			_cancellationTokenSource = new CancellationTokenSource();
 		}
 
 		public void Dispose()
@@ -64,33 +61,43 @@ namespace Imp.CitpSharp
 
 
 
-		public event EventHandler<ICitpTcpClient> ClientConnected;
+		public event EventHandler<IRemoteCitpTcpClient> ClientConnected;
 
 		public event EventHandler<IpEndpoint> ClientDisconnected;
 
 		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
 
+
+		public ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient> Clients
+		{
+			get { return _clients; }
+		}
+
+		public int ListenPort => _listener.LocalPort;
+
+
+
 		public async Task<bool> StartAsync()
 		{
 			var interfaces = await CommsInterface.GetAllInterfacesAsync().ConfigureAwait(false);
 
-			var nicInterface = interfaces.FirstOrDefault(i => i.IpAddress == _localEndpoint.Address.ToString());
+			var nicInterface = interfaces.FirstOrDefault(i => i.IpAddress == _nicAddress.ToString());
 
 			if (nicInterface == null)
 			{
-				_log.LogError($"Could not locate network interface with IP '{_localEndpoint.Address}'");
+				_log.LogError($"Could not locate network interface with IP '{_nicAddress}'");
 				return false;
 			}
 
-			await _listener.StartListeningAsync(_localEndpoint.Port, nicInterface).ConfigureAwait(false);
+			await _listener.StartListeningAsync(0, nicInterface).ConfigureAwait(false);
 
 			return true;
 		}
 
 		private void connectionReceived(object sender, TcpSocketListenerConnectEventArgs e)
 		{
-			var citpClient = new CitpTcpClient(_log, e.SocketClient);
+			var citpClient = new RemoteCitpTcpClient(_log, e.SocketClient, _cancellationTokenSource.Token);
 
 			citpClient.Disconnected += clientDisconnected;
 			citpClient.MessageReceived += clientMessageReceived;
@@ -101,15 +108,15 @@ namespace Imp.CitpSharp
 
 		private void clientDisconnected(object sender, EventArgs e)
 		{
-			ICitpTcpClient removedClient;
-			_clients.TryRemove(((CitpTcpClient)sender).RemoteEndPoint, out removedClient);
+			IRemoteCitpTcpClient removedClient;
+			_clients.TryRemove(((RemoteCitpTcpClient)sender).RemoteEndPoint, out removedClient);
 
 			ClientDisconnected?.Invoke(this, removedClient.RemoteEndPoint);
 		}
 
 		private void clientMessageReceived(object sender, byte[] e)
 		{
-			MessageReceived?.Invoke(this, new MessageReceivedEventArgs(((CitpTcpClient)sender).RemoteEndPoint, e));
+			MessageReceived?.Invoke(this, new MessageReceivedEventArgs(((RemoteCitpTcpClient)sender).RemoteEndPoint, e));
 		}
 
 
@@ -127,22 +134,30 @@ namespace Imp.CitpSharp
 		}
 
 
-		private class CitpTcpClient : ICitpTcpClient
+		private class RemoteCitpTcpClient : IRemoteCitpTcpClient
 		{
+			private const int TcpBufferSize = 2048;
+			private const int TcpReadTimeoutMs = 15000;
 			private static readonly byte[] CitpSearchPattern = {0x43, 0x49, 0x54, 0x50, 0x01, 0x00};
 
-			private readonly ITcpSocketClient _client;
 			private readonly ICitpLogService _log;
+			private readonly ITcpSocketClient _client;
+			private readonly CancellationToken _cancellationToken;
 
 			private byte[] _currentPacket;
 			private int _packetBytesRemaining;
 
 
-			public CitpTcpClient(ICitpLogService log, ITcpSocketClient client)
+			public RemoteCitpTcpClient(ICitpLogService log, ITcpSocketClient client, CancellationToken cancellationToken)
 			{
 				_log = log;
 				_client = client;
+				_cancellationToken = cancellationToken;
 				RemoteEndPoint = IpEndpoint.Parse(client.RemoteAddress);
+
+#pragma warning disable 4014
+				Task.Run(openStreamAsync).ConfigureAwait(false);
+#pragma warning restore 4014
 			}
 
 
@@ -157,78 +172,39 @@ namespace Imp.CitpSharp
 
 			public async Task<bool> SendAsync(byte[] data)
 			{
-				try
-				{
-					await _client.WriteStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
-				}
-				catch (InvalidOperationException)
-				{
-					return false;
-				}
+				await _client.WriteStream.WriteAsync(data, 0, data.Length, _cancellationToken).ConfigureAwait(false);
+				
 
 				return true;
 			}
 
-			public async void OpenStream(CancellationToken ct)
+			private async Task openStreamAsync()
 			{
-				using (_client)
+				var buffer = new byte[TcpBufferSize];
+
+				while (!_cancellationToken.IsCancellationRequested)
 				{
-					try
+					var timeoutTask = Task.Delay(TimeSpan.FromMilliseconds(TcpReadTimeoutMs));
+					var amountReadTask = _client.ReadStream.ReadAsync(buffer, 0, buffer.Length, _cancellationToken);
+
+					var completedTask = await Task.WhenAny(timeoutTask, amountReadTask)
+						.ConfigureAwait(false);
+
+					if (completedTask == timeoutTask)
 					{
-						var buffer = new byte[4096];
-
-						try
-						{
-							_stream = _client.GetStream();
-						}
-						catch (InvalidOperationException)
-						{
-							_log.LogError("Couldn't get network stream");
-							return;
-						}
-
-						while (!ct.IsCancellationRequested)
-						{
-							//under some circumstances, it's not possible to detect
-							//a client disconnecting if there's no data being sent
-							//so it's a good idea to give them a timeout to ensure that 
-							//we clean them up.
-							var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15));
-							var amountReadTask = _stream.ReadAsync(buffer, 0, buffer.Length, ct);
-
-							var completedTask = await Task.WhenAny(timeoutTask, amountReadTask)
-								.ConfigureAwait(false);
-
-							if (completedTask == timeoutTask)
-							{
-								_log.LogInfo("Client timed out");
-								break;
-							}
-
-							int amountRead = amountReadTask.Result;
-
-							if (amountRead == 0)
-								break;
-
-							parseCitpPackets(amountRead, buffer);
-						}
+						_log.LogInfo("Client timed out");
+						break;
 					}
-					catch (AggregateException)
-					{
-						_log.LogInfo("Client closed connection");
-					}
-					catch (IOException)
-					{
-						_log.LogInfo("Client closed connection");
-					}
-					finally
-					{
-						_stream.Dispose();
-						_stream = null;
 
-						Disconnected?.Invoke(this, EventArgs.Empty);
-					}
+					int amountRead = amountReadTask.Result;
+
+					if (amountRead == 0)
+						break;
+
+					parseCitpPackets(amountRead, buffer);
 				}
+
+				Disconnected?.Invoke(this, EventArgs.Empty);
 			}
 
 
@@ -243,9 +219,7 @@ namespace Imp.CitpSharp
 
 				if (_packetBytesRemaining == 0)
 				{
-					if (MessageReceived != null)
-						MessageReceived(this, _currentPacket);
-
+					MessageReceived?.Invoke(this, _currentPacket);
 					_currentPacket = null;
 				}
 

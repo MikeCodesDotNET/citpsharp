@@ -36,7 +36,7 @@ namespace Imp.CitpSharp
 
 		public string IdString
 		{
-			get { return Encoding.UTF8.GetString(Id); }
+			get { return Encoding.UTF8.GetString(Id, 0, Id.Length); }
 		}
 	}
 
@@ -57,12 +57,11 @@ namespace Imp.CitpSharp
 		{
 			return enumVal
 				.GetType()
-				.GetMember(enumVal.ToString())
-				.First()
+				.GetRuntimeField(enumVal.ToString())
 				.GetCustomAttribute<T>(false);
 		}
 
-		public static T GetEnumFromIdString<T>(string s) where T : struct, IConvertible
+		public static T GetEnumFromIdString<T>(string s) where T : struct
 		{
 			var typeT = typeof(T);
 

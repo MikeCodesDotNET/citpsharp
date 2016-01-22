@@ -14,9 +14,6 @@
 //	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;

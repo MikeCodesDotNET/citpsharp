@@ -15,6 +15,7 @@
 
 using System;
 using System.Net;
+using Imp.CitpSharp.Sockets;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
@@ -30,7 +31,7 @@ namespace Imp.CitpSharp
 
 		public CitpPeerType Type;
 
-		public CitpPeer(IPAddress ip, string name)
+		public CitpPeer(IpAddress ip, string name)
 		{
 			Ip = ip;
 			Name = name;
@@ -38,7 +39,7 @@ namespace Imp.CitpSharp
 			LastUpdateReceived = DateTime.Now;
 		}
 
-		public CitpPeer(IPEndPoint remoteEndPoint)
+		public CitpPeer(IpEndpoint remoteEndPoint)
 		{
 			Ip = remoteEndPoint.Address;
 			SetConnected(remoteEndPoint.Port);
@@ -46,20 +47,12 @@ namespace Imp.CitpSharp
 			LastUpdateReceived = DateTime.Now;
 		}
 
-		public IPAddress Ip { get; private set; }
+		public IpAddress Ip { get; private set; }
 		public int? RemoteTcpPort { get; private set; }
 		public int? ListeningTcpPort { get; private set; }
 		public bool IsConnected { get; private set; }
 
-		public IPEndPoint RemoteEndPoint
-		{
-			get
-			{
-				if (RemoteTcpPort.HasValue == false)
-					return null;
-				return new IPEndPoint(Ip, RemoteTcpPort.Value);
-			}
-		}
+		public IpEndpoint RemoteEndPoint => new IpEndpoint(Ip, RemoteTcpPort ?? 0);
 
 		public bool Equals([CanBeNull] CitpPeer other)
 		{
