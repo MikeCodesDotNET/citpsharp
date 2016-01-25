@@ -24,7 +24,7 @@ platform: Any CPU
 configuration: Release
 
 build:
-  project: CitpSharp.sln
+  project: Imp.CitpSharp.sln
   publish_nuget: true
   publish_nuget_symbols: true
 
