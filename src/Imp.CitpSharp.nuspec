@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+  <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+	<description>$description$</description>
+    <licenseUrl>http://www.gnu.org/licenses/lgpl-3.0-standalone.html</licenseUrl>
+    <projectUrl>https://github.com/impsnldavid/citpsharp</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <copyright>Copyright 2016</copyright>
+  </metadata>
+</package>

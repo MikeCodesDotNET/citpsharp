@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CitpSharp", "src\CitpSharp.csproj", "{957FA64A-8017-4211-A144-ADF89DF2C89B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imp.CitpSharp", "src\Imp.CitpSharp.csproj", "{957FA64A-8017-4211-A144-ADF89DF2C89B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CitpSharp.Tests", "tests\CitpSharp.Tests.csproj", "{C7934787-AF72-45C8-B0D3-9D00C6726040}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imp.CitpSharp.Tests", "tests\Imp.CitpSharp.Tests.csproj", "{C7934787-AF72-45C8-B0D3-9D00C6726040}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

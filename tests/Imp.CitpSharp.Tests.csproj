@@ -53,9 +53,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\CitpSharp.csproj">
+    <ProjectReference Include="..\src\Imp.CitpSharp.csproj">
       <Project>{957fa64a-8017-4211-a144-adf89df2c89b}</Project>
-      <Name>CitpSharp</Name>
+      <Name>Imp.CitpSharp</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>
