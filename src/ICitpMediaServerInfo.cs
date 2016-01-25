@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
@@ -54,15 +53,15 @@ namespace Imp.CitpSharp
 		List<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId,
 			List<byte> elementNumbers);
 
-		List<Tuple<MsexId, Image>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
-		List<Tuple<byte, Image>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
+		List<Tuple<MsexId, CitpImage>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
+		List<Tuple<byte, CitpImage>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
 
 		[CanBeNull]
-		Image GetVideoSourceFrame(int sourceId, int frameWidth, int frameHeight);
+		IEnumerable<CitpImage> GetVideoSourceFrame(int sourceId, IEnumerable<CitpImageRequest> requests);
 	}
 
 
-
+	[PublicAPI]
 	public interface ICitpLayer
 	{
 		CitpDmxConnectionString DmxSource { get; }

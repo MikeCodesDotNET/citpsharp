@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
@@ -42,7 +41,7 @@ namespace Imp.CitpSharp
 		{
 			foreach (var request in _streamRequests.Values.ToList())
 			{
-				Image frame = null;
+				CitpImage frame = null;
 
 				foreach (var formatRequest in request.Formats)
 				{

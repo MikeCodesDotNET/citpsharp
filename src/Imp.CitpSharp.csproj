@@ -40,7 +40,7 @@
     <Compile Include="CitpDmxConnectionString.cs" />
     <Compile Include="CitpEnums.cs" />
     <Compile Include="CitpHelpers.cs" />
-    <Compile Include="CitpImageHelpers.cs" />
+    <Compile Include="CitpImage.cs" />
     <Compile Include="CitpInfoClasses.cs" />
     <Compile Include="CitpNetworkService.cs" />
     <Compile Include="CitpPeer.cs" />
