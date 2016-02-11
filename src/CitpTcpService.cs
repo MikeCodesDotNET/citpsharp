@@ -1,21 +1,5 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,9 +19,6 @@ namespace Imp.CitpSharp
 
 	internal sealed class CitpTcpService : IDisposable
 	{
-		private readonly ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient> _clients =
-			new ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient>();
-
 		private readonly IpAddress _nicAddress;
 		private readonly ICitpLogService _log;
 		private readonly TcpSocketListener _listener;
@@ -69,10 +50,8 @@ namespace Imp.CitpSharp
 
 
 
-		public ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient> Clients
-		{
-			get { return _clients; }
-		}
+		public ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient> Clients { get; } =
+			new ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient>();
 
 		public int ListenPort => _listener.LocalPort;
 
@@ -101,7 +80,7 @@ namespace Imp.CitpSharp
 
 			citpClient.Disconnected += clientDisconnected;
 			citpClient.MessageReceived += clientMessageReceived;
-			_clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
+			Clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
 
 			ClientConnected?.Invoke(this, citpClient);
 		}
@@ -109,7 +88,7 @@ namespace Imp.CitpSharp
 		private void clientDisconnected(object sender, EventArgs e)
 		{
 			IRemoteCitpTcpClient removedClient;
-			_clients.TryRemove(((RemoteCitpTcpClient)sender).RemoteEndPoint, out removedClient);
+			Clients.TryRemove(((RemoteCitpTcpClient)sender).RemoteEndPoint, out removedClient);
 
 			ClientDisconnected?.Invoke(this, removedClient.RemoteEndPoint);
 		}
@@ -132,6 +111,7 @@ namespace Imp.CitpSharp
 			public IpEndpoint Endpoint { get; }
 			public byte[] Data { get; }
 		}
+
 
 
 		private class RemoteCitpTcpClient : IRemoteCitpTcpClient
@@ -173,7 +153,7 @@ namespace Imp.CitpSharp
 			public async Task<bool> SendAsync(byte[] data)
 			{
 				await _client.WriteStream.WriteAsync(data, 0, data.Length, _cancellationToken).ConfigureAwait(false);
-				
+
 
 				return true;
 			}

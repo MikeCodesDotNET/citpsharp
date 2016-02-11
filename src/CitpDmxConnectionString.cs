@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Text;
 using JetBrains.Annotations;
 
@@ -72,7 +57,7 @@ namespace Imp.CitpSharp
 			return new CitpDmxConnectionString(DmxProtocol.ArtNet, net, universe, channel, 0);
 		}
 
-		public static CitpDmxConnectionString FromBsre131( int universe, int channel)
+		public static CitpDmxConnectionString FromBsre131(int universe, int channel)
 		{
 			return new CitpDmxConnectionString(DmxProtocol.Bsre131, 0, universe, channel, 0);
 		}
@@ -87,7 +72,7 @@ namespace Imp.CitpSharp
 			return new CitpDmxConnectionString(DmxProtocol.Bsre131, 0, universe, channel, type);
 		}
 
-		
+
 
 		CitpDmxConnectionString(DmxProtocol protocol, int net, int universe, int channel, int type)
 			: this()
@@ -98,6 +83,8 @@ namespace Imp.CitpSharp
 			Channel = channel;
 			Type = type;
 		}
+
+
 
 		public enum DmxProtocol
 		{
@@ -123,13 +110,13 @@ namespace Imp.CitpSharp
 			switch (Protocol)
 			{
 				case DmxProtocol.ArtNet:
-					return string.Format("ArtNet/{0}/{1}/{2}", Net, Universe, Channel);
+					return $"ArtNet/{Net}/{Universe}/{Channel}";
 				case DmxProtocol.Bsre131:
-					return string.Format("BSRE1.31/{0}/{1}", Universe, Channel);
+					return $"BSRE1.31/{Universe}/{Channel}";
 				case DmxProtocol.EtcNet2:
-					return string.Format("ETCNet2/{0}", Channel);
+					return $"ETCNet2/{Channel}";
 				case DmxProtocol.MaNet:
-					return string.Format("MANet/{0}/{1}/{2}", Type, Universe, Channel);
+					return $"MANet/{Type}/{Universe}/{Channel}";
 				default:
 					return string.Empty;
 			}
@@ -142,7 +129,8 @@ namespace Imp.CitpSharp
 
 		public bool Equals(CitpDmxConnectionString other)
 		{
-			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe && Channel == other.Channel;
+			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe
+			       && Channel == other.Channel;
 		}
 
 		public override bool Equals([CanBeNull] object obj)

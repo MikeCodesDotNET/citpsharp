@@ -9,7 +9,8 @@ namespace Imp.CitpSharp.Sockets
 		private const int PortRangeMin = 0;
 		private const int PortRangeMax = 65535;
 
-		private static readonly Regex EndpointMatch = new Regex(@"^(([0-1]?\d{1,2})|(2[0-5]{2}))(\.(([0-1]?\d{1,2})|(2[0-5]{2}))){3}:\d{1,5}$");
+		private static readonly Regex EndpointMatch =
+			new Regex(@"^(([0-1]?\d{1,2})|(2[0-5]{2}))(\.(([0-1]?\d{1,2})|(2[0-5]{2}))){3}:\d{1,5}$");
 
 		public static IpEndpoint Parse(string s)
 		{
@@ -84,7 +85,5 @@ namespace Imp.CitpSharp.Sockets
 		{
 			return !left.Equals(right);
 		}
-
-
 	}
 }

@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
@@ -53,12 +38,16 @@ namespace Imp.CitpSharp
 		List<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId,
 			List<byte> elementNumbers);
 
-		List<Tuple<MsexId, CitpImage>> GetElementLibraryThumbnails(CitpImageRequest request, MsexLibraryType libraryType, List<MsexId> libraryIds);
-		List<Tuple<byte, CitpImage>> GetElementThumbnails(CitpImageRequest request, MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
+		List<Tuple<MsexId, CitpImage>> GetElementLibraryThumbnails(CitpImageRequest request, MsexLibraryType libraryType,
+			List<MsexId> libraryIds);
+
+		List<Tuple<byte, CitpImage>> GetElementThumbnails(CitpImageRequest request, MsexLibraryType libraryType,
+			MsexId libraryId, List<byte> elementNumbers);
 
 		[CanBeNull]
 		CitpImage GetVideoSourceFrame(int sourceId, CitpImageRequest request);
 	}
+
 
 
 	[PublicAPI]

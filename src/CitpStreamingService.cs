@@ -43,7 +43,8 @@ namespace Imp.CitpSharp
 			{
 				foreach (var formatRequest in request.Formats)
 				{
-					if (Math.Abs(request.Fps) < float.Epsilon || DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
+					if (Math.Abs(request.Fps) < float.Epsilon
+					    || DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
 						break;
 
 					var imageRequest = new CitpImageRequest(request.FrameWidth, request.FrameHeight, formatRequest.FrameFormat, true,
@@ -101,7 +102,7 @@ namespace Imp.CitpSharp
 						packet.FrameBuffer = frame.Data;
 						await _networkService.SendMulticastPacketAsync(packet).ConfigureAwait(false);
 					}
-					
+
 					formatRequest.LastOutput = DateTime.Now;
 				}
 
@@ -118,8 +119,6 @@ namespace Imp.CitpSharp
 
 		private class SourceStreamRequest
 		{
-			private readonly HashSet<RequestFormat> _formats = new HashSet<RequestFormat>();
-
 			public SourceStreamRequest()
 			{
 				SourceIdentifier = -1;
@@ -136,10 +135,7 @@ namespace Imp.CitpSharp
 
 			public uint FrameCounter { get; set; }
 
-			public HashSet<RequestFormat> Formats
-			{
-				get { return _formats; }
-			}
+			public HashSet<RequestFormat> Formats { get; } = new HashSet<RequestFormat>();
 
 
 
@@ -156,8 +152,8 @@ namespace Imp.CitpSharp
 				Fps = Math.Max(Fps, packet.Fps);
 
 
-				var format = _formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat
-				                                           && r.IsVersion12 == (peerMsexVersion == MsexVersion.Version1_2));
+				var format = Formats.FirstOrDefault(r => r.FrameFormat == packet.FrameFormat
+				                                         && r.IsVersion12 == (peerMsexVersion == MsexVersion.Version1_2));
 
 				if (format != null)
 				{
@@ -172,7 +168,7 @@ namespace Imp.CitpSharp
 				}
 				else
 				{
-					_formats.Add(new RequestFormat(packet.FrameFormat, peerMsexVersion)
+					Formats.Add(new RequestFormat(packet.FrameFormat, peerMsexVersion)
 					{
 						LastOutput = DateTime.MinValue,
 						ExpireAt = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout)
@@ -182,10 +178,10 @@ namespace Imp.CitpSharp
 
 			public void RemoveTimedOutRequests()
 			{
-				foreach (var format in _formats.ToList())
+				foreach (var format in Formats.ToList())
 				{
 					if (DateTime.Now >= format.ExpireAt)
-						_formats.Remove(format);
+						Formats.Remove(format);
 				}
 			}
 
@@ -199,16 +195,13 @@ namespace Imp.CitpSharp
 					Version = version;
 				}
 
-				public MsexImageFormat FrameFormat { get; private set; }
-				public MsexVersion Version { get; private set; }
+				public MsexImageFormat FrameFormat { get; }
+				public MsexVersion Version { get; }
 
 				public DateTime LastOutput { get; set; }
 				public DateTime ExpireAt { get; set; }
 
-				public bool IsVersion12
-				{
-					get { return Version == MsexVersion.Version1_2; }
-				}
+				public bool IsVersion12 => Version == MsexVersion.Version1_2;
 
 				public bool Equals([CanBeNull] RequestFormat other)
 				{
@@ -225,7 +218,7 @@ namespace Imp.CitpSharp
 						return false;
 					if (ReferenceEquals(this, obj))
 						return true;
-					return obj.GetType() == this.GetType() && Equals((RequestFormat)obj);
+					return obj.GetType() == GetType() && Equals((RequestFormat)obj);
 				}
 
 				public override int GetHashCode()

@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,16 +59,14 @@ namespace Imp.CitpSharp
 
 		public int LocalTcpListenPort => _tcpListenService.ListenPort;
 
-		public IReadOnlyList<CitpPeer> Peers
-		{
-			get { return _peers; }
-		}
+		public IReadOnlyList<CitpPeer> Peers => _peers;
 
-		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue { get; } = new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
+		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue { get; } =
+			new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
 
-		public ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> FrameQueue { get; } = new ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>>();
+		public ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> FrameQueue { get; } =
+			new ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>>();
 
-		
 
 
 		public async Task<bool> StartAsync()
@@ -202,7 +185,7 @@ namespace Imp.CitpSharp
 			var peer = Peers.FirstOrDefault(p => e.Equals(p.RemoteEndPoint));
 
 			if (peer == null)
-				throw new InvalidOperationException(string.Format("Unregistered peer disconnected from TCP,  remote endpoint {0}", e));
+				throw new InvalidOperationException($"Unregistered peer disconnected from TCP,  remote endpoint {e}");
 
 			peer.SetDisconnected();
 			peer.LastUpdateReceived = DateTime.Now;
@@ -330,8 +313,8 @@ namespace Imp.CitpSharp
 		{
 			IRemoteCitpTcpClient client;
 
-			return _tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client) 
-				? client.SendAsync(data) 
+			return _tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client)
+				? client.SendAsync(data)
 				: Task.FromResult(false);
 		}
 

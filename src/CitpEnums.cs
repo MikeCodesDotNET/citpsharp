@@ -1,26 +1,10 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
-
 // ReSharper disable UnusedMember.Global
 
 namespace Imp.CitpSharp
@@ -32,12 +16,9 @@ namespace Imp.CitpSharp
 			Id = Encoding.UTF8.GetBytes(id.Substring(0, 4));
 		}
 
-		public byte[] Id { get; private set; }
+		public byte[] Id { get; }
 
-		public string IdString
-		{
-			get { return Encoding.UTF8.GetString(Id, 0, Id.Length); }
-		}
+		public string IdString => Encoding.UTF8.GetString(Id, 0, Id.Length);
 	}
 
 
@@ -200,8 +181,8 @@ namespace Imp.CitpSharp
 			MinorVersion = minorVersion;
 		}
 
-		public byte MajorVersion { get; private set; }
-		public byte MinorVersion { get; private set; }
+		public byte MajorVersion { get; }
+		public byte MinorVersion { get; }
 
 		public bool Equals([CanBeNull] CitpVersionAttribute other)
 		{
@@ -223,7 +204,7 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			return obj.GetType() == this.GetType() && Equals((CitpVersionAttribute)obj);
+			return obj.GetType() == GetType() && Equals((CitpVersionAttribute)obj);
 		}
 
 		public override int GetHashCode()

@@ -25,7 +25,8 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public struct CitpImageRequest : IEquatable<CitpImageRequest>
 	{
-		internal CitpImageRequest(int frameWidth, int frameHeight, MsexImageFormat format, bool isPreserveAspectRatio = false, bool isBgrOrder = false)
+		internal CitpImageRequest(int frameWidth, int frameHeight, MsexImageFormat format, bool isPreserveAspectRatio = false,
+			bool isBgrOrder = false)
 		{
 			FrameWidth = frameWidth;
 			FrameHeight = frameHeight;
@@ -39,13 +40,14 @@ namespace Imp.CitpSharp
 		public int FrameHeight { get; }
 		public MsexImageFormat Format { get; }
 		public bool IsPreserveAspectRatio { get; }
-		public bool IsBgrOrder { get; } 
+		public bool IsBgrOrder { get; }
 
 
 
 		public bool Equals(CitpImageRequest other)
 		{
-			return FrameWidth == other.FrameWidth && FrameHeight == other.FrameHeight && Format == other.Format && IsBgrOrder == other.IsBgrOrder;
+			return FrameWidth == other.FrameWidth && FrameHeight == other.FrameHeight && Format == other.Format
+			       && IsBgrOrder == other.IsBgrOrder;
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -79,10 +81,10 @@ namespace Imp.CitpSharp
 
 		public override string ToString()
 		{
-			return $"{FrameWidth} x {FrameHeight}" 
-				+ (IsPreserveAspectRatio ? " (Preserve Aspect)" : string.Empty) + 
-				", {Format}" 
-				+ (IsBgrOrder ? " BGR Order" : String.Empty);
+			return $"{FrameWidth} x {FrameHeight}"
+			       + (IsPreserveAspectRatio ? " (Preserve Aspect)" : string.Empty) +
+			       ", {Format}"
+			       + (IsBgrOrder ? " BGR Order" : string.Empty);
 		}
 	}
 }

@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -29,20 +14,15 @@ namespace Imp.CitpSharp.Packets
 		private static readonly int CitpHeaderLength = 20;
 		private static readonly int CitpContentTypePosition = 16;
 
-		private readonly CitpLayerType _layerType;
-
 
 		protected CitpPacket(CitpLayerType layerType)
 		{
-			_layerType = layerType;
+			LayerType = layerType;
 			MessagePart = 1;
 			MessagePartCount = 1;
 		}
 
-		public CitpLayerType LayerType
-		{
-			get { return _layerType; }
-		}
+		public CitpLayerType LayerType { get; }
 
 		public ushort RequestResponseIndex { get; set; }
 		public ushort MessagePartCount { get; set; }
@@ -58,7 +38,8 @@ namespace Imp.CitpSharp.Packets
 			{
 				var layerTypeArray = new byte[4];
 				Buffer.BlockCopy(data, CitpContentTypePosition, layerTypeArray, 0, 4);
-				throw new InvalidOperationException($"Unrecognised CITP content type: {Encoding.UTF8.GetString(layerTypeArray, 0, layerTypeArray.Length)}");
+				throw new InvalidOperationException(
+					$"Unrecognised CITP content type: {Encoding.UTF8.GetString(layerTypeArray, 0, layerTypeArray.Length)}");
 			}
 
 			switch (layerType)
@@ -71,7 +52,8 @@ namespace Imp.CitpSharp.Packets
 					{
 						var messageTypeArray = new byte[4];
 						Buffer.BlockCopy(data, CitpPinfPacket.CitpMessageTypePosition, messageTypeArray, 0, 4);
-						throw new InvalidOperationException($"Unrecognised PING message type: {Encoding.UTF8.GetString(messageTypeArray, 0, messageTypeArray.Length)}");
+						throw new InvalidOperationException(
+							$"Unrecognised PING message type: {Encoding.UTF8.GetString(messageTypeArray, 0, messageTypeArray.Length)}");
 					}
 
 					switch (messageType)
@@ -97,7 +79,8 @@ namespace Imp.CitpSharp.Packets
 					{
 						var messageTypeArray = new byte[4];
 						Buffer.BlockCopy(data, CitpMsexPacket.CitpMessageTypePosition, messageTypeArray, 0, 4);
-						throw new InvalidOperationException($"Unrecognised MSEX message type: {Encoding.UTF8.GetString(messageTypeArray, 0, messageTypeArray.Length)}");
+						throw new InvalidOperationException(
+							$"Unrecognised MSEX message type: {Encoding.UTF8.GetString(messageTypeArray, 0, messageTypeArray.Length)}");
 					}
 
 					switch (messageType)
@@ -282,18 +265,13 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 20;
 
-		private readonly PinfMessageType _messageType;
-
 		protected CitpPinfPacket(PinfMessageType messageType)
 			: base(CitpLayerType.PeerInformationLayer)
 		{
-			_messageType = messageType;
+			MessageType = messageType;
 		}
 
-		public PinfMessageType MessageType
-		{
-			get { return _messageType; }
-		}
+		public PinfMessageType MessageType { get; }
 
 		public static PinfMessageType? GetMessageType(byte[] data)
 		{
@@ -323,18 +301,13 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 20;
 
-		private readonly SdmxMessageType _messageType;
-
 		protected CitpSdmxPacket(SdmxMessageType messageType)
 			: base(CitpLayerType.SendDmxLayer)
 		{
-			_messageType = messageType;
+			MessageType = messageType;
 		}
 
-		public SdmxMessageType MessageType
-		{
-			get { return _messageType; }
-		}
+		public SdmxMessageType MessageType { get; }
 
 		public static SdmxMessageType? GetMessageType(byte[] data)
 		{
@@ -364,19 +337,14 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 22;
 
-		private readonly MsexMessageType _messageType;
-
 		protected CitpMsexPacket(MsexMessageType messageType)
 			: base(CitpLayerType.MediaServerExtensionsLayer)
 		{
 			Version = null;
-			_messageType = messageType;
+			MessageType = messageType;
 		}
 
-		public MsexMessageType MessageType
-		{
-			get { return _messageType; }
-		}
+		public MsexMessageType MessageType { get; }
 
 		public MsexVersion? Version { get; set; }
 

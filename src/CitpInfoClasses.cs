@@ -23,7 +23,9 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return Number == other.Number && Id.Equals(other.Id) && SerialNumber == other.SerialNumber && DmxRangeMin == other.DmxRangeMin && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name) && LibraryCount == other.LibraryCount && ElementCount == other.ElementCount;
+			return Number == other.Number && Id.Equals(other.Id) && SerialNumber == other.SerialNumber
+			       && DmxRangeMin == other.DmxRangeMin && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name)
+			       && LibraryCount == other.LibraryCount && ElementCount == other.ElementCount;
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -44,13 +46,14 @@ namespace Imp.CitpSharp
 				hashCode = (hashCode * 397) ^ (int)SerialNumber;
 				hashCode = (hashCode * 397) ^ DmxRangeMin.GetHashCode();
 				hashCode = (hashCode * 397) ^ DmxRangeMax.GetHashCode();
-				hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Name?.GetHashCode() ?? 0);
 				hashCode = (hashCode * 397) ^ LibraryCount.GetHashCode();
 				hashCode = (hashCode * 397) ^ ElementCount.GetHashCode();
 				return hashCode;
 			}
 		}
 	}
+
 
 
 	[PublicAPI]
@@ -71,12 +74,12 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return LibraryType == other.LibraryType 
-				&& LibraryNumber == other.LibraryNumber 
-				&& LibraryId.Equals(other.LibraryId) 
-				&& UpdateFlags == other.UpdateFlags 
-				&& SequenceComparison.SequenceEqual(AffectedElements, other.AffectedElements)
-				&& SequenceComparison.SequenceEqual(AffectedLibraries, other.AffectedLibraries);
+			return LibraryType == other.LibraryType
+			       && LibraryNumber == other.LibraryNumber
+			       && LibraryId.Equals(other.LibraryId)
+			       && UpdateFlags == other.UpdateFlags
+			       && SequenceComparison.SequenceEqual(AffectedElements, other.AffectedElements)
+			       && SequenceComparison.SequenceEqual(AffectedLibraries, other.AffectedLibraries);
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -96,8 +99,8 @@ namespace Imp.CitpSharp
 				hashCode = (hashCode * 397) ^ LibraryNumber.GetHashCode();
 				hashCode = (hashCode * 397) ^ LibraryId.GetHashCode();
 				hashCode = (hashCode * 397) ^ (int)UpdateFlags;
-				hashCode = (hashCode * 397) ^ (AffectedElements != null ? AffectedElements.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (AffectedLibraries != null ? AffectedLibraries.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (AffectedElements?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 397) ^ (AffectedLibraries?.GetHashCode() ?? 0);
 				return hashCode;
 			}
 		}
@@ -115,6 +118,7 @@ namespace Imp.CitpSharp
 			};
 		}
 	}
+
 
 
 	[PublicAPI]
@@ -144,9 +148,10 @@ namespace Imp.CitpSharp
 			       ^ SerialNumber.GetHashCode()
 			       ^ DmxRangeMin.GetHashCode()
 			       ^ DmxRangeMax.GetHashCode()
-			       ^ (Name != null ? Name.GetHashCode() : 0);
+			       ^ (Name?.GetHashCode() ?? 0);
 		}
 	}
+
 
 
 	[PublicAPI]
@@ -166,7 +171,9 @@ namespace Imp.CitpSharp
 			if (ReferenceEquals(this, other))
 				return true;
 
-			return base.Equals(other) && MediaVersionTimestamp.Equals(other.MediaVersionTimestamp) && MediaWidth == other.MediaWidth && MediaHeight == other.MediaHeight && MediaLength == other.MediaLength && MediaFps == other.MediaFps;
+			return base.Equals(other) && MediaVersionTimestamp.Equals(other.MediaVersionTimestamp)
+			       && MediaWidth == other.MediaWidth && MediaHeight == other.MediaHeight && MediaLength == other.MediaLength
+			       && MediaFps == other.MediaFps;
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -192,6 +199,7 @@ namespace Imp.CitpSharp
 			}
 		}
 	}
+
 
 
 	[PublicAPI]
@@ -222,10 +230,11 @@ namespace Imp.CitpSharp
 		{
 			unchecked
 			{
-				return (base.GetHashCode() * 397) ^ (EffectParameterNames != null ? EffectParameterNames.GetHashCode() : 0);
+				return (base.GetHashCode() * 397) ^ (EffectParameterNames?.GetHashCode() ?? 0);
 			}
 		}
 	}
+
 
 
 	[PublicAPI]
@@ -261,6 +270,7 @@ namespace Imp.CitpSharp
 	}
 
 
+
 	[PublicAPI]
 	public sealed class CitpVideoSourceInformation : IEquatable<CitpVideoSourceInformation>
 	{
@@ -281,7 +291,9 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return SourceIdentifier == other.SourceIdentifier && string.Equals(SourceName, other.SourceName) && PhysicalOutput == other.PhysicalOutput && LayerNumber == other.LayerNumber && Flags == other.Flags && Width == other.Width && Height == other.Height;
+			return SourceIdentifier == other.SourceIdentifier && string.Equals(SourceName, other.SourceName)
+			       && PhysicalOutput == other.PhysicalOutput && LayerNumber == other.LayerNumber && Flags == other.Flags
+			       && Width == other.Width && Height == other.Height;
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -298,7 +310,7 @@ namespace Imp.CitpSharp
 			unchecked
 			{
 				int hashCode = SourceIdentifier.GetHashCode();
-				hashCode = (hashCode * 397) ^ (SourceName != null ? SourceName.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (SourceName?.GetHashCode() ?? 0);
 				hashCode = (hashCode * 397) ^ PhysicalOutput.GetHashCode();
 				hashCode = (hashCode * 397) ^ LayerNumber.GetHashCode();
 				hashCode = (hashCode * 397) ^ (int)Flags;

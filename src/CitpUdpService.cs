@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Sockets;
@@ -79,7 +64,7 @@ namespace Imp.CitpSharp
 		private void messageReceived(object sender, UdpSocketMessageReceivedEventArgs e)
 		{
 			MessageReceived?.Invoke(this, new MessageReceivedEventArgs(
-				new IpEndpoint(IpAddress.Parse(e.RemoteAddress), int.Parse(e.RemotePort)), 
+				new IpEndpoint(IpAddress.Parse(e.RemoteAddress), int.Parse(e.RemotePort)),
 				e.ByteData));
 		}
 
@@ -89,9 +74,11 @@ namespace Imp.CitpSharp
 				return false;
 
 			await _client.SendMulticastAsync(data).ConfigureAwait(false);
-			
+
 			return true;
 		}
+
+
 
 		public class MessageReceivedEventArgs : EventArgs
 		{
@@ -105,8 +92,4 @@ namespace Imp.CitpSharp
 			public byte[] Data { get; }
 		}
 	}
-
-
-
-	
 }

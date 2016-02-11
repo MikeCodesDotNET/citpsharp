@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -78,7 +63,8 @@ namespace Imp.CitpSharp
 			return a.SequenceEqual(b);
 		}
 
-		public static bool SequenceEqual<T>([CanBeNull] IEnumerable<T> a, [CanBeNull] IEnumerable<T> b, IEqualityComparer<T> comparer)
+		public static bool SequenceEqual<T>([CanBeNull] IEnumerable<T> a, [CanBeNull] IEnumerable<T> b,
+			IEqualityComparer<T> comparer)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
@@ -100,7 +86,8 @@ namespace Imp.CitpSharp
 			return a.Count == b.Count && a.SequenceEqual(b);
 		}
 
-		public static bool SequenceEqual<T>([CanBeNull] ICollection<T> a, [CanBeNull] ICollection<T> b, IEqualityComparer<T> comparer)
+		public static bool SequenceEqual<T>([CanBeNull] ICollection<T> a, [CanBeNull] ICollection<T> b,
+			IEqualityComparer<T> comparer)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
@@ -111,6 +98,7 @@ namespace Imp.CitpSharp
 			return a.Count == b.Count && a.SequenceEqual(b, comparer);
 		}
 	}
+
 
 
 	[PublicAPI]
@@ -151,7 +139,7 @@ namespace Imp.CitpSharp
 		public CitpBinaryWriter(Stream output)
 			: base(output, Encoding.Unicode) { }
 
-		public override void Write(string value)
+		public override void Write([CanBeNull] string value)
 		{
 			Write(value, false);
 		}

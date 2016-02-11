@@ -65,7 +65,7 @@ namespace Imp.CitpSharp.Sockets
 
 		public bool IsMulticast => Byte1 >= MulticastRangeLower && Byte1 <= MulticastRangeUpper;
 
-		public bool IsLoopback => this.Equals(Loopback);
+		public bool IsLoopback => Equals(Loopback);
 
 		public override string ToString()
 		{

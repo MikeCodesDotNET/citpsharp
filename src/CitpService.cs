@@ -1,19 +1,4 @@
-﻿//  This file is part of CitpSharp.
-//
-//  CitpSharp is free software: you can redistribute it and/or modify
-//	it under the terms of the GNU Lesser General Public License as published by
-//	the Free Software Foundation, either version 3 of the License, or
-//	(at your option) any later version.
-
-//	CitpSharp is distributed in the hope that it will be useful,
-//	but WITHOUT ANY WARRANTY; without even the implied warranty of
-//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//	GNU Lesser General Public License for more details.
-
-//	You should have received a copy of the GNU Lesser General Public License
-//	along with CitpSharp.  If not, see <http://www.gnu.org/licenses/>.
-
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -206,7 +191,8 @@ namespace Imp.CitpSharp
 				LayerStatusFlags = l.LayerStatusFlags
 			});
 
-			return  _networkService.SendPacketToAllConnectedPeersAsync(new LayerStatusMessagePacket { LayerStatuses = layers.ToList() });
+			return
+				_networkService.SendPacketToAllConnectedPeersAsync(new LayerStatusMessagePacket {LayerStatuses = layers.ToList()});
 		}
 
 		private async Task sendElementLibraryUpdatedPacketsAsync()
@@ -259,8 +245,9 @@ namespace Imp.CitpSharp
 					{
 						LibraryNumber = requestPacket.LibraryNumber,
 						LibraryId = requestPacket.LibraryId,
-						Effects = _serverInfo.GetEffectElementInformation(new MsexId(requestPacket.LibraryId, requestPacket.LibraryNumber),
-							requestPacket.RequestedElementNumbers)
+						Effects =
+							_serverInfo.GetEffectElementInformation(new MsexId(requestPacket.LibraryId, requestPacket.LibraryNumber),
+								requestPacket.RequestedElementNumbers)
 					};
 
 
@@ -290,14 +277,15 @@ namespace Imp.CitpSharp
 		private async Task getElementLibraryThumbnailAsync(CitpPeer peer,
 			GetElementLibraryThumbnailMessagePacket requestPacket)
 		{
-			var msexIds = requestPacket.Version == MsexVersion.Version1_0 
-				? requestPacket.LibraryNumbers.Select(n => new MsexId(n)).ToList() 
+			var msexIds = requestPacket.Version == MsexVersion.Version1_0
+				? requestPacket.LibraryNumbers.Select(n => new MsexId(n)).ToList()
 				: requestPacket.LibraryIds.Select(i => new MsexId(i)).ToList();
 
-			var imageRequest = new CitpImageRequest(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight, requestPacket.ThumbnailFormat,
+			var imageRequest = new CitpImageRequest(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight,
+				requestPacket.ThumbnailFormat,
 				requestPacket.ThumbnailFlags.HasFlag(MsexThumbnailFlags.PreserveAspectRatio),
 				requestPacket.ThumbnailFormat == MsexImageFormat.Rgb8 && requestPacket.Version == MsexVersion.Version1_0);
-			
+
 			var thumbs = _serverInfo.GetElementLibraryThumbnails(imageRequest, requestPacket.LibraryType, msexIds);
 
 			var packets = thumbs.Select(t => new ElementLibraryThumbnailMessagePacket
@@ -328,25 +316,24 @@ namespace Imp.CitpSharp
 				msexId = new MsexId(requestPacket.LibraryId.Value);
 			}
 
-			var imageRequest = new CitpImageRequest(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight, requestPacket.ThumbnailFormat,
+			var imageRequest = new CitpImageRequest(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight,
+				requestPacket.ThumbnailFormat,
 				requestPacket.ThumbnailFlags.HasFlag(MsexThumbnailFlags.PreserveAspectRatio),
 				requestPacket.ThumbnailFormat == MsexImageFormat.Rgb8 && requestPacket.Version == MsexVersion.Version1_0);
 
-			var thumbs = _serverInfo.GetElementThumbnails(imageRequest, requestPacket.LibraryType, msexId, requestPacket.ElementNumbers);
+			var thumbs = _serverInfo.GetElementThumbnails(imageRequest, requestPacket.LibraryType, msexId,
+				requestPacket.ElementNumbers);
 
-			var packets = thumbs.Select(t =>
+			var packets = thumbs.Select(t => new ElementThumbnailMessagePacket
 			{
-				return new ElementThumbnailMessagePacket
-				{
-					LibraryType = requestPacket.LibraryType,
-					LibraryNumber = requestPacket.LibraryNumber,
-					LibraryId = requestPacket.LibraryId,
-					ElementNumber = t.Item1,
-					ThumbnailFormat = requestPacket.ThumbnailFormat,
-					ThumbnailWidth = (ushort)t.Item2.ActualWidth,
-					ThumbnailHeight = (ushort)t.Item2.ActualHeight,
-					ThumbnailBuffer = t.Item2.Data
-				};
+				LibraryType = requestPacket.LibraryType,
+				LibraryNumber = requestPacket.LibraryNumber,
+				LibraryId = requestPacket.LibraryId,
+				ElementNumber = t.Item1,
+				ThumbnailFormat = requestPacket.ThumbnailFormat,
+				ThumbnailWidth = (ushort)t.Item2.ActualWidth,
+				ThumbnailHeight = (ushort)t.Item2.ActualHeight,
+				ThumbnailBuffer = t.Item2.Data
 			});
 
 			foreach (var packet in packets)
@@ -356,7 +343,9 @@ namespace Imp.CitpSharp
 
 		private Task getVideoSourcesAsync(CitpPeer peer, GetVideoSourcesMessagePacket requestPacket)
 		{
-			return _networkService.SendPacketAsync(new VideoSourcesMessagePacket {Sources = _serverInfo.VideoSources.Values.ToList()}, peer);
+			return
+				_networkService.SendPacketAsync(new VideoSourcesMessagePacket {Sources = _serverInfo.VideoSources.Values.ToList()},
+					peer);
 		}
 	}
 }
