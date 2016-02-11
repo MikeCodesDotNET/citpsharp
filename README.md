@@ -1,6 +1,6 @@
-# CitpSharp
+![Alt text](/resources/header.png "CITP#")
 
-A PCL for implementing CITP (Controller Interface Transport Protocol) in any .Net project targeting Windows Store, Windows Desktop, Xamarin iOS/Android/Forms, Xamarin.Mac/MonoMac or Windows Phone 8/8.1. The protocol allows transfer of status information, image thumbnails and streaming video frames between media servers, lighting desks and visualizers.
+A PCL for implementing CITP (Controller Interface Transport Protocol) in any .Net project targeting Windows Desktop, Windows Store, Xamarin iOS/Android/Forms, Xamarin.Mac/MonoMac or Windows Phone 8/8.1. The protocol allows transfer of status information, image thumbnails and streaming video frames between media servers, lighting desks and visualizers.
 
 See http://www.citp-protocol.org/ for more information on CITP.
 
