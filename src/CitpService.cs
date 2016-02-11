@@ -143,11 +143,6 @@ namespace Imp.CitpSharp
 					_log.LogError("Failed to process message");
 					_log.LogException(ex);
 				}
-				catch (SocketException ex)
-				{
-					_log.LogError("Socket exception whilst processing message");
-					_log.LogException(ex);
-				}
 			}
 
 			_log.LogDebug("Finished processing messages");
