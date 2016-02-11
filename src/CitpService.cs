@@ -294,23 +294,21 @@ namespace Imp.CitpSharp
 				? requestPacket.LibraryNumbers.Select(n => new MsexId(n)).ToList() 
 				: requestPacket.LibraryIds.Select(i => new MsexId(i)).ToList();
 
-			var thumbs = _serverInfo.GetElementLibraryThumbnails(requestPacket.LibraryType, msexIds);
+			var imageRequest = new CitpImageRequest(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight, requestPacket.ThumbnailFormat,
+				requestPacket.ThumbnailFlags.HasFlag(MsexThumbnailFlags.PreserveAspectRatio),
+				requestPacket.ThumbnailFormat == MsexImageFormat.Rgb8 && requestPacket.Version == MsexVersion.Version1_0);
+			
+			var thumbs = _serverInfo.GetElementLibraryThumbnails(imageRequest, requestPacket.LibraryType, msexIds);
 
-			var packets = thumbs.Select(t =>
+			var packets = thumbs.Select(t => new ElementLibraryThumbnailMessagePacket
 			{
-				var resizedThumb = t.Item2.Resize(new Size(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight),
-					requestPacket.ThumbnailFlags.HasFlag(MsexThumbnailFlags.PreserveAspectRatio));
-
-				return new ElementLibraryThumbnailMessagePacket
-				{
-					LibraryType = requestPacket.LibraryType,
-					LibraryNumber = t.Item1.LibraryNumber.GetValueOrDefault(),
-					LibraryId = t.Item1.LibraryId.GetValueOrDefault(),
-					ThumbnailFormat = requestPacket.ThumbnailFormat,
-					ThumbnailWidth = (ushort)resizedThumb.Width,
-					ThumbnailHeight = (ushort)resizedThumb.Height,
-					ThumbnailBuffer = resizedThumb.ToByteArray(requestPacket.ThumbnailFormat, requestPacket.Version)
-				};
+				LibraryType = requestPacket.LibraryType,
+				LibraryNumber = t.Item1.LibraryNumber.GetValueOrDefault(),
+				LibraryId = t.Item1.LibraryId.GetValueOrDefault(),
+				ThumbnailFormat = requestPacket.ThumbnailFormat,
+				ThumbnailWidth = (ushort)t.Item2.ActualWidth,
+				ThumbnailHeight = (ushort)t.Item2.ActualHeight,
+				ThumbnailBuffer = t.Item2.Data,
 			});
 
 			foreach (var packet in packets)
@@ -330,13 +328,14 @@ namespace Imp.CitpSharp
 				msexId = new MsexId(requestPacket.LibraryId.Value);
 			}
 
-			var thumbs = _serverInfo.GetElementThumbnails(requestPacket.LibraryType, msexId, requestPacket.ElementNumbers);
+			var imageRequest = new CitpImageRequest(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight, requestPacket.ThumbnailFormat,
+				requestPacket.ThumbnailFlags.HasFlag(MsexThumbnailFlags.PreserveAspectRatio),
+				requestPacket.ThumbnailFormat == MsexImageFormat.Rgb8 && requestPacket.Version == MsexVersion.Version1_0);
+
+			var thumbs = _serverInfo.GetElementThumbnails(imageRequest, requestPacket.LibraryType, msexId, requestPacket.ElementNumbers);
 
 			var packets = thumbs.Select(t =>
 			{
-				var resizedThumb = t.Item2.Resize(new Size(requestPacket.ThumbnailWidth, requestPacket.ThumbnailHeight),
-					requestPacket.ThumbnailFlags.HasFlag(MsexThumbnailFlags.PreserveAspectRatio));
-
 				return new ElementThumbnailMessagePacket
 				{
 					LibraryType = requestPacket.LibraryType,
@@ -344,9 +343,9 @@ namespace Imp.CitpSharp
 					LibraryId = requestPacket.LibraryId,
 					ElementNumber = t.Item1,
 					ThumbnailFormat = requestPacket.ThumbnailFormat,
-					ThumbnailWidth = (ushort)resizedThumb.Width,
-					ThumbnailHeight = (ushort)resizedThumb.Height,
-					ThumbnailBuffer = resizedThumb.ToByteArray(requestPacket.ThumbnailFormat, requestPacket.Version)
+					ThumbnailWidth = (ushort)t.Item2.ActualWidth,
+					ThumbnailHeight = (ushort)t.Item2.ActualHeight,
+					ThumbnailBuffer = t.Item2.Data
 				};
 			});
 

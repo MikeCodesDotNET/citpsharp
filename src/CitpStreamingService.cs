@@ -41,39 +41,18 @@ namespace Imp.CitpSharp
 		{
 			foreach (var request in _streamRequests.Values.ToList())
 			{
-				CitpImage frame = null;
-
 				foreach (var formatRequest in request.Formats)
 				{
 					if (Math.Abs(request.Fps) < float.Epsilon || DateTime.Now < formatRequest.LastOutput + TimeSpan.FromSeconds(1.0f / request.Fps))
 						break;
 
+					var imageRequest = new CitpImageRequest(request.FrameWidth, request.FrameHeight, formatRequest.FrameFormat, true,
+						formatRequest.FrameFormat == MsexImageFormat.Rgb8 && formatRequest.Version == MsexVersion.Version1_0);
+
+					var frame = _serverInfo.GetVideoSourceFrame(request.SourceIdentifier, imageRequest);
+
 					if (frame == null)
-					{
-						frame = _serverInfo.GetVideoSourceFrame(request.SourceIdentifier, request.FrameWidth, request.FrameHeight);
-
-						if (frame == null)
-							break;
-					}
-
-					byte[] frameBuffer;
-
-					switch (formatRequest.FrameFormat)
-					{
-						case MsexImageFormat.Rgb8:
-							frameBuffer = frame.ToRgb8ByteArray(formatRequest.Version == MsexVersion.Version1_0);
-							break;
-						case MsexImageFormat.Jpeg:
-						case MsexImageFormat.FragmentedJpeg:
-							frameBuffer = frame.ToJpegByteArray();
-							break;
-						case MsexImageFormat.Png:
-						case MsexImageFormat.FragmentedPng:
-							frameBuffer = frame.ToPngByteArray();
-							break;
-						default:
-							throw new InvalidOperationException("Unknown image format type");
-					}
+						break;
 
 					var packet = new StreamFrameMessagePacket
 					{
@@ -81,15 +60,15 @@ namespace Imp.CitpSharp
 						MediaServerUuid = _serverInfo.Uuid,
 						SourceIdentifier = Convert.ToUInt16(request.SourceIdentifier),
 						FrameFormat = formatRequest.FrameFormat,
-						FrameWidth = Convert.ToUInt16(request.FrameWidth),
-						FrameHeight = Convert.ToUInt16(request.FrameHeight),
+						FrameWidth = Convert.ToUInt16(frame.ActualWidth),
+						FrameHeight = Convert.ToUInt16(frame.ActualHeight)
 					};
 
 
 					if (formatRequest.FrameFormat == MsexImageFormat.FragmentedJpeg
 					    || formatRequest.FrameFormat == MsexImageFormat.FragmentedPng)
 					{
-						var fragments = frameBuffer.Split(MaximumImageBufferSize);
+						var fragments = frame.Data.Split(MaximumImageBufferSize);
 
 						packet.FragmentInfo = new StreamFrameMessagePacket.FragmentPreamble()
 						{
@@ -113,13 +92,13 @@ namespace Imp.CitpSharp
 					}
 					else
 					{
-						if (frameBuffer.Length > MaximumImageBufferSize)
+						if (frame.Data.Length > MaximumImageBufferSize)
 						{
-							_log.LogWarning("Cannot send streaming frame, image buffer too large");
+							_log.LogWarning($"Cannot send streaming frame request '{imageRequest}', image buffer too large");
 							return;
 						}
 
-						packet.FrameBuffer = frameBuffer;
+						packet.FrameBuffer = frame.Data;
 						await _networkService.SendMulticastPacketAsync(packet).ConfigureAwait(false);
 					}
 					

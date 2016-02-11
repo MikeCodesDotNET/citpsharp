@@ -53,11 +53,11 @@ namespace Imp.CitpSharp
 		List<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId,
 			List<byte> elementNumbers);
 
-		List<Tuple<MsexId, CitpImage>> GetElementLibraryThumbnails(MsexLibraryType libraryType, List<MsexId> libraryIds);
-		List<Tuple<byte, CitpImage>> GetElementThumbnails(MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
+		List<Tuple<MsexId, CitpImage>> GetElementLibraryThumbnails(CitpImageRequest request, MsexLibraryType libraryType, List<MsexId> libraryIds);
+		List<Tuple<byte, CitpImage>> GetElementThumbnails(CitpImageRequest request, MsexLibraryType libraryType, MsexId libraryId, List<byte> elementNumbers);
 
 		[CanBeNull]
-		IEnumerable<CitpImage> GetVideoSourceFrame(int sourceId, IEnumerable<CitpImageRequest> requests);
+		CitpImage GetVideoSourceFrame(int sourceId, CitpImageRequest request);
 	}
 
 
