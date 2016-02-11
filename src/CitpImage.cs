@@ -6,8 +6,11 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public class CitpImage
 	{
-		public CitpImage(CitpImageRequest request, byte[] data, int actualWidth, int actualHeight)
+		public CitpImage(CitpImageRequest request, [NotNull] byte[] data, int actualWidth, int actualHeight)
 		{
+			if (data == null)
+				throw new ArgumentNullException(nameof(data));
+
 			Request = request;
 			Data = data;
 			ActualWidth = actualWidth;

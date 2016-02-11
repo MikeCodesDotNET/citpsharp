@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	[PublicAPI]
 	public interface ICitpMediaServerInfo
 	{
 		string PeerName { get; }

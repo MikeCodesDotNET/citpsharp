@@ -18,11 +18,11 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public interface ICitpLogService
 	{
-		void LogDebug(string message);
-		void LogInfo(string message);
-		void LogWarning(string message);
-		void LogError(string message);
-		void LogException(Exception ex);
+		void LogDebug([NotNull] string message);
+		void LogInfo([NotNull] string message);
+		void LogWarning([NotNull] string message);
+		void LogError([NotNull] string message);
+		void LogException([NotNull] Exception ex);
 	}
 
 

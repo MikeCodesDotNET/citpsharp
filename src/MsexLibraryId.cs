@@ -6,14 +6,17 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public struct MsexLibraryId : IEquatable<MsexLibraryId>
 	{
-		public byte Level { get; private set; }
-		public byte SubLevel1 { get; private set; }
-		public byte SubLevel2 { get; private set; }
-		public byte SubLevel3 { get; private set; }
+		public byte Level { get; }
+		public byte SubLevel1 { get; }
+		public byte SubLevel2 { get; }
+		public byte SubLevel3 { get; }
 
 		public MsexLibraryId(byte level, byte subLevel1 = 0, byte subLevel2 = 0, byte subLevel3 = 0)
 			: this()
 		{
+			if (level > 3)
+				throw new ArgumentOutOfRangeException(nameof(level), level, "level must be in range 0-3");
+
 			Level = level;
 			SubLevel1 = subLevel1;
 			SubLevel2 = subLevel2;
@@ -46,21 +49,18 @@ namespace Imp.CitpSharp
 		}
 
 
-		public static MsexLibraryId FromByteArray(byte[] array)
+		public static MsexLibraryId FromByteArray([NotNull] byte[] array)
 		{
+			if (array == null)
+				throw new ArgumentNullException(nameof(array));
+
 			if (array.Length != 4)
-				throw new InvalidOperationException("Array is incorrect length for library id.");
+				throw new ArgumentException("Array is incorrect length for library id.");
 
-			var id = new MsexLibraryId
-			{
-				Level = array[0],
-				SubLevel1 = array[1],
-				SubLevel2 = array[2],
-				SubLevel3 = array[3]
-			};
+			if (array[0] > 3)
+				throw new ArgumentException("Invalid MsexLibraryId, level must be in range 0-3");
 
-
-			return id;
+			return new MsexLibraryId(array[0], array[1], array[2], array[3]);
 		}
 
 		public override string ToString()
@@ -70,7 +70,7 @@ namespace Imp.CitpSharp
 
 		public byte[] ToByteArray()
 		{
-			return new[] {Level, SubLevel1, SubLevel2, SubLevel3};
+			return new[] { Level, SubLevel1, SubLevel2, SubLevel3 };
 		}
 
 

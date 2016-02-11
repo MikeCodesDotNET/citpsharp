@@ -7,9 +7,10 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public struct CitpDmxConnectionString : IEquatable<CitpDmxConnectionString>
 	{
-		public static CitpDmxConnectionString Parse(string s)
+		public static CitpDmxConnectionString Parse([NotNull] string s)
 		{
-			var dmxString = new CitpDmxConnectionString();
+			if (s == null)
+				throw new ArgumentNullException(nameof(s));
 
 			var tokens = s.Split('/');
 
@@ -18,33 +19,23 @@ namespace Imp.CitpSharp
 
 			try
 			{
-				dmxString.Protocol = (DmxProtocol)Enum.Parse(typeof(DmxProtocol), tokens[0]);
-
-				switch (dmxString.Protocol)
+				switch ((DmxProtocol)Enum.Parse(typeof(DmxProtocol), tokens[0]))
 				{
 					case DmxProtocol.ArtNet:
-						dmxString.Net = int.Parse(tokens[1]);
-						dmxString.Universe = int.Parse(tokens[2]);
-						dmxString.Channel = int.Parse(tokens[3]);
-						break;
+						return FromArtNet(int.Parse(tokens[1]), int.Parse(tokens[2]), int.Parse(tokens[3]));
+
 					case DmxProtocol.Bsre131:
-						dmxString.Universe = int.Parse(tokens[1]);
-						dmxString.Channel = int.Parse(tokens[2]);
-						break;
+						return FromBsre131(int.Parse(tokens[1]), int.Parse(tokens[2]));
+
 					case DmxProtocol.EtcNet2:
-						dmxString.Channel = int.Parse(tokens[1]);
-						break;
+						return FromEtcNet2(int.Parse(tokens[1]));
+
 					case DmxProtocol.MaNet:
-						dmxString.Type = int.Parse(tokens[1]);
-						dmxString.Universe = int.Parse(tokens[2]);
-						dmxString.Channel = int.Parse(tokens[3]);
-						break;
+						return FromMaNet(int.Parse(tokens[1]), int.Parse(tokens[2]), int.Parse(tokens[3]));
 
 					default:
 						throw new FormatException("Invalid DmxConnectionString");
 				}
-
-				return dmxString;
 			}
 			catch (FormatException ex)
 			{
@@ -96,13 +87,13 @@ namespace Imp.CitpSharp
 
 
 
-		public DmxProtocol Protocol { get; private set; }
+		public DmxProtocol Protocol { get; }
 
-		public int Net { get; private set; }
-		public int Type { get; private set; }
+		public int Net { get; }
+		public int Type { get; }
 
-		public int Universe { get; private set; }
-		public int Channel { get; private set; }
+		public int Universe { get; }
+		public int Channel { get; }
 
 
 		public override string ToString()

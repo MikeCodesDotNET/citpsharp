@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Sockets;
 using JetBrains.Annotations;
-using Sockets.Plugin.Abstractions;
 
 namespace Imp.CitpSharp
 {
@@ -25,18 +24,26 @@ namespace Imp.CitpSharp
 
 
 
-		public CitpService(string nicAddress,
-			bool useOriginalMulticastIp,
-			ICitpMediaServerInfo serverInfo, bool isStreamingEnabled,
+		public CitpService([NotNull] string nicIpAddress,
+			bool useOriginalMulticastIp, [NotNull] ICitpMediaServerInfo serverInfo, bool isStreamingEnabled,
 			ICitpLogService log = null)
 		{
+			if (nicIpAddress == null)
+				throw new ArgumentNullException(nameof(nicIpAddress));
+
+			if (serverInfo == null)
+				throw new ArgumentNullException(nameof(serverInfo));
+
 			_log = log ?? new CitpConsoleLogger(CitpLoggerLevel.Info);
 
 			_serverInfo = serverInfo;
 
-			var nicIp = IpAddress.Parse(nicAddress);
+			IpAddress ip;
 
-			_networkService = new CitpNetworkService(_log, nicIp, useOriginalMulticastIp, _serverInfo);
+			if (!IpAddress.TryParse(nicIpAddress, out ip))
+				throw new ArgumentException("Not a valid IPv4 address", nameof(nicIpAddress));
+
+			_networkService = new CitpNetworkService(_log, ip, useOriginalMulticastIp, _serverInfo);
 
 			IsStreamingEnabled = isStreamingEnabled;
 
@@ -47,7 +54,7 @@ namespace Imp.CitpSharp
 
 		public string Status { get; set; }
 
-		public bool IsStreamingEnabled { get; private set; }
+		public bool IsStreamingEnabled { get; }
 
 		public void Dispose()
 		{
@@ -148,7 +155,7 @@ namespace Imp.CitpSharp
 			_log.LogDebug("Finished processing messages");
 		}
 
-		public Task ProcessVideoStreamsAsync()
+		public Task ProcessStreamRequestsAsync()
 		{
 			return _streamingService.ProcessStreamRequestsAsync();
 		}
@@ -250,8 +257,7 @@ namespace Imp.CitpSharp
 					break;
 
 				default:
-					// There must be a library Id as generic elements are unsupported in MSEX V1.0
-					Debug.Assert(requestPacket.LibraryId.HasValue);
+					Debug.Assert(requestPacket.LibraryId.HasValue, "Generic elements are unsupported in MSEX V1.0");
 
 					var genericPacket = new GenericElementInformationMessagePacket
 					{
