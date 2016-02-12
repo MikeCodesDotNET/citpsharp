@@ -37,7 +37,7 @@ namespace Imp.CitpSharp
 
 		public void Dispose()
 		{
-			_listener.Dispose();
+			_listener.StopListeningAsync();
 		}
 
 
@@ -133,7 +133,7 @@ namespace Imp.CitpSharp
 				_log = log;
 				_client = client;
 				_cancellationToken = cancellationToken;
-				RemoteEndPoint = IpEndpoint.Parse(client.RemoteAddress);
+				RemoteEndPoint = new IpEndpoint(IpAddress.Parse(client.RemoteAddress), client.RemotePort);
 
 #pragma warning disable 4014
 				Task.Run(openStreamAsync).ConfigureAwait(false);
