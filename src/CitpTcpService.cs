@@ -83,6 +83,8 @@ namespace Imp.CitpSharp
 			Clients.TryAdd(citpClient.RemoteEndPoint, citpClient);
 
 			ClientConnected?.Invoke(this, citpClient);
+
+			citpClient.OpenStream();
 		}
 
 		private void clientDisconnected(object sender, EventArgs e)
@@ -134,12 +136,14 @@ namespace Imp.CitpSharp
 				_client = client;
 				_cancellationToken = cancellationToken;
 				RemoteEndPoint = new IpEndpoint(IpAddress.Parse(client.RemoteAddress), client.RemotePort);
+			}
 
+			public void OpenStream()
+			{
 #pragma warning disable 4014
 				Task.Run(openStreamAsync).ConfigureAwait(false);
 #pragma warning restore 4014
 			}
-
 
 
 			public event EventHandler Disconnected;

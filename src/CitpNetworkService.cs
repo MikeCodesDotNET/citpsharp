@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
@@ -217,6 +218,15 @@ namespace Imp.CitpSharp
 			// It should be impossible for a TCP packet to be received from an unknown peer,
 			// as the peer information should be recorded upon TCP connection
 			var peer = _peers.First(p => e.Endpoint == p.RemoteEndPoint);
+
+			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
+			{
+				var packetVersion = ((MsexPacket)packet).Version;
+				Debug.Assert(packetVersion.HasValue, "Because we should not be able to deserialize a packet without finding the version");
+
+				if (!peer.MsexVersion.HasValue || peer.MsexVersion < packetVersion)
+					peer.MsexVersion = packetVersion;
+			}
 
 			if (packet is PeerNameMessagePacket)
 				receivedPeerNameMessage((PeerNameMessagePacket)packet, peer);
