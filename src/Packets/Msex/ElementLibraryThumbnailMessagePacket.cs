@@ -32,6 +32,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					writer.Write(ThumbnailWidth);
 					writer.Write(ThumbnailHeight);
 					writer.Write((ushort)ThumbnailBuffer.Length);
+					writer.Write(ThumbnailBuffer);
 					break;
 
 				case MsexVersion.Version1_1:
@@ -48,6 +49,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					writer.Write(ThumbnailWidth);
 					writer.Write(ThumbnailHeight);
 					writer.Write((ushort)ThumbnailBuffer.Length);
+					writer.Write(ThumbnailBuffer);
 					break;
 			}
 		}
