@@ -6,15 +6,6 @@ namespace Imp.CitpSharp
 {
 	internal class CitpPeer : IEquatable<CitpPeer>
 	{
-		public DateTime LastUpdateReceived;
-		public Guid? MediaServerUuid;
-		public MsexVersion? MsexVersion;
-
-		public string Name;
-		public string State;
-
-		public CitpPeerType Type;
-
 		public CitpPeer(IpAddress ip, string name)
 		{
 			Ip = ip;
@@ -31,6 +22,15 @@ namespace Imp.CitpSharp
 			LastUpdateReceived = DateTime.Now;
 		}
 
+		public DateTime LastUpdateReceived { get; set; }
+		public Guid? MediaServerUuid { get; set; }
+		public MsexVersion? MsexVersion { get; set; }
+
+		public string Name { get; set; }
+		public string State { get; set; }
+
+		public CitpPeerType Type { get; set; }
+
 		public IpAddress Ip { get; }
 		public int? RemoteTcpPort { get; private set; }
 		public int? ListeningTcpPort { get; private set; }
@@ -44,11 +44,10 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return string.Equals(Name, other.Name) && Type == other.Type && string.Equals(State, other.State)
-			       && LastUpdateReceived.Equals(other.LastUpdateReceived) && MsexVersion == other.MsexVersion
-			       && MediaServerUuid.Equals(other.MediaServerUuid) && Equals(Ip, other.Ip)
-			       && RemoteTcpPort == other.RemoteTcpPort && ListeningTcpPort == other.ListeningTcpPort
-			       && IsConnected == other.IsConnected;
+			return LastUpdateReceived.Equals(other.LastUpdateReceived) && MediaServerUuid.Equals(other.MediaServerUuid)
+			       && MsexVersion == other.MsexVersion && string.Equals(Name, other.Name) && string.Equals(State, other.State)
+			       && Type == other.Type && Ip.Equals(other.Ip) && RemoteTcpPort == other.RemoteTcpPort
+			       && ListeningTcpPort == other.ListeningTcpPort && IsConnected == other.IsConnected;
 		}
 
 		public void SetConnected(int remoteTcpPort)
@@ -68,19 +67,21 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			return obj.GetType() == GetType() && Equals((CitpPeer)obj);
+			if (obj.GetType() != GetType())
+				return false;
+			return Equals((CitpPeer)obj);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				int hashCode = Name?.GetHashCode() ?? 0;
-				hashCode = (hashCode * 397) ^ (int)Type;
-				hashCode = (hashCode * 397) ^ (State?.GetHashCode() ?? 0);
-				hashCode = (hashCode * 397) ^ LastUpdateReceived.GetHashCode();
-				hashCode = (hashCode * 397) ^ MsexVersion.GetHashCode();
+				int hashCode = LastUpdateReceived.GetHashCode();
 				hashCode = (hashCode * 397) ^ MediaServerUuid.GetHashCode();
+				hashCode = (hashCode * 397) ^ MsexVersion.GetHashCode();
+				hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (State != null ? State.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (int)Type;
 				hashCode = (hashCode * 397) ^ Ip.GetHashCode();
 				hashCode = (hashCode * 397) ^ RemoteTcpPort.GetHashCode();
 				hashCode = (hashCode * 397) ^ ListeningTcpPort.GetHashCode();

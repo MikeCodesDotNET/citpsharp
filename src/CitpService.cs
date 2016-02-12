@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets.Pinf;
 using Imp.CitpSharp.Sockets;
 using JetBrains.Annotations;
 
@@ -101,7 +103,7 @@ namespace Imp.CitpSharp
 				{
 					if (message.Item2.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 					{
-						var msexPacket = message.Item2 as CitpMsexPacket;
+						var msexPacket = message.Item2 as MsexPacket;
 
 						if (message.Item1.MsexVersion.HasValue == false)
 						{

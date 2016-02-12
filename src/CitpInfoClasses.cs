@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Packets.Msex;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp

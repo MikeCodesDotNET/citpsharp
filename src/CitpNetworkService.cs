@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
+using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets.Pinf;
 using Imp.CitpSharp.Sockets;
 
 namespace Imp.CitpSharp
@@ -97,7 +99,7 @@ namespace Imp.CitpSharp
 
 			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 			{
-				var msexPacket = (CitpMsexPacket)packet;
+				var msexPacket = (MsexPacket)packet;
 
 				if (peer.MsexVersion.HasValue == false)
 					throw new InvalidOperationException("Peer MSEX version is unknown");
@@ -109,7 +111,7 @@ namespace Imp.CitpSharp
 				}
 				else
 				{
-					((CitpMsexPacket)packet).Version = peer.MsexVersion;
+					((MsexPacket)packet).Version = peer.MsexVersion;
 				}
 			}
 
@@ -124,7 +126,7 @@ namespace Imp.CitpSharp
 			// run this special routine to avoid serializing the packet more than once for each version.
 			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 			{
-				var msexPacket = (CitpMsexPacket)packet;
+				var msexPacket = (MsexPacket)packet;
 
 				if (msexPacket.Version.HasValue == false)
 				{
@@ -169,7 +171,7 @@ namespace Imp.CitpSharp
 
 		private async void tcpListenService_ClientConnect(object sender, IRemoteCitpTcpClient e)
 		{
-			var peer = _peers.FirstOrDefault(p => e.RemoteEndPoint.Address.Equals(p.Ip));
+			var peer = _peers.FirstOrDefault(p => e.RemoteEndPoint.Address == p.Ip);
 
 			if (peer != null)
 				peer.SetConnected(e.RemoteEndPoint.Port);
@@ -212,19 +214,13 @@ namespace Imp.CitpSharp
 				return;
 			}
 
+			// It should be impossible for a TCP packet to be received from an unknown peer,
+			// as the peer information should be recorded upon TCP connection
+			var peer = _peers.First(p => e.Endpoint == p.RemoteEndPoint);
+
 			if (packet is PeerNameMessagePacket)
-			{
-				receivedPeerNameMessage((PeerNameMessagePacket)packet, e.Endpoint);
-				return;
-			}
-
-			var peer = _peers.FirstOrDefault(p => e.Endpoint == p.RemoteEndPoint);
-
-			if (peer == null)
-				throw new InvalidOperationException("Message received via TCP from unrecognized peer.");
-
-
-			if (packet is ClientInformationMessagePacket)
+				receivedPeerNameMessage((PeerNameMessagePacket)packet, peer);
+			else if (packet is ClientInformationMessagePacket)
 				await receivedClientInformationMessageAsync((ClientInformationMessagePacket)packet, peer).ConfigureAwait(false);
 			else
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
@@ -259,16 +255,8 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		private void receivedPeerNameMessage(PeerNameMessagePacket message, IpEndpoint remoteEndPoint)
+		private void receivedPeerNameMessage(PeerNameMessagePacket message, CitpPeer peer)
 		{
-			var peer = _peers.FirstOrDefault(p => remoteEndPoint.Address.Equals(p.Ip));
-
-			if (peer == null)
-			{
-				peer = new CitpPeer(remoteEndPoint.Address, message.Name);
-				_peers.Add(peer);
-			}
-
 			peer.Name = message.Name;
 			peer.LastUpdateReceived = DateTime.Now;
 		}
@@ -276,8 +264,7 @@ namespace Imp.CitpSharp
 		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IpAddress remoteIp)
 		{
 			// Filter out the local CITP peer
-			if (remoteIp.Equals(_nicAddress) && message.Name == _serverInfo.PeerName
-			    && message.ListeningTcpPort == LocalTcpListenPort)
+			if (remoteIp == _nicAddress && message.Name == _serverInfo.PeerName && message.ListeningTcpPort == LocalTcpListenPort)
 				return;
 
 			var peer = Peers.FirstOrDefault(p => p.Ip.Equals(remoteIp) && p.Name == message.Name);
