@@ -101,39 +101,6 @@ namespace Imp.CitpSharp
 
 
 
-	[PublicAPI]
-	public struct MsexId
-	{
-		public MsexId(MsexLibraryId? libraryId, byte libraryNumber)
-		{
-			LibraryId = libraryId;
-			LibraryNumber = libraryNumber;
-		}
-
-		public MsexId(MsexLibraryId? libraryId, int libraryNumber)
-			: this(libraryId, (byte)libraryNumber) { }
-
-		public MsexId(MsexLibraryId libraryId)
-		{
-			LibraryId = libraryId;
-			LibraryNumber = null;
-		}
-
-		public MsexId(byte libraryNumber)
-		{
-			LibraryNumber = libraryNumber;
-			LibraryId = null;
-		}
-
-		public MsexId(int libraryNumber)
-			: this((byte)libraryNumber) { }
-
-		public MsexLibraryId? LibraryId;
-		public byte? LibraryNumber;
-	}
-
-
-
 	internal class CitpBinaryWriter : BinaryWriter
 	{
 		public CitpBinaryWriter(Stream output)

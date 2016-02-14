@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	/// <summary>
+	/// Represents a unique position in an MSEX element library.
+	/// </summary>
 	[PublicAPI]
-	public struct MsexLibraryId : IEquatable<MsexLibraryId>
+	public struct MsexLibraryId : IEquatable<MsexLibraryId>, IComparable<MsexLibraryId>
 	{
 		public byte Level { get; }
 		public byte SubLevel1 { get; }
@@ -21,6 +25,11 @@ namespace Imp.CitpSharp
 			SubLevel1 = subLevel1;
 			SubLevel2 = subLevel2;
 			SubLevel3 = subLevel3;
+		}
+
+		public int CompareTo(MsexLibraryId other)
+		{
+			throw new NotImplementedException();
 		}
 
 		public bool Equals(MsexLibraryId other)
@@ -82,6 +91,91 @@ namespace Imp.CitpSharp
 		public static bool operator !=(MsexLibraryId a, MsexLibraryId b)
 		{
 			return !a.Equals(b);
+		}
+	}
+
+	/// <summary>
+	/// Value representing either a byte indicating a library number (MSEX 1.0) or a <see cref="MsexLibraryId"/> (MSEX 1.1+)
+	/// </summary>
+	[PublicAPI]
+	public struct MsexId : IEquatable<MsexId>, IComparable<MsexId>
+	{
+		internal MsexId(MsexLibraryId? libraryId, byte? libraryNumber)
+		{
+			LibraryId = libraryId;
+			LibraryNumber = libraryNumber;
+		}
+
+		public MsexId(MsexLibraryId libraryId)
+		{
+			LibraryId = libraryId;
+			LibraryNumber = null;
+		}
+
+		public MsexId(byte libraryNumber)
+		{
+			LibraryNumber = libraryNumber;
+			LibraryId = null;
+		}
+
+		public MsexId(int libraryNumber)
+			: this((byte)libraryNumber)
+		{ }
+
+
+		public MsexLibraryId? LibraryId { get; }
+		public byte? LibraryNumber { get; }
+
+		public bool IsVersion10 => LibraryNumber.HasValue;
+
+
+
+		public int CompareTo(MsexId other)
+		{
+			if (IsVersion10 && !other.IsVersion10)
+				return -1;
+
+			if (!IsVersion10 && other.IsVersion10)
+				return 1;
+
+			if (IsVersion10 && other.IsVersion10)
+			{
+				Debug.Assert(LibraryNumber.HasValue && other.LibraryNumber.HasValue);
+				return LibraryNumber.Value.CompareTo(other.LibraryNumber.Value);
+			}
+
+			Debug.Assert(LibraryId.HasValue && other.LibraryId.HasValue);
+			return LibraryId.Value.CompareTo(other.LibraryId.Value);
+		}
+
+		public bool Equals(MsexId other)
+		{
+			return LibraryId.Equals(other.LibraryId) && LibraryNumber == other.LibraryNumber;
+		}
+
+		public override bool Equals([CanBeNull] object obj)
+		{
+			if (ReferenceEquals(null, obj))
+				return false;
+			return obj is MsexId && Equals((MsexId)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (LibraryId.GetHashCode() * 397) ^ LibraryNumber.GetHashCode();
+			}
+		}
+
+		public static bool operator ==(MsexId left, MsexId right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(MsexId left, MsexId right)
+		{
+			return !left.Equals(right);
 		}
 	}
 }

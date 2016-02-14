@@ -23,7 +23,7 @@ namespace Imp.CitpSharp
 		private readonly IpAddress _nicAddress;
 
 		private readonly List<CitpPeer> _peers = new List<CitpPeer>();
-		private readonly ICitpMediaServerInfo _serverInfo;
+		private readonly ICitpMediaServer _server;
 
 		private readonly CitpTcpService _tcpListenService;
 		private readonly CitpUdpService _udpService;
@@ -46,10 +46,10 @@ namespace Imp.CitpSharp
 
 
 		public CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp,
-			ICitpMediaServerInfo serverInfo)
+			ICitpMediaServer server)
 			: this(log, nicAddress, useOriginalMulticastIp)
 		{
-			_serverInfo = serverInfo;
+			_server = server;
 		}
 
 		public void Dispose()
@@ -274,7 +274,7 @@ namespace Imp.CitpSharp
 		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IpAddress remoteIp)
 		{
 			// Filter out the local CITP peer
-			if (remoteIp == _nicAddress && message.Name == _serverInfo.PeerName && message.ListeningTcpPort == LocalTcpListenPort)
+			if (remoteIp == _nicAddress && message.Name == _server.PeerName && message.ListeningTcpPort == LocalTcpListenPort)
 				return;
 
 			var peer = Peers.FirstOrDefault(p => p.Ip.Equals(remoteIp) && p.Name == message.Name);
@@ -319,7 +319,7 @@ namespace Imp.CitpSharp
 		{
 			return new PeerNameMessagePacket
 			{
-				Name = _serverInfo.PeerName
+				Name = _server.PeerName
 			};
 		}
 
@@ -328,16 +328,16 @@ namespace Imp.CitpSharp
 			return new ServerInformationMessagePacket
 			{
 				Version = version,
-				Uuid = _serverInfo.Uuid,
-				ProductName = _serverInfo.ProductName,
-				ProductVersionMajor = Convert.ToByte(_serverInfo.ProductVersionMajor),
-				ProductVersionMinor = Convert.ToByte(_serverInfo.ProductVersionMinor),
-				ProductVersionBugfix = Convert.ToByte(_serverInfo.ProductVersionBugfix),
-				SupportedMsexVersions = _serverInfo.SupportedMsexVersions.ToList(),
-				SupportedLibraryTypes = _serverInfo.SupportedLibraryTypes.ToList(),
-				ThumbnailFormats = _serverInfo.SupportedThumbnailFormats.ToList(),
-				StreamFormats = _serverInfo.SupportedStreamFormats.ToList(),
-				LayerDmxSources = _serverInfo.Layers.Select(l => l.DmxSource).ToList()
+				Uuid = _server.Uuid,
+				ProductName = _server.ProductName,
+				ProductVersionMajor = Convert.ToByte(_server.ProductVersionMajor),
+				ProductVersionMinor = Convert.ToByte(_server.ProductVersionMinor),
+				ProductVersionBugfix = Convert.ToByte(_server.ProductVersionBugfix),
+				SupportedMsexVersions = _server.SupportedMsexVersions.ToList(),
+				SupportedLibraryTypes = _server.SupportedLibraryTypes.ToList(),
+				ThumbnailFormats = _server.SupportedThumbnailFormats.ToList(),
+				StreamFormats = _server.SupportedStreamFormats.ToList(),
+				LayerDmxSources = _server.Layers.Select(l => l.DmxSource).ToList()
 			};
 		}
 	}

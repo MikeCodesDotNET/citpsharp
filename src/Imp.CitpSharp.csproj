@@ -49,7 +49,7 @@
     <Compile Include="CitpTcpService.cs" />
     <Compile Include="CitpUdpService.cs" />
     <Compile Include="ICitpLogService.cs" />
-    <Compile Include="ICitpMediaServerInfo.cs" />
+    <Compile Include="ICitpMediaServer.cs" />
     <Compile Include="MsexLibraryId.cs" />
     <Compile Include="Packets\CitpPacket.cs" />
     <Compile Include="Packets\PinfPacket.cs" />

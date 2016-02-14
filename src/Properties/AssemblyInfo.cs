@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
+
 [assembly: AssemblyTitle("Imp.CitpSharp")]
 [assembly:
 	AssemblyDescription(
@@ -8,10 +9,8 @@ using System.Runtime.CompilerServices;
 		)]
 
 #if DEBUG
-
 [assembly: AssemblyConfiguration("Debug")]
 #else
-
 [assembly: AssemblyConfiguration("Release")]
 #endif
 

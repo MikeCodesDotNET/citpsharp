@@ -221,6 +221,7 @@ namespace Imp.CitpSharp
 
 
 
+	[PublicAPI]
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	public enum MsexVersion
 	{
@@ -246,7 +247,7 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	[PublicAPI]
 	public enum MsexImageFormat : uint
 	{
 		[CitpId("RGB8")] Rgb8,
@@ -257,7 +258,7 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	[PublicAPI]
 	[Flags]
 	public enum MsexLayerStatusFlags : uint
 	{
@@ -271,7 +272,7 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	[PublicAPI]
 	[Flags]
 	public enum MsexElementLibraryUpdatedFlags : byte
 	{
@@ -283,7 +284,7 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	[PublicAPI]
 	[Flags]
 	public enum MsexThumbnailFlags : byte
 	{
@@ -292,7 +293,7 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	[PublicAPI]
 	[Flags]
 	public enum MsexVideoSourcesFlags : ushort
 	{
