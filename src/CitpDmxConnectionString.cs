@@ -26,10 +26,36 @@ namespace Imp.CitpSharp
 			if (s == null)
 				throw new ArgumentNullException(nameof(s));
 
+			var result = TryParse(s);
+
+			if (!result.HasValue)
+				throw new FormatException("String is not a valid CITP DmxConnectionString");
+
+			return result.Value;
+		}
+
+		public static bool TryParse([CanBeNull] string s, out CitpDmxConnectionString value)
+		{
+			value = default(CitpDmxConnectionString);
+
+			var result = TryParse(s);
+
+			if (!result.HasValue)
+				return false;
+
+			value = result.Value;
+			return true;
+		}
+
+		public static CitpDmxConnectionString? TryParse([CanBeNull] string s)
+		{
+			if (s == null)
+				return null;
+
 			var match = _dmxConnectionStringRegex.Match(s);
 
 			if (!match.Success)
-				throw new FormatException("String is not a valid CITP DmxConnectionString");
+				return null;
 
 			const int indexProtocol = 1;
 			const int indexNet = 2;
@@ -46,30 +72,32 @@ namespace Imp.CitpSharp
 			switch (match.Groups[indexProtocol].Captures[0].Value)
 			{
 				case ProtocolNameArtNet:
-					return FromArtNet(int.Parse(match.Groups[indexNet].Captures[0].Value), 
-						int.Parse(match.Groups[indexUniverse].Captures[0].Value), 
-						int.Parse(match.Groups[indexChannel].Captures[0].Value), 
+					return FromArtNet(int.Parse(match.Groups[indexNet].Captures[0].Value),
+						int.Parse(match.Groups[indexUniverse].Captures[0].Value),
+						int.Parse(match.Groups[indexChannel].Captures[0].Value),
 						personalityId);
 
 				case ProtocolNameBsre131:
-					return FromBsre131(int.Parse(match.Groups[indexUniverse].Captures[0].Value), 
-						int.Parse(match.Groups[indexChannel].Captures[0].Value), 
+					return FromBsre131(int.Parse(match.Groups[indexUniverse].Captures[0].Value),
+						int.Parse(match.Groups[indexChannel].Captures[0].Value),
 						personalityId);
 
 				case ProtocolNameEtcNet2:
-					return FromEtcNet2(int.Parse(match.Groups[indexChannel].Captures[0].Value), 
+					return FromEtcNet2(int.Parse(match.Groups[indexChannel].Captures[0].Value),
 						personalityId);
 
 				case ProtocolNameMaNet:
 					return FromMaNet(int.Parse(match.Groups[indexType].Captures[0].Value),
-						int.Parse(match.Groups[indexUniverse].Captures[0].Value), 
-						int.Parse(match.Groups[indexChannel].Captures[0].Value), 
+						int.Parse(match.Groups[indexUniverse].Captures[0].Value),
+						int.Parse(match.Groups[indexChannel].Captures[0].Value),
 						personalityId);
 
 				default:
-					throw new FormatException("String is not a valid CITP DmxConnectionString");
+					return null;
 			}
 		}
+
+
 
 		public static CitpDmxConnectionString FromArtNet(int net, int universe, int channel, Guid? personalityId = null)
 		{
