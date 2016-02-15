@@ -136,6 +136,7 @@ namespace Imp.CitpSharp
 
 		public enum DmxProtocol
 		{
+			None = 0,
 			ArtNet,
 			Bsre131,
 			EtcNet2,

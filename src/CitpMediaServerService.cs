@@ -36,7 +36,7 @@ namespace Imp.CitpSharp
 			if (device == null)
 				throw new ArgumentNullException(nameof(device));
 
-			_log = log ?? new CitpConsoleLogger(CitpLoggerLevel.Info);
+			_log = log ?? new CitpDebugLogger(CitpLoggerLevel.Info);
 
 			_device = device;
 
@@ -78,8 +78,6 @@ namespace Imp.CitpSharp
 		/// </summary>
 		public async Task SendAndReceiveMessagesAsync()
 		{
-			_log.LogDebug("Started processing messages");
-
 			if ((DateTime.Now - _peerLocationMessageLastSent).TotalMilliseconds >= CitpPlocFrequency)
 			{
 				await sendPeerLocationPacketAsync().ConfigureAwait(false);
@@ -137,8 +135,6 @@ namespace Imp.CitpSharp
 					_log.LogException(ex);
 				}
 			}
-
-			_log.LogDebug("Finished processing messages");
 		}
 
 		public Task ProcessStreamRequestsAsync()
@@ -205,7 +201,7 @@ namespace Imp.CitpSharp
 				Elements = libraries.ToList()
 			};
 
-			return _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
+			return _networkService.SendPacketAsync(packet, peer, requestPacket);
 		}
 
 		private Task getElementInformationAsync(CitpPeer peer, GetElementInformationMessagePacket requestPacket)
@@ -257,7 +253,7 @@ namespace Imp.CitpSharp
 					break;
 			}
 
-			return _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex);
+			return _networkService.SendPacketAsync(packet, peer, requestPacket);
 		}
 
 		private async Task getElementLibraryThumbnailAsync(CitpPeer peer,
@@ -286,7 +282,7 @@ namespace Imp.CitpSharp
 			});
 
 			foreach (var packet in packets)
-				await _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex).ConfigureAwait(false);
+				await _networkService.SendPacketAsync(packet, peer, requestPacket).ConfigureAwait(false);
 		}
 
 		private async Task getElementThumbnailAsync(CitpPeer peer, GetElementThumbnailMessagePacket requestPacket)
@@ -323,15 +319,14 @@ namespace Imp.CitpSharp
 			});
 
 			foreach (var packet in packets)
-				await _networkService.SendPacketAsync(packet, peer, requestPacket.RequestResponseIndex).ConfigureAwait(false);
+				await _networkService.SendPacketAsync(packet, peer, requestPacket).ConfigureAwait(false);
 		}
 
 
 		private Task getVideoSourcesAsync(CitpPeer peer, GetVideoSourcesMessagePacket requestPacket)
 		{
 			return
-				_networkService.SendPacketAsync(new VideoSourcesMessagePacket {Sources = _device.VideoSources.Values.ToList()},
-					peer);
+				_networkService.SendPacketAsync(new VideoSourcesMessagePacket { Sources = _device.VideoSources.Values.ToList() }, peer, requestPacket);
 		}
 	}
 }

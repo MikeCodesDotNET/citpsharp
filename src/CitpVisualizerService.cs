@@ -35,7 +35,7 @@ namespace Imp.CitpSharp
 			if (device == null)
 				throw new ArgumentNullException(nameof(device));
 
-			_log = log ?? new CitpConsoleLogger(CitpLoggerLevel.Info);
+			_log = log ?? new CitpDebugLogger(CitpLoggerLevel.Info);
 
 			_device = device;
 
@@ -123,7 +123,7 @@ namespace Imp.CitpSharp
 		{
 			return
 				_networkService.SendPacketAsync(new VideoSourcesMessagePacket {Sources = _device.VideoSources.Values.ToList()},
-					peer);
+					peer, requestPacket);
 		}
 	}
 }

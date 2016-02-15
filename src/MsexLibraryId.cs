@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	/// Represents a unique position in an MSEX element library.
+	///     Represents a unique position in an MSEX element library.
 	/// </summary>
 	[PublicAPI]
 	public struct MsexLibraryId : IEquatable<MsexLibraryId>, IComparable<MsexLibraryId>
@@ -79,7 +79,7 @@ namespace Imp.CitpSharp
 
 		public byte[] ToByteArray()
 		{
-			return new[] { Level, SubLevel1, SubLevel2, SubLevel3 };
+			return new[] {Level, SubLevel1, SubLevel2, SubLevel3};
 		}
 
 
@@ -94,33 +94,35 @@ namespace Imp.CitpSharp
 		}
 	}
 
+
+
 	/// <summary>
-	/// Value representing either a byte indicating a library number (MSEX 1.0) or a <see cref="MsexLibraryId"/> (MSEX 1.1+)
+	///     Value representing either a byte indicating a library number (MSEX 1.0) or a <see cref="MsexLibraryId" /> (MSEX
+	///     1.1+)
 	/// </summary>
 	[PublicAPI]
 	public struct MsexId : IEquatable<MsexId>, IComparable<MsexId>
 	{
-		internal MsexId(MsexLibraryId? libraryId, byte? libraryNumber)
+		public MsexId(MsexLibraryId? libraryId, byte? libraryNumber)
 		{
+			if (libraryId == null && libraryNumber == null)
+				throw new ArgumentException("Cannot create an MsexId where both values are null");
+
 			LibraryId = libraryId;
 			LibraryNumber = libraryNumber;
 		}
+
+		public MsexId(MsexLibraryId? libraryId, int? libraryNumber)
+			: this(libraryId, (byte?)libraryNumber) { }
 
 		public MsexId(MsexLibraryId libraryId)
-		{
-			LibraryId = libraryId;
-			LibraryNumber = null;
-		}
+			: this(libraryId, null) { }
 
 		public MsexId(byte libraryNumber)
-		{
-			LibraryNumber = libraryNumber;
-			LibraryId = null;
-		}
+			: this(null, libraryNumber) { }
 
 		public MsexId(int libraryNumber)
-			: this((byte)libraryNumber)
-		{ }
+			: this(null, (byte)libraryNumber) { }
 
 
 		public MsexLibraryId? LibraryId { get; }
@@ -150,7 +152,7 @@ namespace Imp.CitpSharp
 
 		public bool Equals(MsexId other)
 		{
-			return LibraryId.Equals(other.LibraryId) && LibraryNumber == other.LibraryNumber;
+			return LibraryId.Equals(other.LibraryId) || LibraryNumber == other.LibraryNumber;
 		}
 
 		public override bool Equals([CanBeNull] object obj)

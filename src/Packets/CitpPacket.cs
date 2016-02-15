@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using Imp.CitpSharp.Packets.Msex;
 using Imp.CitpSharp.Packets.Pinf;
+using Imp.CitpSharp.Sockets;
 
 namespace Imp.CitpSharp.Packets
 {
@@ -30,7 +31,9 @@ namespace Imp.CitpSharp.Packets
 		public ushort MessagePartCount { get; set; }
 		public ushort MessagePart { get; set; }
 
-		public static CitpPacket FromByteArray(byte[] data)
+		public IpEndpoint? RemoteEndpoint { get; private set; }
+
+		public static CitpPacket FromByteArray(byte[] data, IpEndpoint? remoteEndpoint = null)
 		{
 			CitpPacket packet;
 
@@ -156,6 +159,8 @@ namespace Imp.CitpSharp.Packets
 
 			using (var reader = new CitpBinaryReader(new MemoryStream(data)))
 				packet.DeserializeFromStream(reader);
+
+			packet.RemoteEndpoint = remoteEndpoint;
 
 			return packet;
 		}

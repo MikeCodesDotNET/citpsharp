@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	/// <summary>
+	/// Level of messages reported to the ICitpLogService implementation
+	/// </summary>
 	[PublicAPI]
 	public enum CitpLoggerLevel
 	{
@@ -14,7 +18,9 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	/// <summary>
+	/// Interface to be implemented to provide access to the hosts logging framework
+	/// </summary>
 	[PublicAPI]
 	public interface ICitpLogService
 	{
@@ -27,11 +33,11 @@ namespace Imp.CitpSharp
 
 
 
-	internal class CitpConsoleLogger : ICitpLogService
+	internal class CitpDebugLogger : ICitpLogService
 	{
 		private readonly CitpLoggerLevel _logLevel;
 
-		public CitpConsoleLogger(CitpLoggerLevel logLevel)
+		public CitpDebugLogger(CitpLoggerLevel logLevel)
 		{
 			_logLevel = logLevel;
 		}
@@ -39,36 +45,36 @@ namespace Imp.CitpSharp
 		public void LogDebug(string message)
 		{
 			if (_logLevel <= CitpLoggerLevel.Debug)
-				writeToConsole(CitpLoggerLevel.Debug, message);
+				writeToDebug(CitpLoggerLevel.Debug, message);
 		}
 
 		public void LogInfo(string message)
 		{
 			if (_logLevel <= CitpLoggerLevel.Info)
-				writeToConsole(CitpLoggerLevel.Info, message);
+				writeToDebug(CitpLoggerLevel.Info, message);
 		}
 
 		public void LogWarning(string message)
 		{
 			if (_logLevel <= CitpLoggerLevel.Warning)
-				writeToConsole(CitpLoggerLevel.Warning, message);
+				writeToDebug(CitpLoggerLevel.Warning, message);
 		}
 
 		public void LogError(string message)
 		{
 			if (_logLevel <= CitpLoggerLevel.Error)
-				writeToConsole(CitpLoggerLevel.Error, message);
+				writeToDebug(CitpLoggerLevel.Error, message);
 		}
 
 		public void LogException(Exception ex)
 		{
 			if (_logLevel <= CitpLoggerLevel.Error)
-				writeToConsole(CitpLoggerLevel.Error, ex.ToString());
+				writeToDebug(CitpLoggerLevel.Error, ex.ToString());
 		}
 
-		private void writeToConsole(CitpLoggerLevel level, string message)
+		private void writeToDebug(CitpLoggerLevel level, string message)
 		{
-			//Console.WriteLine("CitpSharp ({0}): {1}", level, message);
+			Debug.WriteLine("CitpSharp ({0}): {1}", level, message);
 		}
 	}
 }

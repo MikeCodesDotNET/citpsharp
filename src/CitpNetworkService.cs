@@ -8,6 +8,7 @@ using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Msex;
 using Imp.CitpSharp.Packets.Pinf;
 using Imp.CitpSharp.Sockets;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -101,14 +102,14 @@ namespace Imp.CitpSharp
 
 
 
-		public async Task<bool> SendPacketAsync(CitpPacket packet, CitpPeer peer, int requestResponseIndex = 0)
+		public async Task<bool> SendPacketAsync(CitpPacket packet, CitpPeer peer, [CanBeNull] CitpPacket requestPacket = null)
 		{
 			if (peer.IsConnected == false)
 				throw new InvalidOperationException("Cannot send packet, peer is not connected");
 
 			packet.MessagePart = 0;
 			packet.MessagePartCount = 1;
-			packet.RequestResponseIndex = Convert.ToUInt16(requestResponseIndex);
+			packet.RequestResponseIndex = Convert.ToUInt16(requestPacket?.RequestResponseIndex ?? 0);
 
 			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 			{
@@ -128,7 +129,7 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			return await sendDataToPeerAsync(peer, packet.ToByteArray()).ConfigureAwait(false);
+			return await sendDataToPeerAsync(peer, packet.ToByteArray(), requestPacket?.RemoteEndpoint?.Port).ConfigureAwait(false);
 		}
 
 		public async Task SendPacketToAllConnectedPeersAsync(CitpPacket packet)
@@ -184,12 +185,7 @@ namespace Imp.CitpSharp
 
 		private async void tcpListenService_ClientConnect(object sender, IRemoteCitpTcpClient e)
 		{
-			var peer = _peers.FirstOrDefault(p => e.RemoteEndPoint.Address == p.Ip);
-
-			if (peer != null)
-				peer.SetConnected(e.RemoteEndPoint.Port);
-			else
-				_peers.Add(new CitpPeer(e.RemoteEndPoint));
+			_log.LogDebug($"TCP client connected from {e.RemoteEndPoint}");
 
 			await e.SendAsync(createPeerNamePacket().ToByteArray()).ConfigureAwait(false);
 			await e.SendAsync(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray()).ConfigureAwait(false);
@@ -197,22 +193,31 @@ namespace Imp.CitpSharp
 
 		private void tcpListenService_ClientDisconnect(object sender, IpEndpoint e)
 		{
-			var peer = Peers.FirstOrDefault(p => e.Equals(p.RemoteEndPoint));
+			_log.LogDebug($"TCP client disconnected from {e}");
+
+			var peer = Peers.FirstOrDefault(p => p.RemoteTcpPorts.Contains(e.Port));
 
 			if (peer == null)
-				throw new InvalidOperationException($"Unregistered peer disconnected from TCP,  remote endpoint {e}");
+			{
+				_log.LogDebug("Failed to identify disconnecting peer");
+				return;
+			}
 
-			peer.SetDisconnected();
+			peer.RemoveTcpConnection(e.Port);
 			peer.LastUpdateReceived = DateTime.Now;
+
+			_log.LogInfo($"CITP Peer '{peer}' disconnected on TCP Port {e.Port}");
 		}
 
 		private async void tcpListenService_PacketReceived(object sender, CitpTcpListenService.MessageReceivedEventArgs e)
 		{
+			_log.LogDebug($"TCP packet ({e.Data.Length} bytes) received from {e.Endpoint}");
+
 			CitpPacket packet;
 
 			try
 			{
-				packet = CitpPacket.FromByteArray(e.Data);
+				packet = CitpPacket.FromByteArray(e.Data, e.Endpoint);
 			}
 			catch (InvalidOperationException ex)
 			{
@@ -227,9 +232,21 @@ namespace Imp.CitpSharp
 				return;
 			}
 
-			// It should be impossible for a TCP packet to be received from an unknown peer,
-			// as the peer information should be recorded upon TCP connection
-			var peer = _peers.First(p => e.Endpoint == p.RemoteEndPoint);
+			if (packet is PeerNameMessagePacket)
+			{
+				receivedPeerNameMessage((PeerNameMessagePacket)packet, e.Endpoint);
+				return;
+			}
+
+			var peer = _peers.FirstOrDefault(p => p.Ip == e.Endpoint.Address && p.RemoteTcpPorts.Contains(e.Endpoint.Port));
+
+			if (peer == null)
+			{
+				_log.LogDebug($"Failed to identify peer for received TCP packet, ignoring...");
+				return;
+			}
+
+			_log.LogDebug($"Packet identified as from CITP Peer '{peer}'");
 
 			if (packet.LayerType == CitpLayerType.MediaServerExtensionsLayer)
 			{
@@ -240,9 +257,7 @@ namespace Imp.CitpSharp
 					peer.MsexVersion = packetVersion;
 			}
 
-			if (packet is PeerNameMessagePacket)
-				receivedPeerNameMessage((PeerNameMessagePacket)packet, peer);
-			else if (packet is ClientInformationMessagePacket)
+			if (packet is ClientInformationMessagePacket)
 				await receivedClientInformationMessageAsync((ClientInformationMessagePacket)packet, peer).ConfigureAwait(false);
 			else
 				MessageQueue.Enqueue(Tuple.Create(peer, packet));
@@ -254,7 +269,7 @@ namespace Imp.CitpSharp
 
 			try
 			{
-				packet = CitpPacket.FromByteArray(e.Data);
+				packet = CitpPacket.FromByteArray(e.Data, e.Endpoint);
 			}
 			catch (InvalidOperationException ex)
 			{
@@ -273,12 +288,28 @@ namespace Imp.CitpSharp
 			}
 			else
 			{
-				_log.LogError($"Invalid packet received via UDP from {e.Endpoint}");
+				_log.LogError($"Unrecognised/Invalid packet received via UDP from {e.Endpoint}");
 			}
 		}
 
-		private void receivedPeerNameMessage(PeerNameMessagePacket message, CitpPeer peer)
+		private void receivedPeerNameMessage(PeerNameMessagePacket message, IpEndpoint remoteEndpoint)
 		{
+			var peer = _peers.FirstOrDefault(p => p.Ip == remoteEndpoint.Address && p.Name == message.Name);
+
+			if (peer != null)
+			{
+				peer.AddTcpConnection(remoteEndpoint.Port);
+				_log.LogInfo($"Known CITP Peer '{peer}' identified on TCP port {remoteEndpoint.Port}");
+			}
+			else
+			{
+				peer = new CitpPeer(remoteEndpoint.Address, message.Name);
+				peer.AddTcpConnection(remoteEndpoint.Port);
+				
+				_peers.Add(peer);
+				_log.LogInfo($"New CITP Peer '{peer}' identified from on TCP port {remoteEndpoint.Port}");
+			}
+
 			peer.Name = message.Name;
 			peer.LastUpdateReceived = DateTime.Now;
 		}
@@ -309,7 +340,7 @@ namespace Imp.CitpSharp
 
 			peer.MsexVersion = MsexVersion.Version1_2;
 
-			return SendPacketAsync(createServerInfoPacket(MsexVersion.Version1_2), peer, message.RequestResponseIndex);
+			return SendPacketAsync(createServerInfoPacket(MsexVersion.Version1_2), peer, message);
 		}
 
 		private void removeInactivePeers()
@@ -318,11 +349,15 @@ namespace Imp.CitpSharp
 				p => p.IsConnected == false && (DateTime.Now - p.LastUpdateReceived).TotalSeconds > CitpPeerExpiryTime);
 		}
 
-		private Task<bool> sendDataToPeerAsync(CitpPeer peer, byte[] data)
+		private Task<bool> sendDataToPeerAsync(CitpPeer peer, byte[] data, int? remoteTcpPort = null)
 		{
 			IRemoteCitpTcpClient client;
 
-			return _tcpListenService.Clients.TryGetValue(peer.RemoteEndPoint, out client)
+			Debug.Assert(peer.IsConnected, "Can't send data to an unconnected peer");
+
+			var endpoint = new IpEndpoint(peer.Ip, remoteTcpPort ?? peer.RemoteTcpPorts.First());
+
+			return _tcpListenService.Clients.TryGetValue(endpoint, out client)
 				? client.SendAsync(data)
 				: Task.FromResult(false);
 		}
@@ -353,7 +388,7 @@ namespace Imp.CitpSharp
 				SupportedLibraryTypes = serverDevice.SupportedLibraryTypes.ToList(),
 				ThumbnailFormats = serverDevice.SupportedThumbnailFormats.ToList(),
 				StreamFormats = serverDevice.SupportedStreamFormats.ToList(),
-				LayerDmxSources = serverDevice.Layers.Select(l => l.DmxSource).ToList()
+				LayerDmxSources = serverDevice.Layers.Where(l => l.DmxSource.Protocol != CitpDmxConnectionString.DmxProtocol.None).Select(l => l.DmxSource).ToList()
 			};
 		}
 	}
