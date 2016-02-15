@@ -23,9 +23,12 @@ namespace Imp.CitpSharp
 		private readonly IpAddress _nicAddress;
 
 		private readonly List<CitpPeer> _peers = new List<CitpPeer>();
-		private readonly ICitpMediaServer _server;
 
-		private readonly CitpTcpService _tcpListenService;
+
+		private readonly CitpPeerType _deviceType;
+		private readonly ICitpDevice _device;
+
+		private readonly CitpTcpListenService _tcpListenService;
 		private readonly CitpUdpService _udpService;
 
 
@@ -35,7 +38,7 @@ namespace Imp.CitpSharp
 			_nicAddress = nicAddress;
 			_log = log;
 
-			_tcpListenService = new CitpTcpService(_log, _nicAddress);
+			_tcpListenService = new CitpTcpListenService(_log, _nicAddress);
 			_tcpListenService.ClientConnected += tcpListenService_ClientConnect;
 			_tcpListenService.ClientDisconnected += tcpListenService_ClientDisconnect;
 			_tcpListenService.MessageReceived += tcpListenService_PacketReceived;
@@ -46,10 +49,19 @@ namespace Imp.CitpSharp
 
 
 		public CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp,
-			ICitpMediaServer server)
+			ICitpMediaServerDevice device)
 			: this(log, nicAddress, useOriginalMulticastIp)
 		{
-			_server = server;
+			_device = device;
+			_deviceType = CitpPeerType.MediaServer;
+		}
+
+		public CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp,
+			ICitpVisualizerDevice device)
+			: this(log, nicAddress, useOriginalMulticastIp)
+		{
+			_device = device;
+			_deviceType = CitpPeerType.Visualizer;
 		}
 
 		public void Dispose()
@@ -194,7 +206,7 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		private async void tcpListenService_PacketReceived(object sender, CitpTcpService.MessageReceivedEventArgs e)
+		private async void tcpListenService_PacketReceived(object sender, CitpTcpListenService.MessageReceivedEventArgs e)
 		{
 			CitpPacket packet;
 
@@ -274,7 +286,7 @@ namespace Imp.CitpSharp
 		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IpAddress remoteIp)
 		{
 			// Filter out the local CITP peer
-			if (remoteIp == _nicAddress && message.Name == _server.PeerName && message.ListeningTcpPort == LocalTcpListenPort)
+			if (remoteIp == _nicAddress && message.Name == _device.PeerName && message.ListeningTcpPort == LocalTcpListenPort)
 				return;
 
 			var peer = Peers.FirstOrDefault(p => p.Ip.Equals(remoteIp) && p.Name == message.Name);
@@ -319,25 +331,29 @@ namespace Imp.CitpSharp
 		{
 			return new PeerNameMessagePacket
 			{
-				Name = _server.PeerName
+				Name = _device.PeerName
 			};
 		}
 
 		private ServerInformationMessagePacket createServerInfoPacket(MsexVersion? version)
 		{
+			Debug.Assert(_device is ICitpMediaServerDevice, "Only media servers can send the server information packet");
+
+			var serverDevice = (ICitpMediaServerDevice)_device;
+
 			return new ServerInformationMessagePacket
 			{
 				Version = version,
-				Uuid = _server.Uuid,
-				ProductName = _server.ProductName,
-				ProductVersionMajor = Convert.ToByte(_server.ProductVersionMajor),
-				ProductVersionMinor = Convert.ToByte(_server.ProductVersionMinor),
-				ProductVersionBugfix = Convert.ToByte(_server.ProductVersionBugfix),
-				SupportedMsexVersions = _server.SupportedMsexVersions.ToList(),
-				SupportedLibraryTypes = _server.SupportedLibraryTypes.ToList(),
-				ThumbnailFormats = _server.SupportedThumbnailFormats.ToList(),
-				StreamFormats = _server.SupportedStreamFormats.ToList(),
-				LayerDmxSources = _server.Layers.Select(l => l.DmxSource).ToList()
+				Uuid = serverDevice.Uuid,
+				ProductName = serverDevice.ProductName,
+				ProductVersionMajor = Convert.ToByte(serverDevice.ProductVersionMajor),
+				ProductVersionMinor = Convert.ToByte(serverDevice.ProductVersionMinor),
+				ProductVersionBugfix = Convert.ToByte(serverDevice.ProductVersionBugfix),
+				SupportedMsexVersions = serverDevice.SupportedMsexVersions.ToList(),
+				SupportedLibraryTypes = serverDevice.SupportedLibraryTypes.ToList(),
+				ThumbnailFormats = serverDevice.SupportedThumbnailFormats.ToList(),
+				StreamFormats = serverDevice.SupportedStreamFormats.ToList(),
+				LayerDmxSources = serverDevice.Layers.Select(l => l.DmxSource).ToList()
 			};
 		}
 	}

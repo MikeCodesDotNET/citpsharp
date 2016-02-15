@@ -5,16 +5,11 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	/// Interface allowing <see cref="CitpService"/> access to properties of and ability to request thumbnails/streaming frames from a host media server.
+	/// Interface allowing <see cref="CitpMediaServerService"/> access to properties of a host media server and ability to satisfy thumbnail/streaming requests.
 	/// </summary>
 	[PublicAPI]
-	public interface ICitpMediaServer
+	public interface ICitpMediaServerDevice : ICitpDevice, ICitpStreamProvider
 	{
-		/// <summary>
-		/// The name of this media server to be broadcast to other CITP peers
-		/// </summary>
-		string PeerName { get; }
-
 		/// <summary>
 		/// The name of the media server product
 		/// </summary>
@@ -34,11 +29,6 @@ namespace Imp.CitpSharp
 		/// The bugfix version of the media server product
 		/// </summary>
 		int ProductVersionBugfix { get; }
-
-		/// <summary>
-		/// The unique identifier of the media server
-		/// </summary>
-		Guid Uuid { get; }
 
 		/// <summary>
 		/// An enumerable of MSEX versions supported by this media server
@@ -63,15 +53,10 @@ namespace Imp.CitpSharp
 		/// <summary>
 		/// An enumerable of available layers on this media server
 		/// </summary>
-		IEnumerable<ICitpLayer> Layers { get; }
+		IEnumerable<ICitpMediaServerLayer> Layers { get; }
 
 		/// <summary>
-		/// An dictionary containing information on available video sources on this media server, where the key is the unique video source ID.
-		/// </summary>
-		IReadOnlyDictionary<int, CitpVideoSourceInformation> VideoSources { get; }
-
-		/// <summary>
-		/// When true, indicates to <see cref="CitpService"/> that the contents of one of the media server libraries has been updated
+		/// When true, indicates to <see cref="CitpMediaServerService"/> that the contents of one of the media server libraries has been updated
 		/// </summary>
 		bool HasLibraryBeenUpdated { get; }
 
@@ -137,36 +122,69 @@ namespace Imp.CitpSharp
 		/// <returns>An enumerable of Tuples with the element number and <see cref="CitpImage"/> for each requested library</returns>
 		IEnumerable<Tuple<byte, CitpImage>> GetElementThumbnails(CitpImageRequest request, MsexLibraryType libraryType,
 			MsexId libraryId, IEnumerable<byte> elementNumbers);
-
-		/// <summary>
-		/// Requests a frame from a streaming video source
-		/// </summary>
-		/// <param name="sourceId">ID of the video source</param>
-		/// <param name="request">Image request parameters</param>
-		/// <returns>A <see cref="CitpImage"/>, or null if the request was unsuccessful</returns>
-		[CanBeNull]
-		CitpImage GetVideoSourceFrame(int sourceId, CitpImageRequest request);
 	}
 
 
 	/// <summary>
-	/// Interface allowing <see cref="CitpService"/> access to properties of individual layers on a host media server.
+	/// Interface allowing <see cref="CitpMediaServerService"/> access to properties of individual layers on a host media server.
 	/// </summary>
-	/// <seealso cref="ICitpMediaServer"/>
+	/// <seealso cref="ICitpMediaServerDevice"/>
 	[PublicAPI]
-	public interface ICitpLayer
+	public interface ICitpMediaServerLayer
 	{
+		/// <summary>
+		/// DMX patching information for this layer
+		/// </summary>
 		CitpDmxConnectionString DmxSource { get; }
 
+		/// <summary>
+		/// Zero-based index indicating the physical output on the media server this layer is linked to
+		/// </summary>
 		int PhysicalOutput { get; }
+
+		/// <summary>
+		/// The library type for elements which can be loaded to this layer (for MSEX 1.0)
+		/// </summary>
 		MsexLibraryType MediaLibraryType { get; }
+
+		/// <summary>
+		/// The index of the library containing elements which can be loaded to this layer (for MSEX 1.1+)
+		/// </summary>
 		int MediaLibraryIndex { get; }
+
+		/// <summary>
+		/// The ID of the library containing elements which can be loaded to this layer
+		/// </summary>
 		MsexLibraryId MediaLibraryId { get; }
+
+		/// <summary>
+		/// Index of the media loaded to this layer
+		/// </summary>
 		int MediaIndex { get; }
+
+		/// <summary>
+		/// Name of the media loaded to this layer
+		/// </summary>
 		string MediaName { get; }
+
+		/// <summary>
+		/// Current frame of the media loaded to this layer
+		/// </summary>
 		uint MediaFrame { get; }
+
+		/// <summary>
+		/// Frame count of the media loaded to this layer
+		/// </summary>
 		uint MediaNumFrames { get; }
+
+		/// <summary>
+		/// Frames per second of the media loaded to this layer
+		/// </summary>
 		int MediaFps { get; }
+
+		/// <summary>
+		/// Flags indicating media playback status information
+		/// </summary>
 		MsexLayerStatusFlags LayerStatusFlags { get; }
 	}
 }

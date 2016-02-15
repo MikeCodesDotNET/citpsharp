@@ -13,14 +13,14 @@ namespace Imp.CitpSharp
 
 		private readonly ICitpLogService _log;
 		private readonly CitpNetworkService _networkService;
-		private readonly ICitpMediaServer _server;
+		private readonly ICitpStreamProvider _streamProvider;
 
 		private readonly Dictionary<int, SourceStreamRequest> _streamRequests = new Dictionary<int, SourceStreamRequest>();
 
-		public CitpStreamingService(ICitpLogService log, ICitpMediaServer server, CitpNetworkService networkService)
+		public CitpStreamingService(ICitpLogService log, ICitpStreamProvider streamProvider, CitpNetworkService networkService)
 		{
 			_log = log;
-			_server = server;
+			_streamProvider = streamProvider;
 			_networkService = networkService;
 		}
 
@@ -50,7 +50,7 @@ namespace Imp.CitpSharp
 					var imageRequest = new CitpImageRequest(request.FrameWidth, request.FrameHeight, formatRequest.FrameFormat, true,
 						formatRequest.FrameFormat == MsexImageFormat.Rgb8 && formatRequest.Version == MsexVersion.Version1_0);
 
-					var frame = _server.GetVideoSourceFrame(request.SourceIdentifier, imageRequest);
+					var frame = _streamProvider.GetVideoSourceFrame(request.SourceIdentifier, imageRequest);
 
 					if (frame == null)
 						break;
@@ -58,7 +58,7 @@ namespace Imp.CitpSharp
 					var packet = new StreamFrameMessagePacket
 					{
 						Version = formatRequest.Version,
-						MediaServerUuid = _server.Uuid,
+						MediaServerUuid = _streamProvider.Uuid,
 						SourceIdentifier = Convert.ToUInt16(request.SourceIdentifier),
 						FrameFormat = formatRequest.FrameFormat,
 						FrameWidth = Convert.ToUInt16(frame.ActualWidth),

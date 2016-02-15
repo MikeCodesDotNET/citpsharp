@@ -17,7 +17,7 @@ namespace Imp.CitpSharp
 
 
 
-	internal sealed class CitpTcpService : IDisposable
+	internal sealed class CitpTcpListenService : IDisposable
 	{
 		private readonly IpAddress _nicAddress;
 		private readonly ICitpLogService _log;
@@ -26,7 +26,7 @@ namespace Imp.CitpSharp
 
 
 
-		public CitpTcpService(ICitpLogService log, IpAddress nicAddress)
+		public CitpTcpListenService(ICitpLogService log, IpAddress nicAddress)
 		{
 			_log = log;
 			_nicAddress = nicAddress;

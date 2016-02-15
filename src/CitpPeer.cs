@@ -79,8 +79,8 @@ namespace Imp.CitpSharp
 				int hashCode = LastUpdateReceived.GetHashCode();
 				hashCode = (hashCode * 397) ^ MediaServerUuid.GetHashCode();
 				hashCode = (hashCode * 397) ^ MsexVersion.GetHashCode();
-				hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (State != null ? State.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Name?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 397) ^ (State?.GetHashCode() ?? 0);
 				hashCode = (hashCode * 397) ^ (int)Type;
 				hashCode = (hashCode * 397) ^ Ip.GetHashCode();
 				hashCode = (hashCode * 397) ^ RemoteTcpPort.GetHashCode();
