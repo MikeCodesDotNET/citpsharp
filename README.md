@@ -14,8 +14,8 @@ The library is LGPL licensed, allowing use in non-GPL-licensed projects. Any mod
 
 * Master 
 
-[![Build status](https://ci.appveyor.com/api/projects/status/opvt773ds4mtd23j/branch/master?svg=true)](https://ci.appveyor.com/project/impsnldavid/citpsharp/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/impsnldavid/citpsharp?branch=master&svg=true)](https://ci.appveyor.com/project/impsnldavid/citpsharp/branch/master)
 
 * Develop
 
-[![Build status](https://ci.appveyor.com/api/projects/status/opvt773ds4mtd23j/branch/develop?svg=true)](https://ci.appveyor.com/project/impsnldavid/citpsharp/branch/develop)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/impsnldavid/citpsharp?branch=develop&svg=true)](https://ci.appveyor.com/project/impsnldavid/citpsharp/branch/develop)
