@@ -5,15 +5,6 @@
 branches:
   only:
     - master
-    - develop
-
-#---------------------------------#
-#    environment configuration    #
-#---------------------------------#
-
-nuget:
-  account_feed: true
-  project_feed: true
 
 #---------------------------------#
 #       build configuration       #
@@ -24,14 +15,13 @@ platform: Any CPU
 configuration: Release
 
 build:
-  project: Imp.CitpSharp.sln
-  publish_nuget: true
-  publish_nuget_symbols: true
-
-
+  project: CitpSharp.sln
+  
+  
 #---------------------------------#
 #           build events          #
 #---------------------------------#
-
+  
 before_build:
   - nuget restore
+
