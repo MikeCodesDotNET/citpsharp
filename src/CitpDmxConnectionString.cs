@@ -175,11 +175,6 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public byte[] ToUtf8ByteArray()
-		{
-			return Encoding.UTF8.GetBytes(ToString());
-		}
-
 		public bool Equals(CitpDmxConnectionString other)
 		{
 			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe && Channel == other.Channel && PersonalityId.Equals(other.PersonalityId);
