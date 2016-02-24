@@ -41,7 +41,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 					writer.Write((byte)LayerDmxSources.Count);
 					foreach (var d in LayerDmxSources)
-						writer.Write(d.ToString(), true);
+						writer.Write(d, true);
 					break;
 
 				case MsexVersion.Version1_2:
@@ -71,7 +71,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 					writer.Write((byte)LayerDmxSources.Count);
 					foreach (var d in LayerDmxSources)
-						writer.Write(d.ToString(), true);
+						writer.Write(d, true);
 					break;
 			}
 		}

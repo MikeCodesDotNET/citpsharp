@@ -201,14 +201,10 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public static bool operator ==(CitpDmxConnectionString left, CitpDmxConnectionString right)
-		{
-			return left.Equals(right);
-		}
+		public static bool operator ==(CitpDmxConnectionString left, CitpDmxConnectionString right) => left.Equals(right);
 
-		public static bool operator !=(CitpDmxConnectionString left, CitpDmxConnectionString right)
-		{
-			return !left.Equals(right);
-		}
+		public static bool operator !=(CitpDmxConnectionString left, CitpDmxConnectionString right) => !left.Equals(right);
+
+		public static implicit operator string(CitpDmxConnectionString value) => value.ToString();
 	}
 }

@@ -29,7 +29,25 @@ namespace Imp.CitpSharp
 
 		public int CompareTo(MsexLibraryId other)
 		{
-			throw new NotImplementedException();
+			if (SubLevel1 < other.SubLevel1)
+				return -1;
+
+			if (SubLevel1 > other.SubLevel1)
+				return 1;
+
+			if (SubLevel2 < other.SubLevel2)
+				return -1;
+
+			if (SubLevel2 > other.SubLevel2)
+				return 1;
+
+			if (SubLevel3 < other.SubLevel3)
+				return -1;
+
+			if (SubLevel3 > other.SubLevel3)
+				return 1;
+
+			return 0;
 		}
 
 		public bool Equals(MsexLibraryId other)
@@ -72,26 +90,22 @@ namespace Imp.CitpSharp
 			return new MsexLibraryId(array[0], array[1], array[2], array[3]);
 		}
 
-		public override string ToString()
-		{
-			return $"{{{Level},{SubLevel1},{SubLevel2},{SubLevel3}}}";
-		}
+		public override string ToString() => $"{{{Level},{SubLevel1},{SubLevel2},{SubLevel3}}}";
 
-		public byte[] ToByteArray()
-		{
-			return new[] {Level, SubLevel1, SubLevel2, SubLevel3};
-		}
+		public byte[] ToByteArray() => new[] {Level, SubLevel1, SubLevel2, SubLevel3};
 
 
-		public static bool operator ==(MsexLibraryId a, MsexLibraryId b)
-		{
-			return a.Equals(b);
-		}
+		public static bool operator ==(MsexLibraryId a, MsexLibraryId b) => a.Equals(b);
 
-		public static bool operator !=(MsexLibraryId a, MsexLibraryId b)
-		{
-			return !a.Equals(b);
-		}
+		public static bool operator !=(MsexLibraryId a, MsexLibraryId b) => !a.Equals(b);
+
+		public static bool operator <(MsexLibraryId a, MsexLibraryId b) => a.CompareTo(b) == -1;
+
+		public static bool operator >(MsexLibraryId a, MsexLibraryId b) => a.CompareTo(b) == 1;
+
+		public static bool operator <=(MsexLibraryId a, MsexLibraryId b) => a.CompareTo(b) != 1;
+
+		public static bool operator >=(MsexLibraryId a, MsexLibraryId b) => a.CompareTo(b) != -1;
 	}
 
 
@@ -170,14 +184,18 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public static bool operator ==(MsexId left, MsexId right)
-		{
-			return left.Equals(right);
-		}
+		public override string ToString() => IsVersion10 ? LibraryNumber.ToString() : LibraryId.ToString();
 
-		public static bool operator !=(MsexId left, MsexId right)
-		{
-			return !left.Equals(right);
-		}
+		public static bool operator ==(MsexId a, MsexId b) => a.Equals(b);
+
+		public static bool operator !=(MsexId a, MsexId b) => !a.Equals(b);
+
+		public static bool operator <(MsexId a, MsexId b) => a.CompareTo(b) == -1;
+
+		public static bool operator >(MsexId a, MsexId b) => a.CompareTo(b) == 1;
+
+		public static bool operator <=(MsexId a, MsexId b) => a.CompareTo(b) != 1;
+
+		public static bool operator >=(MsexId a, MsexId b) => a.CompareTo(b) != -1;
 	}
 }

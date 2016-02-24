@@ -13,7 +13,7 @@ namespace Imp.CitpSharp.Packets.Sdmx
 			base.SerializeToStream(writer);
 
 			writer.Write(UniverseIndex);
-			writer.Write(ConnectionString.ToString(), true);
+			writer.Write(ConnectionString, true);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
