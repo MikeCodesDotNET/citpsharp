@@ -11,6 +11,8 @@ namespace Imp.CitpSharp
 {
 	internal interface IRemoteCitpTcpClient
 	{
+		bool IsConnected { get; }
+		
 		IpEndpoint RemoteEndPoint { get; }
 		Task<bool> SendAsync(byte[] data);
 	}
@@ -76,6 +78,8 @@ namespace Imp.CitpSharp
 
 		private void connectionReceived(object sender, TcpSocketListenerConnectEventArgs e)
 		{
+			_log.LogInfo($"TCP connection received from CITP client at remote endpoint {e.SocketClient.RemoteAddress}:{e.SocketClient.RemotePort}");
+
 			var citpClient = new RemoteCitpTcpClient(_log, e.SocketClient, _cancellationTokenSource.Token);
 
 			citpClient.Disconnected += clientDisconnected;
@@ -140,6 +144,8 @@ namespace Imp.CitpSharp
 
 			public void OpenStream()
 			{
+				IsConnected = true;
+
 #pragma warning disable 4014
 				Task.Run(openStreamAsync).ConfigureAwait(false);
 #pragma warning restore 4014
@@ -154,10 +160,29 @@ namespace Imp.CitpSharp
 
 			public IpEndpoint RemoteEndPoint { get; }
 
+			public bool IsConnected { get; private set; }
+
 			public async Task<bool> SendAsync(byte[] data)
 			{
-				await _client.WriteStream.WriteAsync(data, 0, data.Length, _cancellationToken).ConfigureAwait(false);
+				if (!IsConnected)
+				{
+					_log.LogError($"Cannot send TCP data, CITP client at remote endpoint {RemoteEndPoint} is not connected.");
+					return false;
+				}
 
+				try
+				{
+					await _client.WriteStream.WriteAsync(data, 0, data.Length, _cancellationToken).ConfigureAwait(false);
+				}
+				// ReSharper disable once CatchAllClause
+				// TODO: Replace this with specific exception when rda.SocketsForPCL is updated
+				catch (Exception)
+				{
+					_log.LogError($"Failed to write to TCP stream for CITP client at remote endpoint {RemoteEndPoint}. Connection may have been closed.");
+					setDisconnected();
+
+					return false;
+				}
 
 				return true;
 			}
@@ -166,7 +191,7 @@ namespace Imp.CitpSharp
 			{
 				var buffer = new byte[TcpBufferSize];
 
-				while (!_cancellationToken.IsCancellationRequested)
+				while (!_cancellationToken.IsCancellationRequested && IsConnected)
 				{
 					var timeoutTask = Task.Delay(TimeSpan.FromMilliseconds(TcpReadTimeoutMs));
 					var amountReadTask = _client.ReadStream.ReadAsync(buffer, 0, buffer.Length, _cancellationToken);
@@ -188,9 +213,18 @@ namespace Imp.CitpSharp
 					parseCitpPackets(amountRead, buffer);
 				}
 
-				Disconnected?.Invoke(this, EventArgs.Empty);
+				setDisconnected();
 			}
 
+			private void setDisconnected()
+			{
+				if (!IsConnected)
+					return;
+
+				IsConnected = false;
+				_log.LogInfo($"TCP connection from CITP client at remote endpoint {RemoteEndPoint} disconnected");
+				Disconnected?.Invoke(this, EventArgs.Empty);
+			}
 
 
 			private int copyBytesToPacket(int srcOffset, int nBytesToCopy, byte[] source)

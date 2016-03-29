@@ -187,7 +187,11 @@ namespace Imp.CitpSharp
 		{
 			_log.LogDebug($"TCP client connected from {e.RemoteEndPoint}");
 
-			await e.SendAsync(createPeerNamePacket().ToByteArray()).ConfigureAwait(false);
+			bool result = await e.SendAsync(createPeerNamePacket().ToByteArray()).ConfigureAwait(false);
+
+			if (!result)
+				return;
+
 			await e.SendAsync(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray()).ConfigureAwait(false);
 		}
 
