@@ -45,7 +45,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					break;
 
 				case MsexVersion.Version1_2:
-					writer.Write(Encoding.UTF8.GetBytes(Uuid.ToString("D")));
+					writer.Write(Uuid);
 					writer.Write(ProductName);
 
 					writer.Write(ProductVersionMajor);
@@ -98,7 +98,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 				case MsexVersion.Version1_2:
 				{
-					Uuid = new Guid(reader.ReadString(true));
+					Uuid = reader.ReadGuid();
 
 					ProductName = reader.ReadString();
 					ProductVersionMajor = reader.ReadByte();

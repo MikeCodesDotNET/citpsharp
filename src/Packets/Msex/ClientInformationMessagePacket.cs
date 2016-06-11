@@ -26,8 +26,8 @@ namespace Imp.CitpSharp.Packets.Msex
 			SupportedMsexVersions = new List<MsexVersion>(supportedVersionsCount);
 			for (int i = 0; i < supportedVersionsCount; ++i)
 			{
-				byte versionMinor = reader.ReadByte();
 				byte versionMajor = reader.ReadByte();
+				byte versionMinor = reader.ReadByte();
 
 				if (versionMajor == 1 && versionMinor == 0)
 					SupportedMsexVersions.Add(MsexVersion.Version1_0);

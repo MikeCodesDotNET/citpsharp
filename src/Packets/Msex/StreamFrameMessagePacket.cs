@@ -88,7 +88,23 @@ namespace Imp.CitpSharp.Packets.Msex
 					FrameHeight = reader.ReadUInt16();
 
 					int frameBufferLength = reader.ReadUInt16();
-					FrameBuffer = reader.ReadBytes(frameBufferLength);
+
+				    if (FrameFormat == MsexImageFormat.FragmentedJpeg || FrameFormat == MsexImageFormat.FragmentedPng)
+				    {
+				        FragmentInfo = new FragmentPreamble()
+				        {
+				            FrameIndex = reader.ReadUInt32(),
+				            FragmentCount = reader.ReadUInt16(),
+				            FragmentIndex = reader.ReadUInt16(),
+				            FragmentByteOffset = reader.ReadUInt32()
+				        };
+
+				        FrameBuffer = reader.ReadBytes(frameBufferLength - FragmentPreamble.ByteLength);
+				    }
+				    else
+				    {
+				        FrameBuffer = reader.ReadBytes(frameBufferLength);
+				    }
 				}
 					break;
 			}
