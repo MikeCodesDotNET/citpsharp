@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Imp.CitpSharp.Sockets;
+using System.Net;
 
 namespace Imp.CitpSharp
 {
@@ -8,7 +8,7 @@ namespace Imp.CitpSharp
 	{
 		private readonly HashSet<int> _remoteTcpPorts = new HashSet<int>(); 
 
-		public CitpPeer(IpAddress ip, string name)
+		public CitpPeer(IPAddress ip, string name)
 		{
 			Ip = ip;
 			Name = name;
@@ -35,7 +35,7 @@ namespace Imp.CitpSharp
 
 		public CitpPeerType Type { get; set; }
 
-		public IpAddress Ip { get; }
+		public IPAddress Ip { get; }
 
 		public IEnumerable<int> RemoteTcpPorts => _remoteTcpPorts;
 

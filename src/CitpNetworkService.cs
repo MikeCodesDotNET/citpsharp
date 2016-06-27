@@ -3,11 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Msex;
 using Imp.CitpSharp.Packets.Pinf;
-using Imp.CitpSharp.Sockets;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
@@ -21,7 +21,7 @@ namespace Imp.CitpSharp
 		private static readonly int CitpPeerExpiryTime = 10;
 
 		private readonly ICitpLogService _log;
-		private readonly IpAddress _nicAddress;
+		private readonly IPAddress _nicAddress;
 
 		private readonly List<CitpPeer> _peers = new List<CitpPeer>();
 
@@ -34,7 +34,7 @@ namespace Imp.CitpSharp
 
 
 
-		private CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp)
+		private CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp)
 		{
 			_nicAddress = nicAddress;
 			_log = log;
@@ -49,7 +49,7 @@ namespace Imp.CitpSharp
 		}
 
 
-		public CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp,
+		public CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp,
 			ICitpMediaServerDevice device)
 			: this(log, nicAddress, useOriginalMulticastIp)
 		{
@@ -57,7 +57,7 @@ namespace Imp.CitpSharp
 			_deviceType = CitpPeerType.MediaServer;
 		}
 
-		public CitpNetworkService(ICitpLogService log, IpAddress nicAddress, bool useOriginalMulticastIp,
+		public CitpNetworkService(ICitpLogService log, IPAddress nicAddress, bool useOriginalMulticastIp,
 			ICitpVisualizerDevice device)
 			: this(log, nicAddress, useOriginalMulticastIp)
 		{
@@ -80,11 +80,11 @@ namespace Imp.CitpSharp
 		public ConcurrentQueue<Tuple<CitpPeer, CitpPacket>> MessageQueue { get; } =
 			new ConcurrentQueue<Tuple<CitpPeer, CitpPacket>>();
 
-		public ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>> FrameQueue { get; } =
-			new ConcurrentQueue<Tuple<IpAddress, StreamFrameMessagePacket>>();
+		public ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>> FrameQueue { get; } =
+			new ConcurrentQueue<Tuple<IPAddress, StreamFrameMessagePacket>>();
 
 
-
+		
 		public async Task<bool> StartAsync()
 		{
 			bool udpResult = await _udpService.StartAsync().ConfigureAwait(false);
@@ -195,7 +195,7 @@ namespace Imp.CitpSharp
 			await e.SendAsync(createServerInfoPacket(MsexVersion.Version1_0).ToByteArray()).ConfigureAwait(false);
 		}
 
-		private void tcpListenService_ClientDisconnect(object sender, IpEndpoint e)
+		private void tcpListenService_ClientDisconnect(object sender, IPEndPoint e)
 		{
 			_log.LogDebug($"TCP client disconnected from {e}");
 
@@ -296,7 +296,7 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		private void receivedPeerNameMessage(PeerNameMessagePacket message, IpEndpoint remoteEndpoint)
+		private void receivedPeerNameMessage(PeerNameMessagePacket message, IPEndPoint remoteEndpoint)
 		{
 			var peer = _peers.FirstOrDefault(p => p.Ip == remoteEndpoint.Address && p.Name == message.Name);
 
@@ -318,7 +318,7 @@ namespace Imp.CitpSharp
 			peer.LastUpdateReceived = DateTime.Now;
 		}
 
-		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IpAddress remoteIp)
+		private void receivedPeerLocationMessage(PeerLocationMessagePacket message, IPAddress remoteIp)
 		{
 			// Filter out the local CITP peer
 			if (remoteIp == _nicAddress && message.Name == _device.PeerName && message.ListeningTcpPort == LocalTcpListenPort)
@@ -359,7 +359,7 @@ namespace Imp.CitpSharp
 
 			Debug.Assert(peer.IsConnected, "Can't send data to an unconnected peer");
 
-			var endpoint = new IpEndpoint(peer.Ip, remoteTcpPort ?? peer.RemoteTcpPorts.First());
+			var endpoint = new IPEndPoint(peer.Ip, remoteTcpPort ?? peer.RemoteTcpPorts.First());
 
 			return _tcpListenService.Clients.TryGetValue(endpoint, out client)
 				? client.SendAsync(data)

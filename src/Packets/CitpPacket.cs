@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using Imp.CitpSharp.Packets.Msex;
 using Imp.CitpSharp.Packets.Pinf;
-using Imp.CitpSharp.Sockets;
 
 namespace Imp.CitpSharp.Packets
 {
@@ -31,9 +31,9 @@ namespace Imp.CitpSharp.Packets
 		public ushort MessagePartCount { get; set; }
 		public ushort MessagePart { get; set; }
 
-		public IpEndpoint? RemoteEndpoint { get; private set; }
+		public IPEndPoint RemoteEndpoint { get; private set; }
 
-		public static CitpPacket FromByteArray(byte[] data, IpEndpoint? remoteEndpoint = null)
+		public static CitpPacket FromByteArray(byte[] data, IPEndPoint remoteEndpoint = null)
 		{
 			CitpPacket packet;
 

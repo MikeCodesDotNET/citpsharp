@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Msex;
 using Imp.CitpSharp.Packets.Pinf;
-using Imp.CitpSharp.Sockets;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp

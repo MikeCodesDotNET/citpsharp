@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Imp.CitpSharp.Sockets;
-using Sockets.Plugin;
-using Sockets.Plugin.Abstractions;
 
 namespace Imp.CitpSharp
 {
@@ -13,7 +11,7 @@ namespace Imp.CitpSharp
 	{
 		bool IsConnected { get; }
 		
-		IpEndpoint RemoteEndPoint { get; }
+		IPEndPoint RemoteEndPoint { get; }
 		Task<bool> SendAsync(byte[] data);
 	}
 
@@ -21,14 +19,14 @@ namespace Imp.CitpSharp
 
 	internal sealed class CitpTcpListenService : IDisposable
 	{
-		private readonly IpAddress _nicAddress;
+		private readonly IPAddress _nicAddress;
 		private readonly ICitpLogService _log;
 		private readonly TcpSocketListener _listener;
 		private readonly CancellationTokenSource _cancellationTokenSource;
 
 
 
-		public CitpTcpListenService(ICitpLogService log, IpAddress nicAddress)
+		public CitpTcpListenService(ICitpLogService log, IPAddress nicAddress)
 		{
 			_log = log;
 			_nicAddress = nicAddress;
@@ -46,14 +44,14 @@ namespace Imp.CitpSharp
 
 		public event EventHandler<IRemoteCitpTcpClient> ClientConnected;
 
-		public event EventHandler<IpEndpoint> ClientDisconnected;
+		public event EventHandler<IPEndPoint> ClientDisconnected;
 
 		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
 
 
-		public ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient> Clients { get; } =
-			new ConcurrentDictionary<IpEndpoint, IRemoteCitpTcpClient>();
+		public ConcurrentDictionary<IPEndPoint, IRemoteCitpTcpClient> Clients { get; } =
+			new ConcurrentDictionary<IPEndPoint, IRemoteCitpTcpClient>();
 
 		public int ListenPort => _listener.LocalPort;
 
@@ -108,13 +106,13 @@ namespace Imp.CitpSharp
 
 		public class MessageReceivedEventArgs : EventArgs
 		{
-			public MessageReceivedEventArgs(IpEndpoint endpoint, byte[] data)
+			public MessageReceivedEventArgs(IPEndPoint endpoint, byte[] data)
 			{
 				Endpoint = endpoint;
 				Data = data;
 			}
 
-			public IpEndpoint Endpoint { get; }
+			public IPEndPoint Endpoint { get; }
 			public byte[] Data { get; }
 		}
 
@@ -139,7 +137,7 @@ namespace Imp.CitpSharp
 				_log = log;
 				_client = client;
 				_cancellationToken = cancellationToken;
-				RemoteEndPoint = new IpEndpoint(IpAddress.Parse(client.RemoteAddress), client.RemotePort);
+				RemoteEndPoint = new IPEndPoint(IpAddress.Parse(client.RemoteAddress), client.RemotePort);
 			}
 
 			public void OpenStream()
@@ -158,7 +156,7 @@ namespace Imp.CitpSharp
 
 
 
-			public IpEndpoint RemoteEndPoint { get; }
+			public IPEndPoint RemoteEndPoint { get; }
 
 			public bool IsConnected { get; private set; }
 

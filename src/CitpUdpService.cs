@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
-using Imp.CitpSharp.Sockets;
-using Sockets.Plugin;
-using Sockets.Plugin.Abstractions;
 
 namespace Imp.CitpSharp
 {
@@ -12,19 +10,19 @@ namespace Imp.CitpSharp
 		public static readonly int MaximumUdpPacketLength = 65507;
 
 		private static readonly int CitpUdpPort = 4809;
-		private static readonly IpAddress CitpMulticastOriginalIp = IpAddress.Parse("224.0.0.180");
-		private static readonly IpAddress CitpMulticastIp = IpAddress.Parse("239.224.0.180");
-		private static readonly IpEndpoint CitpMulticastOriginalEndpoint = new IpEndpoint(CitpMulticastOriginalIp, CitpUdpPort);
-		private static readonly IpEndpoint CitpMulticastEndpoint = new IpEndpoint(CitpMulticastIp, CitpUdpPort);
+		private static readonly IPAddress CitpMulticastOriginalIp = IPAddress.Parse("224.0.0.180");
+		private static readonly IPAddress CitpMulticastIp = IPAddress.Parse("239.224.0.180");
+		private static readonly IPEndPoint CitpMulticastOriginalEndpoint = new IPEndPoint(CitpMulticastOriginalIp, CitpUdpPort);
+		private static readonly IPEndPoint CitpMulticastEndpoint = new IPEndPoint(CitpMulticastIp, CitpUdpPort);
 
 		private readonly ICitpLogService _log;
-		private readonly IpAddress _nicIp;
+		private readonly IPAddress _nicIp;
 		private readonly bool _useOriginalMulticastIp;
 
 		private readonly UdpSocketMulticastClient _client;
 
 
-		public CitpUdpService(ICitpLogService log, IpAddress nicIp, bool useOriginalMulticastIp)
+		public CitpUdpService(ICitpLogService log, IPAddress nicIp, bool useOriginalMulticastIp)
 		{
 			_log = log;
 			_nicIp = nicIp;
@@ -46,7 +44,7 @@ namespace Imp.CitpSharp
 		{
 			var interfaces = await CommsInterface.GetAllInterfacesAsync().ConfigureAwait(false);
 
-			var nicInterface = interfaces.FirstOrDefault(i => i.IpAddress == _nicIp.ToString());
+			var nicInterface = interfaces.FirstOrDefault(i => i.IPAddress == _nicIp.ToString());
 
 			if (nicInterface == null)
 			{
@@ -64,7 +62,7 @@ namespace Imp.CitpSharp
 		private void messageReceived(object sender, UdpSocketMessageReceivedEventArgs e)
 		{
 			MessageReceived?.Invoke(this, new MessageReceivedEventArgs(
-				new IpEndpoint(IpAddress.Parse(e.RemoteAddress), int.Parse(e.RemotePort)),
+				new IPEndPoint(IPAddress.Parse(e.RemoteAddress), int.Parse(e.RemotePort)),
 				e.ByteData));
 		}
 
@@ -82,13 +80,13 @@ namespace Imp.CitpSharp
 
 		public class MessageReceivedEventArgs : EventArgs
 		{
-			public MessageReceivedEventArgs(IpEndpoint endpoint, byte[] data)
+			public MessageReceivedEventArgs(IPEndPoint endpoint, byte[] data)
 			{
 				Endpoint = endpoint;
 				Data = data;
 			}
 
-			public IpEndpoint Endpoint { get; }
+			public IPEndPoint Endpoint { get; }
 			public byte[] Data { get; }
 		}
 	}
