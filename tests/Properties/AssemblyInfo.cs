@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("Release")]
 #endif
 
-[assembly: AssemblyCompany("The Impersonal Setereo")]
+[assembly: AssemblyCompany("The Impersonal Stereo")]
 [assembly: AssemblyProduct("Imp.CitpSharp")]
 [assembly: AssemblyCopyright("Copyright © David Butler / The Impersonal Stereo 2016")]
 
