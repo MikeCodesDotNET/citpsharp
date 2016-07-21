@@ -35,3 +35,12 @@ build:
 
 before_build:
   - nuget restore
+  
+deploy:
+    # Deploying to NuGet feed
+  - provider: NuGet
+    on:
+      appveyor_repo_tag: true
+    api_key:
+      secure: rWUYkrDdoedwz/r2XGss/gQ4j9+oRVw/4t5j48vDRFN9sM9Tyl0zlUAby5MMm3ME
+    skip_symbols: false
