@@ -10,7 +10,7 @@ namespace Imp.CitpSharp.Packets.Pinf
 		public bool IsListeningForTcpConnection { get; set; }
 
 		public ushort ListeningTcpPort { get; set; }
-		public CitpPeerType Type { get; set; }
+		public PeerKind Kind { get; set; }
 		public string Name { get; set; }
 		public string State { get; set; }
 
@@ -25,7 +25,7 @@ namespace Imp.CitpSharp.Packets.Pinf
 			else
 				writer.Write((ushort)0x0000);
 
-			writer.Write(Type.ToString(), true);
+			writer.Write(Kind.ToString(), true);
 			writer.Write(Name, true);
 			writer.Write(State, true);
 		}
@@ -39,8 +39,8 @@ namespace Imp.CitpSharp.Packets.Pinf
 			if (ListeningTcpPort == 0)
 				IsListeningForTcpConnection = false;
 
-			CitpPeerType peerType;
-			Type = Enum.TryParse(reader.ReadString(true), out peerType) ? peerType : CitpPeerType.Unknown;
+			PeerKind peerKind;
+			Kind = Enum.TryParse(reader.ReadString(true), out peerKind) ? peerKind : PeerKind.Unknown;
 
 			Name = reader.ReadString(true);
 			State = reader.ReadString(true);

@@ -5,7 +5,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public RequestStreamPacket()
 			: base(MsexMessageType.RequestStreamMessage) { }
 
-		public ushort SourceIdentifier { get; set; }
+		public ushort SourceId { get; set; }
 		public MsexImageFormat FrameFormat { get; set; }
 
 		public ushort FrameWidth { get; set; }
@@ -17,7 +17,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(SourceIdentifier);
+			writer.Write(SourceId);
 			writer.Write(FrameFormat.GetCustomAttribute<CitpId>().Id);
 			writer.Write(FrameWidth);
 			writer.Write(FrameHeight);
@@ -29,7 +29,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.DeserializeFromStream(reader);
 
-			SourceIdentifier = reader.ReadUInt16();
+			SourceId = reader.ReadUInt16();
 			FrameFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 			FrameWidth = reader.ReadUInt16();
 			FrameHeight = reader.ReadUInt16();

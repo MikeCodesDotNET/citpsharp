@@ -7,9 +7,9 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	[PublicAPI]
-	public sealed class CitpElementLibraryUpdatedInformation : IEquatable<CitpElementLibraryUpdatedInformation>
+	public sealed class ElementLibraryUpdatedInformation : IEquatable<ElementLibraryUpdatedInformation>
 	{
-		public CitpElementLibraryUpdatedInformation(MsexLibraryType libraryType, byte libraryNumber, MsexLibraryId? libraryId,
+		public ElementLibraryUpdatedInformation(MsexLibraryType libraryType, byte libraryNumber, MsexLibraryId? libraryId,
 			MsexElementLibraryUpdatedFlags updateFlags, [NotNull] IEnumerable<byte> affectedElements,
 			[NotNull] IEnumerable<byte> affectedLibraries)
 		{
@@ -35,7 +35,7 @@ namespace Imp.CitpSharp
 		public ImmutableSortedSet<byte> AffectedElements { get; }
 		public ImmutableSortedSet<byte> AffectedLibraries { get; }
 
-		public bool Equals([CanBeNull] CitpElementLibraryUpdatedInformation other)
+		public bool Equals([CanBeNull] ElementLibraryUpdatedInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -55,7 +55,7 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			return obj is CitpElementLibraryUpdatedInformation && Equals((CitpElementLibraryUpdatedInformation)obj);
+			return obj is ElementLibraryUpdatedInformation && Equals((ElementLibraryUpdatedInformation)obj);
 		}
 
 		public override int GetHashCode()

@@ -5,20 +5,20 @@ namespace Imp.CitpSharp.Packets.Sdmx
 		public SetExternalSourcePacket()
 			: base(SdmxMessageType.SetExternalSourceMessage) { }
 
-		public CitpDmxConnectionString ConnectionString { get; set; }
+		public DmxPatchInfo PatchInfo { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
 			base.SerializeToStream(writer);
 
-			writer.Write(ConnectionString, true);
+			writer.Write(PatchInfo, true);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-			ConnectionString = CitpDmxConnectionString.Parse(reader.ReadString(true));
+			PatchInfo = DmxPatchInfo.Parse(reader.ReadString(true));
 		}
 	}
 }

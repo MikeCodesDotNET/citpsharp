@@ -25,7 +25,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public ImmutableHashSet<MsexImageFormat> ThumbnailFormats { get; set; }
 		public ImmutableHashSet<MsexImageFormat> StreamFormats { get; set; }
 
-		public ImmutableList<CitpDmxConnectionString> LayerDmxSources { get; set; }
+		public ImmutableList<DmxPatchInfo> LayerDmxSources { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -78,7 +78,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					ProductVersionMinor = reader.ReadByte();
 
 					LayerDmxSources = reader.ReadCollection(TypeCode.Byte, 
-						() => CitpDmxConnectionString.Parse(reader.ReadString(true))).ToImmutableList();
+						() => DmxPatchInfo.Parse(reader.ReadString(true))).ToImmutableList();
 				}
 					break;
 
@@ -109,7 +109,7 @@ namespace Imp.CitpSharp.Packets.Msex
 						() => CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString())).ToImmutableHashSet();
 
 					LayerDmxSources = reader.ReadCollection(TypeCode.Byte,
-							() => CitpDmxConnectionString.Parse(reader.ReadString(true))).ToImmutableList();
+							() => DmxPatchInfo.Parse(reader.ReadString(true))).ToImmutableList();
 				}
 					break;
 			}

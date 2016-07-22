@@ -149,7 +149,7 @@ namespace Imp.CitpSharp
 
 
     [PublicAPI]
-	public enum CitpPeerType
+	public enum PeerKind
 	{
 		LightingConsole,
 		MediaServer,

@@ -59,7 +59,7 @@ namespace Imp.CitpSharp
 		/// Requests information from the media server on which libraries have been updated.
 		/// </summary>
 		/// <returns>An enumerable of library update information objects</returns>
-		IEnumerable<CitpElementLibraryUpdatedInformation> GetLibraryUpdateMessages();
+		IEnumerable<ElementLibraryUpdatedInformation> GetLibraryUpdateMessages();
 
 		/// <summary>
 		/// Requests information from the media server about specific element libraries.
@@ -130,7 +130,7 @@ namespace Imp.CitpSharp
 		/// <summary>
 		/// DMX patching information for this layer
 		/// </summary>
-		CitpDmxConnectionString DmxSource { get; }
+		DmxPatchInfo DmxSource { get; }
 
 		/// <summary>
 		/// Zero-based index indicating the physical output on the media server this layer is linked to

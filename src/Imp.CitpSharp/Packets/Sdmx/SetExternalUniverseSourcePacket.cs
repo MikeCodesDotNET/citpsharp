@@ -6,14 +6,14 @@ namespace Imp.CitpSharp.Packets.Sdmx
 			: base(SdmxMessageType.SetExternalUniverseSourceMessage) { }
 
 		public byte UniverseIndex { get; set; }
-		public CitpDmxConnectionString ConnectionString { get; set; }
+		public DmxPatchInfo PatchInfo { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
 			base.SerializeToStream(writer);
 
 			writer.Write(UniverseIndex);
-			writer.Write(ConnectionString, true);
+			writer.Write(PatchInfo, true);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
@@ -21,7 +21,7 @@ namespace Imp.CitpSharp.Packets.Sdmx
 			base.DeserializeFromStream(reader);
 
 			UniverseIndex = reader.ReadByte();
-			ConnectionString = CitpDmxConnectionString.Parse(reader.ReadString(true));
+			PatchInfo = DmxPatchInfo.Parse(reader.ReadString(true));
 		}
 	}
 }

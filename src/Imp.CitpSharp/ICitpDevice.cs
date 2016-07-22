@@ -6,7 +6,7 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public interface ICitpDevice
 	{
-        CitpPeerType DeviceType { get; }
+        PeerKind DeviceType { get; }
 
 		/// <summary>
 		/// The name of this CITP peer to be broadcast to other CITP peers

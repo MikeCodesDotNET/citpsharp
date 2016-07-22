@@ -8,7 +8,7 @@ namespace Imp.CitpSharp
 	///     Contains DMX patch information, serializes to a string
 	/// </summary>
 	[PublicAPI]
-	public struct CitpDmxConnectionString : IEquatable<CitpDmxConnectionString>
+	public struct DmxPatchInfo : IEquatable<DmxPatchInfo>
 	{
 		public const string ProtocolNameArtNet = "ArtNet";
 		public const string ProtocolNameBsre131 = "BSRE1.31";
@@ -22,7 +22,7 @@ namespace Imp.CitpSharp
 
 
 
-		public static CitpDmxConnectionString Parse([NotNull] string s)
+		public static DmxPatchInfo Parse([NotNull] string s)
 		{
 			if (s == null)
 				throw new ArgumentNullException(nameof(s));
@@ -35,9 +35,9 @@ namespace Imp.CitpSharp
 			return result.Value;
 		}
 
-		public static bool TryParse([CanBeNull] string s, out CitpDmxConnectionString value)
+		public static bool TryParse([CanBeNull] string s, out DmxPatchInfo value)
 		{
-			value = default(CitpDmxConnectionString);
+			value = default(DmxPatchInfo);
 
 			var result = TryParse(s);
 
@@ -48,7 +48,7 @@ namespace Imp.CitpSharp
 			return true;
 		}
 
-		public static CitpDmxConnectionString? TryParse([CanBeNull] string s)
+		public static DmxPatchInfo? TryParse([CanBeNull] string s)
 		{
 			if (s == null)
 				return null;
@@ -100,29 +100,29 @@ namespace Imp.CitpSharp
 
 
 
-		public static CitpDmxConnectionString FromArtNet(int net, int universe, int channel, Guid? personalityId = null)
+		public static DmxPatchInfo FromArtNet(int net, int universe, int channel, Guid? personalityId = null)
 		{
-			return new CitpDmxConnectionString(DmxProtocol.ArtNet, channel, net, universe, null, personalityId);
+			return new DmxPatchInfo(DmxProtocol.ArtNet, channel, net, universe, null, personalityId);
 		}
 
-		public static CitpDmxConnectionString FromBsre131(int universe, int channel, Guid? personalityId = null)
+		public static DmxPatchInfo FromBsre131(int universe, int channel, Guid? personalityId = null)
 		{
-			return new CitpDmxConnectionString(DmxProtocol.Bsre131, channel, null, universe, null, personalityId);
+			return new DmxPatchInfo(DmxProtocol.Bsre131, channel, null, universe, null, personalityId);
 		}
 
-		public static CitpDmxConnectionString FromEtcNet2(int channel, Guid? personalityId = null)
+		public static DmxPatchInfo FromEtcNet2(int channel, Guid? personalityId = null)
 		{
-			return new CitpDmxConnectionString(DmxProtocol.EtcNet2, channel, null, null, null, personalityId);
+			return new DmxPatchInfo(DmxProtocol.EtcNet2, channel, null, null, null, personalityId);
 		}
 
-		public static CitpDmxConnectionString FromMaNet(int type, int universe, int channel, Guid? personalityId = null)
+		public static DmxPatchInfo FromMaNet(int type, int universe, int channel, Guid? personalityId = null)
 		{
-			return new CitpDmxConnectionString(DmxProtocol.MaNet, channel, null, universe, type, personalityId);
+			return new DmxPatchInfo(DmxProtocol.MaNet, channel, null, universe, type, personalityId);
 		}
 
 
 
-		private CitpDmxConnectionString(DmxProtocol protocol, int channel, int? net, int? universe, int? type,
+		private DmxPatchInfo(DmxProtocol protocol, int channel, int? net, int? universe, int? type,
 			Guid? personalityId)
 			: this()
 		{
@@ -177,7 +177,7 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public bool Equals(CitpDmxConnectionString other)
+		public bool Equals(DmxPatchInfo other)
 		{
 			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe
 			       && Channel == other.Channel && PersonalityId.Equals(other.PersonalityId);
@@ -187,7 +187,7 @@ namespace Imp.CitpSharp
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
-			return obj is CitpDmxConnectionString && Equals((CitpDmxConnectionString)obj);
+			return obj is DmxPatchInfo && Equals((DmxPatchInfo)obj);
 		}
 
 		public override int GetHashCode()
@@ -204,10 +204,10 @@ namespace Imp.CitpSharp
 			}
 		}
 
-		public static bool operator ==(CitpDmxConnectionString left, CitpDmxConnectionString right) => left.Equals(right);
+		public static bool operator ==(DmxPatchInfo left, DmxPatchInfo right) => left.Equals(right);
 
-		public static bool operator !=(CitpDmxConnectionString left, CitpDmxConnectionString right) => !left.Equals(right);
+		public static bool operator !=(DmxPatchInfo left, DmxPatchInfo right) => !left.Equals(right);
 
-		public static implicit operator string(CitpDmxConnectionString value) => value.ToString();
+		public static implicit operator string(DmxPatchInfo value) => value.ToString();
 	}
 }

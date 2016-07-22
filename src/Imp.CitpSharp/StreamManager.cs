@@ -1,0 +1,284 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using Imp.CitpSharp.Packets.Msex;
+
+namespace Imp.CitpSharp
+{
+	internal class StreamSource
+	{
+		private readonly ICitpLogService _logger;
+		private readonly ICitpServerDevice _device;
+
+		private uint _frameIndex;
+
+		private readonly Dictionary<StreamRequest, DateTime> _requests = new Dictionary<StreamRequest, DateTime>();
+		private readonly Dictionary<CitpImageRequest, StreamInfo> _resolvedRequests = new Dictionary<CitpImageRequest, StreamInfo>();
+
+		public StreamSource(ICitpLogService logger, ICitpServerDevice device, ushort sourceId)
+		{
+			_logger = logger;
+			_device = device;
+			SourceId = sourceId;
+		}
+
+		public ushort SourceId { get; }
+
+		public IEnumerable<CitpImageRequest> ResolvedRequests => _resolvedRequests.Keys;
+
+		public void AddRequest(PeerInfo peer, RequestStreamPacket packet)
+		{
+			Debug.Assert(packet.SourceId == SourceId, "Patch source ID does not match this source");
+			Debug.Assert(packet.Version != null);
+
+			var request = new StreamRequest(peer, packet.Version.Value, packet.FrameFormat, packet.FrameWidth, packet.FrameHeight, packet.Fps);
+			_requests[request] = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout);
+
+			computeResolvedRequests();
+		}
+
+		public void RemoveExpiredRequests(DateTime timeNow)
+		{
+			bool isRequestsChanged = false;
+
+			foreach (var pair in _requests.ToList())
+			{
+				if (pair.Value >= timeNow)
+					continue;
+
+				_logger.LogInfo($"Stream frame requestse from {pair.Key.Peer} for source {SourceId} timed out");
+
+				_requests.Remove(pair.Key);
+				isRequestsChanged = true;
+			}
+
+			if (isRequestsChanged)
+				computeResolvedRequests();
+		}
+
+		public IEnumerable<StreamFramePacket> GetPackets(DateTime timeNow)
+		{
+			foreach (var pair in _resolvedRequests)
+			{
+				if (pair.Value.LastOutput + TimeSpan.FromMilliseconds(1000f / pair.Value.Fps) > timeNow)
+					continue;
+
+				var image = _device.GetVideoSourceFrame(SourceId, pair.Key);
+				if (image == null)
+				{
+					_logger.LogError($"Failed to get image for stream request on source {SourceId}");
+					continue;
+				}
+
+				if (pair.Key.Format == MsexImageFormat.FragmentedJpeg || pair.Key.Format == MsexImageFormat.FragmentedPng)
+				{
+					var fragments = image.Data.Split(CitpImage.MaximumFragmentedImageBufferLength);
+
+					if (fragments.Length > ushort.MaxValue)
+					{
+						_logger.LogWarning($"Cannot send streaming frame for source {SourceId}, too many image fragments");
+						continue;
+					}
+
+					for(int i = 0; i < fragments.Length; ++i)
+					{
+						yield return new StreamFramePacket
+						{
+							Version = pair.Value.Version,
+							MediaServerUuid = _device.Uuid,
+							SourceIdentifier = SourceId,
+							FrameFormat = pair.Key.Format,
+							FrameWidth = (ushort)pair.Key.FrameWidth,
+							FrameHeight = (ushort)pair.Key.FrameHeight,
+							FrameBuffer = fragments[i],
+							FragmentInfo = new StreamFramePacket.FragmentPreamble
+							{
+								FrameIndex = _frameIndex,
+								FragmentCount = (ushort)fragments.Length,
+								FragmentIndex = (ushort)i,
+								FragmentByteOffset = (uint)(CitpImage.MaximumFragmentedImageBufferLength * i)
+							}
+						};
+					}
+				}
+				else
+				{
+					if (image.Data.Length > CitpImage.MaximumImageBufferLength)
+					{
+						_logger.LogError($"Provided image buffer for source {SourceId} at resolution {pair.Key.FrameWidth} x {pair.Key.FrameHeight}, "
+						                 + $"format {pair.Key.Format} " + (pair.Key.IsBgrOrder ? "(BGR Mode)" : "") +
+						                 " is too large to be transported in a single UDP packet");
+
+						continue;
+					}
+
+					yield return new StreamFramePacket
+					{
+						Version = pair.Value.Version,
+						MediaServerUuid = _device.Uuid,
+						SourceIdentifier = SourceId,
+						FrameFormat = pair.Key.Format,
+						FrameWidth = (ushort)pair.Key.FrameWidth,
+						FrameHeight = (ushort)pair.Key.FrameHeight,
+						FrameBuffer = image.Data
+					};
+				}
+
+				pair.Value.LastOutput = timeNow;
+			}
+
+			unchecked
+			{
+				++_frameIndex;
+			}
+		}
+
+		private void computeResolvedRequests()
+		{
+			var updatedRequests = new Dictionary<CitpImageRequest, StreamInfo>();
+
+			foreach (var format in _device.SupportedStreamFormats)
+			{
+				bool isRequireBgrCompatibilityPacket = false;
+				ushort width = 0;
+				ushort height = 0;
+				byte fps = 0;
+				var version = MsexVersion.Version1_2;
+
+				foreach (var pair in _requests.Where(p => p.Key.Format == format))
+				{
+					if (format == MsexImageFormat.Rgb8 && pair.Key.Version == MsexVersion.Version1_0)
+					{
+						isRequireBgrCompatibilityPacket = true;
+						continue;
+					}
+
+					width = Math.Max(width, pair.Key.Width);
+					height = Math.Max(height, pair.Key.Height);
+					fps = Math.Max(fps, pair.Key.Fps);
+					version = (MsexVersion)Math.Min((ushort)version, (ushort)pair.Key.Version);
+				}
+
+				if (width == 0 || height == 0 || fps == 0 || version == MsexVersion.UnsupportedVersion)
+					continue;
+
+				var request = new CitpImageRequest(width, height, format, true);
+				updatedRequests.Add(request, new StreamInfo(fps, version, DateTime.MinValue));
+
+				if (isRequireBgrCompatibilityPacket)
+				{
+					ushort bgrWidth = 0;
+					ushort bgrHeight = 0;
+					byte bgrFps = 0;
+
+					foreach (var pair in _requests)
+					{
+						if (format == MsexImageFormat.Rgb8 && pair.Key.Version == MsexVersion.Version1_0)
+						{
+							bgrWidth = Math.Max(bgrWidth, pair.Key.Width);
+							bgrHeight = Math.Max(bgrHeight, pair.Key.Height);
+							bgrFps = Math.Max(bgrFps, pair.Key.Fps);
+						}
+					}
+
+					var bgrRequest = new CitpImageRequest(width, height, format, true, true);
+					updatedRequests.Add(bgrRequest, new StreamInfo(fps, MsexVersion.Version1_0, DateTime.MinValue));
+				}
+			}
+		}
+
+
+
+		private class StreamInfo
+		{
+			public StreamInfo(byte fps, MsexVersion version, DateTime lastOutput)
+			{
+				Fps = fps;
+				Version = version;
+				LastOutput = lastOutput;
+			}
+
+			public byte Fps { get; }
+			public MsexVersion Version { get; }
+			public DateTime LastOutput { get; set; }
+		}
+	}
+
+    internal class StreamManager
+    {
+	    private readonly ICitpLogService _logger;
+	    private readonly ICitpServerDevice _device;
+
+		private readonly Dictionary<ushort, StreamSource> _streams = new Dictionary<ushort, StreamSource>();
+
+	    public StreamManager(ICitpLogService logger, ICitpServerDevice device)
+	    {
+		    _logger = logger;
+		    _device = device;
+	    }
+
+	    public void AddRequest(PeerInfo peer, RequestStreamPacket packet)
+	    {
+		    StreamSource source;
+
+		    if (!_streams.TryGetValue(packet.SourceId, out source))
+		    {
+			    CitpVideoSourceInformation info;
+			    if (!_device.VideoSourceInformation.TryGetValue(packet.SourceId, out info))
+			    {
+				    _logger.LogError($"Peer '{peer}' requested stream whuch does not exist on this server");
+				    return;
+			    }
+
+			    source = new StreamSource(_logger, _device, info.SourceIdentifier);
+				_streams.Add(info.SourceIdentifier, source);
+		    }
+		    
+			source.AddRequest(peer, packet);
+	    }
+
+		public IEnumerable<StreamFramePacket> GetPackets()
+	    {
+		    var packets = new List<StreamFramePacket>();
+		    var timeNow = DateTime.Now;
+
+		    foreach (var pair in _streams)
+		    {
+			    pair.Value.RemoveExpiredRequests(timeNow);
+				packets.AddRange(pair.Value.GetPackets(timeNow));
+		    }
+
+		    return packets;
+	    }
+
+		public IEnumerable<StreamFramePacket> GetPackets(ushort sourceId)
+		{
+			var packets = new List<StreamFramePacket>();
+			var timeNow = DateTime.Now;
+
+			StreamSource source;
+			if (_streams.TryGetValue(sourceId, out source))
+			{
+				source.RemoveExpiredRequests(timeNow);
+				packets.AddRange(source.GetPackets(timeNow));
+			}
+
+			return packets;
+		}
+
+		public IEnumerable<CitpImageRequest> GetStreamFrameRequests(ushort sourceId)
+	    {
+			var requests = new HashSet<CitpImageRequest>();
+
+			StreamSource source;
+			if (_streams.TryGetValue(sourceId, out source))
+			{
+				foreach (var request in source.ResolvedRequests)
+					requests.Add(request);
+			}
+
+			return requests;
+		}
+	}
+}

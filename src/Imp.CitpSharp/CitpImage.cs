@@ -9,6 +9,9 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public class CitpImage
 	{
+		public const int MaximumImageBufferLength = 65433;
+		public const int MaximumFragmentedImageBufferLength = 65421;
+
 		public CitpImage(CitpImageRequest request, [NotNull] byte[] data, int actualWidth, int actualHeight)
 		{
 			if (data == null)
