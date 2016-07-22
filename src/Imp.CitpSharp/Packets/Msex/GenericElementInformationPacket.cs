@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+using System;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -10,7 +11,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public MsexLibraryType LibraryType { get; set; }
 		public MsexLibraryId LibraryId { get; set; }
 
-		public List<CitpGenericInformation> Information { get; set; }
+		public ImmutableSortedSet<GenericInformation> Information { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -19,33 +20,14 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_1:
-					writer.Write(LibraryId.ToByteArray());
-
-					writer.Write((byte)Information.Count);
-					foreach (var i in Information)
-					{
-						writer.Write(i.ElementNumber);
-						writer.Write(i.DmxRangeMin);
-						writer.Write(i.DmxRangeMax);
-						writer.Write(i.Name);
-						writer.Write(DateTimeHelpers.ConvertToUnixTimestamp(i.VersionTimestamp));
-					}
+					writer.Write(LibraryId);
+					writer.Write(Information, TypeCode.Byte, e => e.Serialize(writer, Version.Value));
 					break;
 
 				case MsexVersion.Version1_2:
 					writer.Write((byte)LibraryType);
-					writer.Write(LibraryId.ToByteArray());
-
-					writer.Write((ushort)Information.Count);
-					foreach (var i in Information)
-					{
-						writer.Write(i.ElementNumber);
-						writer.Write(i.SerialNumber);
-						writer.Write(i.DmxRangeMin);
-						writer.Write(i.DmxRangeMax);
-						writer.Write(i.Name);
-						writer.Write(DateTimeHelpers.ConvertToUnixTimestamp(i.VersionTimestamp));
-					}
+					writer.Write(LibraryId);
+					writer.Write(Information, TypeCode.UInt16, e => e.Serialize(writer, Version.Value));
 					break;
 			}
 		}
@@ -57,44 +39,18 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_1:
-				{
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
-
-					int elementCount = reader.ReadByte();
-					Information = new List<CitpGenericInformation>(elementCount);
-					for (int i = 0; i < elementCount; ++i)
-					{
-						Information.Add(new CitpGenericInformation
-						{
-							ElementNumber = reader.ReadByte(),
-							DmxRangeMin = reader.ReadByte(),
-							DmxRangeMax = reader.ReadByte(),
-							Name = reader.ReadString(),
-							VersionTimestamp = DateTimeHelpers.ConvertFromUnixTimestamp(reader.ReadUInt64())
-						});
-					}
-				}
+					LibraryId = reader.ReadLibraryId();
+					Information = reader.ReadCollection(TypeCode.Byte, () => GenericInformation.Deserialize(reader, Version.Value))
+							.ToImmutableSortedSet();
+				
 					break;
 
 				case MsexVersion.Version1_2:
-				{
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
-
-					int elementCount = reader.ReadUInt16();
-					Information = new List<CitpGenericInformation>(elementCount);
-					for (int i = 0; i < elementCount; ++i)
-					{
-						Information.Add(new CitpGenericInformation
-						{
-							ElementNumber = reader.ReadByte(),
-							SerialNumber = reader.ReadUInt32(),
-							DmxRangeMin = reader.ReadByte(),
-							DmxRangeMax = reader.ReadByte(),
-							Name = reader.ReadString(),
-							VersionTimestamp = DateTimeHelpers.ConvertFromUnixTimestamp(reader.ReadUInt64())
-						});
-					}
-				}
+					LibraryType = (MsexLibraryType)reader.ReadByte();
+					LibraryId = reader.ReadLibraryId();
+					Information = reader.ReadCollection(TypeCode.UInt16, () => GenericInformation.Deserialize(reader, Version.Value))
+							.ToImmutableSortedSet();
+					
 					break;
 			}
 		}

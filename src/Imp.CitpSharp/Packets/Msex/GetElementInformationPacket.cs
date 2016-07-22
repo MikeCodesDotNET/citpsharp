@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -13,7 +13,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public MsexLibraryId? LibraryId { get; set; }
 
 		public bool ShouldRequestAllElements { get; set; }
-		public List<byte> RequestedElementNumbers { get; set; }
+		public ImmutableSortedSet<byte> RequestedElementNumbers { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -28,10 +28,8 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (ShouldRequestAllElements)
 						writer.Write((byte)0x00);
 					else
-						writer.Write((byte)RequestedElementNumbers.Count);
+						writer.Write(RequestedElementNumbers, TypeCode.Byte, writer.Write);
 
-					foreach (byte e in RequestedElementNumbers)
-						writer.Write(e);
 					break;
 
 				case MsexVersion.Version1_1:
@@ -40,15 +38,13 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					if (ShouldRequestAllElements)
 						writer.Write((byte)0x00);
 					else
-						writer.Write((byte)RequestedElementNumbers.Count);
+						writer.Write(RequestedElementNumbers, TypeCode.Byte, writer.Write);
 
-					foreach (byte e in RequestedElementNumbers)
-						writer.Write(e);
 					break;
 
 				case MsexVersion.Version1_2:
@@ -57,15 +53,13 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					if (ShouldRequestAllElements)
 						writer.Write((ushort)0x00);
 					else
-						writer.Write((ushort)RequestedElementNumbers.Count);
+						writer.Write(RequestedElementNumbers, TypeCode.UInt16, writer.Write);
 
-					foreach (byte e in RequestedElementNumbers)
-						writer.Write(e);
 					break;
 			}
 		}
@@ -77,48 +71,39 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_0:
-				{
+				
 					LibraryType = (MsexLibraryType)reader.ReadByte();
 					LibraryNumber = reader.ReadByte();
 
-					int requestedElementNumbersCount = reader.ReadByte();
-					RequestedElementNumbers = new List<byte>(requestedElementNumbersCount);
-					for (int i = 0; i < requestedElementNumbersCount; ++i)
-						RequestedElementNumbers.Add(reader.ReadByte());
+					RequestedElementNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
 
-					if (requestedElementNumbersCount == 0)
+					if (RequestedElementNumbers.Count == 0)
 						ShouldRequestAllElements = true;
-				}
+				
 					break;
 
 				case MsexVersion.Version1_1:
-				{
+				
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 
-					int requestedElementNumbersCount = reader.ReadByte();
-					RequestedElementNumbers = new List<byte>(requestedElementNumbersCount);
-					for (int i = 0; i < requestedElementNumbersCount; ++i)
-						RequestedElementNumbers.Add(reader.ReadByte());
+					RequestedElementNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
 
-					if (requestedElementNumbersCount == 0)
+					if (RequestedElementNumbers.Count == 0)
 						ShouldRequestAllElements = true;
-				}
+				
 					break;
 
 				case MsexVersion.Version1_2:
-				{
+				
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 
-					int requestedElementNumbersCount = reader.ReadUInt16();
-					RequestedElementNumbers = new List<byte>(requestedElementNumbersCount);
-					for (int i = 0; i < requestedElementNumbersCount; ++i)
-						RequestedElementNumbers.Add(reader.ReadByte());
+					RequestedElementNumbers = reader.ReadCollection(TypeCode.UInt16, reader.ReadByte).ToImmutableSortedSet();
 
-					if (requestedElementNumbersCount == 0)
+					if (RequestedElementNumbers.Count == 0)
 						ShouldRequestAllElements = true;
-				}
+					
 					break;
 			}
 		}

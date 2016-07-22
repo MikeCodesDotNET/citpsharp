@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -20,7 +21,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 		public bool ShouldRequestAllThumbnails { get; set; }
 
-		public List<byte> ElementNumbers { get; set; }
+		public ImmutableSortedSet<byte> RequestedElementNumbers { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -30,79 +31,55 @@ namespace Imp.CitpSharp.Packets.Msex
 			{
 				case MsexVersion.Version1_0:
 					writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
-
 					writer.Write(ThumbnailWidth);
 					writer.Write(ThumbnailHeight);
-
 					writer.Write((byte)ThumbnailFlags);
-
 					writer.Write((byte)LibraryType);
 					writer.Write(LibraryNumber);
 
 					if (ShouldRequestAllThumbnails)
-					{
 						writer.Write((byte)0x00);
-					}
 					else
-					{
-						writer.Write((byte)ElementNumbers.Count);
-						foreach (byte e in ElementNumbers)
-							writer.Write(e);
-					}
+						writer.Write(RequestedElementNumbers, TypeCode.Byte, writer.Write);
+			
 					break;
 
 				case MsexVersion.Version1_1:
 					writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
-
 					writer.Write(ThumbnailWidth);
 					writer.Write(ThumbnailHeight);
-
 					writer.Write((byte)ThumbnailFlags);
-
 					writer.Write((byte)LibraryType);
 
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					if (ShouldRequestAllThumbnails)
-					{
 						writer.Write((byte)0x00);
-					}
 					else
-					{
-						writer.Write((byte)ElementNumbers.Count);
-						foreach (byte e in ElementNumbers)
-							writer.Write(e);
-					}
+						writer.Write(RequestedElementNumbers, TypeCode.Byte, writer.Write);
+
 					break;
 
 				case MsexVersion.Version1_2:
 					writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
-
 					writer.Write(ThumbnailWidth);
 					writer.Write(ThumbnailHeight);
-
 					writer.Write((byte)ThumbnailFlags);
-
 					writer.Write((byte)LibraryType);
 
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					if (ShouldRequestAllThumbnails)
-					{
-						writer.Write((ushort)0x0000);
-					}
+						writer.Write((byte)0x00);
 					else
-					{
-						writer.Write((ushort)ElementNumbers.Count);
-						foreach (byte e in ElementNumbers)
-							writer.Write(e);
-					}
+						writer.Write(RequestedElementNumbers, TypeCode.UInt16, writer.Write);
+
 					break;
 			}
 		}
@@ -114,7 +91,6 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_0:
-				{
 					ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 					ThumbnailWidth = reader.ReadUInt16();
 					ThumbnailHeight = reader.ReadUInt16();
@@ -122,52 +98,43 @@ namespace Imp.CitpSharp.Packets.Msex
 					LibraryType = (MsexLibraryType)reader.ReadByte();
 					LibraryNumber = reader.ReadByte();
 
-					int elementNumberCount = reader.ReadByte();
-					ElementNumbers = new List<byte>(elementNumberCount);
-					for (int i = 0; i < elementNumberCount; ++i)
-						ElementNumbers.Add(reader.ReadByte());
+					RequestedElementNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
 
-					if (elementNumberCount == 0)
+					if (RequestedElementNumbers.Count == 0)
 						ShouldRequestAllThumbnails = true;
-				}
+					
 					break;
 
 				case MsexVersion.Version1_1:
-				{
+				
 					ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 					ThumbnailWidth = reader.ReadUInt16();
 					ThumbnailHeight = reader.ReadUInt16();
 					ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 
-					int elementNumberCount = reader.ReadByte();
-					ElementNumbers = new List<byte>(elementNumberCount);
-					for (int i = 0; i < elementNumberCount; ++i)
-						ElementNumbers.Add(reader.ReadByte());
+					RequestedElementNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
 
-					if (elementNumberCount == 0)
+					if (RequestedElementNumbers.Count == 0)
 						ShouldRequestAllThumbnails = true;
-				}
+
 					break;
 
 				case MsexVersion.Version1_2:
-				{
+				
 					ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 					ThumbnailWidth = reader.ReadUInt16();
 					ThumbnailHeight = reader.ReadUInt16();
 					ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 
-					int elementNumberCount = reader.ReadUInt16();
-					ElementNumbers = new List<byte>(elementNumberCount);
-					for (int i = 0; i < elementNumberCount; ++i)
-						ElementNumbers.Add(reader.ReadByte());
+					RequestedElementNumbers = reader.ReadCollection(TypeCode.UInt16, reader.ReadByte).ToImmutableSortedSet();
 
-					if (elementNumberCount == 0)
+					if (RequestedElementNumbers.Count == 0)
 						ShouldRequestAllThumbnails = true;
-				}
+
 					break;
 			}
 		}

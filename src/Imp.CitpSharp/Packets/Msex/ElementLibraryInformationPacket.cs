@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -10,7 +10,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 		public MsexLibraryType LibraryType { get; set; }
 
-		public List<CitpElementLibraryInformation> Elements { get; set; }
+		public ImmutableSortedSet<ElementLibraryInformation> Elements { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -19,54 +19,14 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_0:
-					writer.Write((byte)LibraryType);
-
-					writer.Write((byte)Elements.Count);
-					foreach (var e in Elements)
-					{
-						writer.Write(e.Number);
-						writer.Write(e.DmxRangeMin);
-						writer.Write(e.DmxRangeMax);
-						writer.Write(e.Name);
-						writer.Write((byte)e.ElementCount);
-					}
-					break;
-
 				case MsexVersion.Version1_1:
 					writer.Write((byte)LibraryType);
-
-					writer.Write((byte)Elements.Count);
-					foreach (var e in Elements)
-					{
-						if (!e.Id.HasValue)
-							throw new InvalidOperationException("Element Id has no value. Required for MSEX V1.1");
-
-						writer.Write(e.Id.Value.ToByteArray());
-						writer.Write(e.DmxRangeMin);
-						writer.Write(e.DmxRangeMax);
-						writer.Write(e.Name);
-						writer.Write((byte)e.LibraryCount);
-						writer.Write((byte)e.ElementCount);
-					}
+					writer.Write(Elements, TypeCode.Byte, e => e.Serialize(writer, Version.Value));
 					break;
 
 				case MsexVersion.Version1_2:
 					writer.Write((byte)LibraryType);
-
-					writer.Write((ushort)Elements.Count);
-					foreach (var e in Elements)
-					{
-						if (!e.Id.HasValue)
-							throw new InvalidOperationException("Element Id has no value. Required for MSEX V1.2");
-
-						writer.Write(e.Id.Value.ToByteArray());
-						writer.Write(e.SerialNumber);
-						writer.Write(e.DmxRangeMin);
-						writer.Write(e.DmxRangeMax);
-						writer.Write(e.Name);
-						writer.Write(e.LibraryCount);
-						writer.Write(e.ElementCount);
-					}
+					writer.Write(Elements, TypeCode.UInt16, e => e.Serialize(writer, Version.Value));
 					break;
 			}
 		}
@@ -78,65 +38,17 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_0:
-				{
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-
-					int libraryCount = reader.ReadByte();
-					Elements = new List<CitpElementLibraryInformation>(libraryCount);
-					for (int i = 0; i < libraryCount; ++i)
-					{
-						Elements.Add(new CitpElementLibraryInformation
-						{
-							Number = reader.ReadByte(),
-							DmxRangeMin = reader.ReadByte(),
-							DmxRangeMax = reader.ReadByte(),
-							Name = reader.ReadString(),
-							ElementCount = reader.ReadByte()
-						});
-					}
-				}
-					break;
-
 				case MsexVersion.Version1_1:
-				{
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-
-					int libraryCount = reader.ReadByte();
-					Elements = new List<CitpElementLibraryInformation>(libraryCount);
-					for (int i = 0; i < libraryCount; ++i)
-					{
-						Elements.Add(new CitpElementLibraryInformation
-						{
-							Number = reader.ReadByte(),
-							DmxRangeMin = reader.ReadByte(),
-							DmxRangeMax = reader.ReadByte(),
-							Name = reader.ReadString(),
-							LibraryCount = reader.ReadByte(),
-							ElementCount = reader.ReadByte()
-						});
-					}
-				}
+					Elements = reader.ReadCollection(TypeCode.Byte, () => ElementLibraryInformation.Deserialize(reader, Version.Value))
+						.ToImmutableSortedSet();
+				
 					break;
 
 				case MsexVersion.Version1_2:
-				{
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-
-					int libraryCount = reader.ReadUInt16();
-					Elements = new List<CitpElementLibraryInformation>(libraryCount);
-					for (int i = 0; i < libraryCount; ++i)
-					{
-						Elements.Add(new CitpElementLibraryInformation
-						{
-							Number = reader.ReadByte(),
-							DmxRangeMin = reader.ReadByte(),
-							DmxRangeMax = reader.ReadByte(),
-							Name = reader.ReadString(),
-							LibraryCount = reader.ReadUInt16(),
-							ElementCount = reader.ReadUInt16()
-						});
-					}
-				}
+					Elements = reader.ReadCollection(TypeCode.UInt16, () => ElementLibraryInformation.Deserialize(reader, Version.Value))
+												.ToImmutableSortedSet();
 					break;
 			}
 		}

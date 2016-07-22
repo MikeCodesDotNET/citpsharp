@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+using System;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -7,7 +8,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public VideoSourcesPacket()
 			: base(MsexMessageType.VideoSourcesMessage) { }
 
-		public List<CitpVideoSourceInformation> Sources { get; set; }
+		public ImmutableSortedSet<CitpVideoSourceInformation> Sources { get; set; }
 
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
@@ -41,23 +42,20 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.DeserializeFromStream(reader);
 
-			int sourcesCount = reader.ReadUInt16();
-			Sources = new List<CitpVideoSourceInformation>(sourcesCount);
-			for (int i = 0; i < sourcesCount; ++i)
+			Sources = reader.ReadCollection(TypeCode.UInt16, () =>
 			{
-				var s = new CitpVideoSourceInformation
-				{
-					SourceIdentifier = reader.ReadUInt16(),
-					SourceName = reader.ReadString(),
-					PhysicalOutput = reader.ReadByte(),
-					LayerNumber = reader.ReadByte(),
-					Flags = (MsexVideoSourcesFlags)reader.ReadUInt16(),
-					Width = reader.ReadUInt16(),
-					Height = reader.ReadUInt16()
-				};
+				ushort sourceIdentifier = reader.ReadUInt16();
+				string sourceName = reader.ReadString();
+				byte physicalOutput = reader.ReadByte();
+				byte layerNumber = reader.ReadByte();
+				var flags = (MsexVideoSourcesFlags)reader.ReadUInt16();
+				ushort width = reader.ReadUInt16();
+				ushort height = reader.ReadUInt16();
 
-				Sources.Add(s);
-			}
+				return new CitpVideoSourceInformation(sourceIdentifier, sourceName, flags, width, height, physicalOutput,
+					layerNumber);
+
+			}).ToImmutableSortedSet();
 		}
 	}
 }

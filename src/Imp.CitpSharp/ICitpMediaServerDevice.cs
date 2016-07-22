@@ -68,7 +68,7 @@ namespace Imp.CitpSharp
 		/// <param name="parentLibraryId">The ID of the parent library, or the root ID if there is no parent</param>
 		/// <param name="libraryIndices">The indices of the libraries to request information on</param>
 		/// <returns>An enumerable of library information for the library indices requested</returns>
-		IEnumerable<CitpElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType,
+		IEnumerable<ElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType,
 			MsexLibraryId? parentLibraryId, IEnumerable<byte> libraryIndices);
 
 		/// <summary>
@@ -77,7 +77,7 @@ namespace Imp.CitpSharp
 		/// <param name="libraryId">ID of the library</param>
 		/// <param name="elementNumbers">Element numbers of items in the library to request information on</param>
 		/// <returns>An enumerable of media element information for the element numbers requested</returns>
-		IEnumerable<CitpMediaInformation> GetMediaElementInformation(MsexId libraryId, IEnumerable<byte> elementNumbers);
+		IEnumerable<MediaInformation> GetMediaElementInformation(MsexId libraryId, IEnumerable<byte> elementNumbers);
 
 		/// <summary>
 		/// Requests information from the media server about specific effect elements in a library
@@ -85,7 +85,7 @@ namespace Imp.CitpSharp
 		/// <param name="libraryId">ID of the library</param>
 		/// <param name="elementNumbers">Element numbers of items in the library to request information on</param>
 		/// <returns>An enumerable of effect element information for the element numbers requested</returns>
-		IEnumerable<CitpEffectInformation> GetEffectElementInformation(MsexId libraryId, IEnumerable<byte> elementNumbers);
+		IEnumerable<EffectInformation> GetEffectElementInformation(MsexId libraryId, IEnumerable<byte> elementNumbers);
 
 		/// <summary>
 		/// Requests information from the media server about specific generic elements in a library
@@ -94,7 +94,7 @@ namespace Imp.CitpSharp
 		/// <param name="libraryId">ID of the library</param>
 		/// <param name="elementNumbers">Element numbers of items in the library to request information on</param>
 		/// <returns>An enumerable of generic element information for the element numbers requested</returns>
-		IEnumerable<CitpGenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId,
+		IEnumerable<GenericInformation> GetGenericElementInformation(MsexLibraryType libraryType, MsexLibraryId libraryId,
 			IEnumerable<byte> elementNumbers);
 
 		/// <summary>

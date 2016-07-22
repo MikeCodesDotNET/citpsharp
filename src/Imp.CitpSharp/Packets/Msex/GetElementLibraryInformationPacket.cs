@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -11,7 +11,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public MsexLibraryType LibraryType { get; set; }
 		public MsexLibraryId? LibraryParentId { get; set; }
 		public bool ShouldRequestAllLibraries { get; set; }
-		public List<byte> RequestedLibraryNumbers { get; set; }
+		public ImmutableSortedSet<byte> RequestedLibraryNumbers { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -23,15 +23,10 @@ namespace Imp.CitpSharp.Packets.Msex
 					writer.Write((byte)LibraryType);
 
 					if (ShouldRequestAllLibraries)
-					{
 						writer.Write((byte)0);
-					}
 					else
-					{
-						writer.Write((byte)RequestedLibraryNumbers.Count);
-						foreach (byte n in RequestedLibraryNumbers)
-							writer.Write(n);
-					}
+						writer.Write(RequestedLibraryNumbers, TypeCode.Byte, writer.Write);
+					
 					break;
 
 				case MsexVersion.Version1_1:
@@ -40,18 +35,13 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryParentId.HasValue)
 						throw new InvalidOperationException("LibraryParentId has no value. Required for MSEX V1.1");
 
-					writer.Write(LibraryParentId.Value.ToByteArray());
+					writer.Write(LibraryParentId.Value);
 
 					if (ShouldRequestAllLibraries)
-					{
 						writer.Write((byte)0);
-					}
 					else
-					{
-						writer.Write((byte)RequestedLibraryNumbers.Count);
-						foreach (byte n in RequestedLibraryNumbers)
-							writer.Write(n);
-					}
+						writer.Write(RequestedLibraryNumbers, TypeCode.Byte, writer.Write);
+
 					break;
 
 				case MsexVersion.Version1_2:
@@ -60,18 +50,13 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryParentId.HasValue)
 						throw new InvalidOperationException("LibraryParentId has no value. Required for MSEX V1.2");
 
-					writer.Write(LibraryParentId.Value.ToByteArray());
+					writer.Write(LibraryParentId.Value);
 
 					if (ShouldRequestAllLibraries)
-					{
 						writer.Write((ushort)0);
-					}
 					else
-					{
-						writer.Write((byte)RequestedLibraryNumbers.Count);
-						foreach (byte n in RequestedLibraryNumbers)
-							writer.Write(n);
-					}
+						writer.Write(RequestedLibraryNumbers, TypeCode.UInt16, writer.Write);
+
 					break;
 			}
 		}
@@ -83,47 +68,38 @@ namespace Imp.CitpSharp.Packets.Msex
 			switch (Version)
 			{
 				case MsexVersion.Version1_0:
-				{
+				
 					LibraryType = (MsexLibraryType)reader.ReadByte();
 
-					int libraryNumberCount = reader.ReadByte();
-					RequestedLibraryNumbers = new List<byte>(libraryNumberCount);
-					for (int i = 0; i < libraryNumberCount; ++i)
-						RequestedLibraryNumbers.Add(reader.ReadByte());
+					RequestedLibraryNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
 
-					if (libraryNumberCount == 0)
+					if (RequestedLibraryNumbers.Count == 0)
 						ShouldRequestAllLibraries = true;
-				}
+				
 					break;
 
 				case MsexVersion.Version1_1:
-				{
+				
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryParentId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryParentId = reader.ReadLibraryId();
 
-					int libraryNumberCount = reader.ReadByte();
-					RequestedLibraryNumbers = new List<byte>(libraryNumberCount);
-					for (int i = 0; i < libraryNumberCount; ++i)
-						RequestedLibraryNumbers.Add(reader.ReadByte());
+					RequestedLibraryNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
 
-					if (libraryNumberCount == 0)
+					if (RequestedLibraryNumbers.Count == 0)
 						ShouldRequestAllLibraries = true;
-				}
+
 					break;
 
 				case MsexVersion.Version1_2:
-				{
+				
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryParentId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryParentId = reader.ReadLibraryId();
 
-					int libraryNumberCount = reader.ReadUInt16();
-					RequestedLibraryNumbers = new List<byte>(libraryNumberCount);
-					for (int i = 0; i < libraryNumberCount; ++i)
-						RequestedLibraryNumbers.Add(reader.ReadByte());
+					RequestedLibraryNumbers = reader.ReadCollection(TypeCode.UInt16, reader.ReadByte).ToImmutableSortedSet();
 
-					if (libraryNumberCount == 0)
+					if (RequestedLibraryNumbers.Count == 0)
 						ShouldRequestAllLibraries = true;
-				}
+
 					break;
 			}
 		}

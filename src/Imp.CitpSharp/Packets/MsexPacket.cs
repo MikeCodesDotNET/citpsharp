@@ -31,7 +31,7 @@ namespace Imp.CitpSharp.Packets
 			if (!Version.HasValue)
 				throw new InvalidOperationException("Version has no value. Required for MSEX packets");
 
-			writer.Write(Version.GetCustomAttribute<CitpVersionAttribute>().ToByteArray());
+			writer.Write(Version.Value, false);
 			writer.Write(MessageType.GetCustomAttribute<CitpId>().Id);
 		}
 
@@ -39,17 +39,7 @@ namespace Imp.CitpSharp.Packets
 		{
 			base.DeserializeFromStream(reader);
 
-			byte versionHi = reader.ReadByte();
-			byte versionLo = reader.ReadByte();
-
-			if (versionHi == 1 && versionLo == 0)
-				Version = MsexVersion.Version1_0;
-			else if (versionHi == 1 && versionLo == 1)
-				Version = MsexVersion.Version1_1;
-			else if (versionHi == 1 && versionLo == 2)
-				Version = MsexVersion.Version1_2;
-			else
-				Version = MsexVersion.UnsupportedVersion;
+			Version = reader.ReadMsexVersion(false);
 
 			if (Version == MsexVersion.UnsupportedVersion)
 				throw new InvalidOperationException("Incorrect or invalid MSEX version");

@@ -172,63 +172,14 @@ namespace Imp.CitpSharp
 	}
 
 
-
-	internal class CitpVersionAttribute : Attribute, IEquatable<CitpVersionAttribute>
-	{
-		public CitpVersionAttribute(byte majorVersion, byte minorVersion)
-		{
-			MajorVersion = majorVersion;
-			MinorVersion = minorVersion;
-		}
-
-		public byte MajorVersion { get; }
-		public byte MinorVersion { get; }
-
-		public bool Equals([CanBeNull] CitpVersionAttribute other)
-		{
-			if (ReferenceEquals(null, other))
-				return false;
-			if (ReferenceEquals(this, other))
-				return true;
-			return base.Equals(other) && MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion;
-		}
-
-		public byte[] ToByteArray()
-		{
-			return new[] {MajorVersion, MinorVersion};
-		}
-
-		public override bool Equals([CanBeNull] object obj)
-		{
-			if (ReferenceEquals(null, obj))
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			return obj.GetType() == GetType() && Equals((CitpVersionAttribute)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				int hashCode = base.GetHashCode();
-				hashCode = (hashCode * 397) ^ MajorVersion.GetHashCode();
-				hashCode = (hashCode * 397) ^ MinorVersion.GetHashCode();
-				return hashCode;
-			}
-		}
-	}
-
-
-
 	[PublicAPI]
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
-	public enum MsexVersion
+	public enum MsexVersion : ushort
 	{
-		[CitpVersion(0, 0)] UnsupportedVersion,
-		[CitpVersion(1, 0)] Version1_0,
-		[CitpVersion(1, 1)] Version1_1,
-		[CitpVersion(1, 2)] Version1_2
+		UnsupportedVersion = 0,
+		Version1_0,
+		Version1_1,
+		Version1_2
 	}
 
 

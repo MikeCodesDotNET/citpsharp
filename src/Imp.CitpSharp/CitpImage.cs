@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	/// Contains byte data of an image generated in response to a <see cref="CitpImageRequest"/>
+	///     Contains byte data of an image generated in response to a <see cref="CitpImageRequest" />
 	/// </summary>
 	[PublicAPI]
 	public class CitpImage
@@ -21,22 +21,22 @@ namespace Imp.CitpSharp
 		}
 
 		/// <summary>
-		/// The request the image was generated in response to
+		///     The request the image was generated in response to
 		/// </summary>
 		public CitpImageRequest Request { get; }
 
 		/// <summary>
-		/// The byte data of the image
+		///     The byte data of the image
 		/// </summary>
 		public byte[] Data { get; }
 
 		/// <summary>
-		/// The actual width of the image contained in <see cref="Data"/>
+		///     The actual width of the image contained in <see cref="Data" />
 		/// </summary>
 		public int ActualWidth { get; }
 
 		/// <summary>
-		/// The actual height of the image contained in <see cref="Data"/>
+		///     The actual height of the image contained in <see cref="Data" />
 		/// </summary>
 		public int ActualHeight { get; }
 	}
@@ -44,9 +44,9 @@ namespace Imp.CitpSharp
 
 
 	/// <summary>
-	/// Represents a request for either a library/element thumbnail or streaming frame from a CITP peer.
+	///     Represents a request for either a library/element thumbnail or streaming frame from a CITP peer.
 	/// </summary>
-	/// <seealso cref="CitpImage"/>
+	/// <seealso cref="CitpImage" />
 	[PublicAPI]
 	public struct CitpImageRequest : IEquatable<CitpImageRequest>
 	{
@@ -61,27 +61,29 @@ namespace Imp.CitpSharp
 		}
 
 		/// <summary>
-		/// The requested width for the image.
+		///     The requested width for the image.
 		/// </summary>
 		public int FrameWidth { get; }
 
 		/// <summary>
-		/// The requested height for the image
+		///     The requested height for the image
 		/// </summary>
 		public int FrameHeight { get; }
 
 		/// <summary>
-		/// The requested format for the image
+		///     The requested format for the image
 		/// </summary>
 		public MsexImageFormat Format { get; }
 
 		/// <summary>
-		/// When true, indicates that the requested image should be scaled to fit the requested width and height without changing the image aspect ratio.
+		///     When true, indicates that the requested image should be scaled to fit the requested width and height without
+		///     changing the image aspect ratio.
 		/// </summary>
 		public bool IsPreserveAspectRatio { get; }
 
 		/// <summary>
-		/// When true, and when <see cref="Format"/> is equal to RGB, indicates that the ordering of the bytes should be BGR rather than RGB.
+		///     When true, and when <see cref="Format" /> is equal to RGB, indicates that the ordering of the bytes should be BGR
+		///     rather than RGB.
 		/// </summary>
 		/// <remarks>This will only be true when communicating with MSEX 1.0 clients</remarks>
 		public bool IsBgrOrder { get; }

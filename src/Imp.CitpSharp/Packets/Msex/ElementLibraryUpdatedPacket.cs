@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -15,8 +16,8 @@ namespace Imp.CitpSharp.Packets.Msex
 
 		public MsexElementLibraryUpdatedFlags UpdateFlags { get; set; }
 
-		public List<byte> AffectedElements { get; set; }
-		public List<byte> AffectedLibraries { get; set; }
+		public ImmutableSortedSet<byte> AffectedElements { get; set; }
+		public ImmutableSortedSet<byte> AffectedLibraries { get; set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
@@ -37,7 +38,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					writer.Write((byte)UpdateFlags);
 					break;
@@ -48,7 +49,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					writer.Write((byte)UpdateFlags);
 
@@ -83,30 +84,33 @@ namespace Imp.CitpSharp.Packets.Msex
 
 				case MsexVersion.Version1_1:
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 					UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 					break;
 
 				case MsexVersion.Version1_2:
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 					UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 
-					AffectedElements = new List<byte>();
+					var affectedElementsList = new List<byte>();
 					var affectedElementsArray = new BitArray(reader.ReadBytes(32));
 					for (byte i = 0; i <= 255; ++i)
 					{
 						if (affectedElementsArray[i])
-							AffectedElements.Add(i);
+							affectedElementsList.Add(i);
 					}
+					AffectedElements = affectedElementsList.ToImmutableSortedSet();
 
-					AffectedLibraries = new List<byte>();
+					var affectedLibrariesList = new List<byte>();
 					var affectedLibrariesArray = new BitArray(reader.ReadBytes(32));
 					for (byte i = 0; i <= 255; ++i)
 					{
 						if (affectedLibrariesArray[i])
-							AffectedLibraries.Add(i);
+							affectedLibrariesList.Add(i);
 					}
+					AffectedLibraries = affectedLibrariesList.ToImmutableSortedSet();
+
 					break;
 			}
 		}

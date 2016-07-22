@@ -42,7 +42,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					if (!LibraryId.HasValue)
 						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1 & V1.2");
 
-					writer.Write(LibraryId.Value.ToByteArray());
+					writer.Write(LibraryId.Value);
 
 					writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
 
@@ -79,7 +79,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				case MsexVersion.Version1_2:
 				{
 					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = MsexLibraryId.FromByteArray(reader.ReadBytes(4));
+					LibraryId = reader.ReadLibraryId();
 
 					ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
 

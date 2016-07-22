@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Text;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	/// Contains DMX patch information, serializes to a string
+	///     Contains DMX patch information, serializes to a string
 	/// </summary>
 	[PublicAPI]
 	public struct CitpDmxConnectionString : IEquatable<CitpDmxConnectionString>
@@ -16,10 +15,12 @@ namespace Imp.CitpSharp
 		public const string ProtocolNameEtcNet2 = "ETCNet2";
 		public const string ProtocolNameMaNet = "MANet";
 
-		static Regex _dmxConnectionStringRegex = new Regex(@"^(?:(?<p>ArtNet)\/(?<n>\d+)\/(?<u>\d+)\/(?<c>\d+)|(?<p>BSRE1\.31)\/(?<u>\d+)\/(?<c>\d+)|(?<p>ETCNet2)\/(?<c>\d+)|(?<p>MANet)\/(?<t>\d+)\/(?<u>\d+)\/(?<c>\d+))(?:\/PersonalityID\/(?<pId>{[0-9A-Fa-f]{8}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{12}}))?$", 
-			RegexOptions.CultureInvariant);
+		private static Regex _dmxConnectionStringRegex =
+			new Regex(
+				@"^(?:(?<p>ArtNet)\/(?<n>\d+)\/(?<u>\d+)\/(?<c>\d+)|(?<p>BSRE1\.31)\/(?<u>\d+)\/(?<c>\d+)|(?<p>ETCNet2)\/(?<c>\d+)|(?<p>MANet)\/(?<t>\d+)\/(?<u>\d+)\/(?<c>\d+))(?:\/PersonalityID\/(?<pId>{[0-9A-Fa-f]{8}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{12}}))?$",
+				RegexOptions.CultureInvariant);
 
-		
+
 
 		public static CitpDmxConnectionString Parse([NotNull] string s)
 		{
@@ -121,7 +122,8 @@ namespace Imp.CitpSharp
 
 
 
-		CitpDmxConnectionString(DmxProtocol protocol, int channel, int? net, int? universe, int? type, Guid? personalityId)
+		private CitpDmxConnectionString(DmxProtocol protocol, int channel, int? net, int? universe, int? type,
+			Guid? personalityId)
 			: this()
 		{
 			Protocol = protocol;
@@ -133,7 +135,7 @@ namespace Imp.CitpSharp
 		}
 
 
-
+		[PublicAPI]
 		public enum DmxProtocol
 		{
 			None = 0,
@@ -177,7 +179,8 @@ namespace Imp.CitpSharp
 
 		public bool Equals(CitpDmxConnectionString other)
 		{
-			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe && Channel == other.Channel && PersonalityId.Equals(other.PersonalityId);
+			return Protocol == other.Protocol && Net == other.Net && Type == other.Type && Universe == other.Universe
+			       && Channel == other.Channel && PersonalityId.Equals(other.PersonalityId);
 		}
 
 		public override bool Equals([CanBeNull] object obj)

@@ -1,14 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Imp.CitpSharp.Packets;
-using Imp.CitpSharp.Packets.Msex;
-using Imp.CitpSharp.Packets.Pinf;
-using JetBrains.Annotations;
-
-namespace Imp.CitpSharp
+﻿namespace Imp.CitpSharp
 {
 	//[PublicAPI]
 	//public sealed class CitpMediaServerService : IDisposable
