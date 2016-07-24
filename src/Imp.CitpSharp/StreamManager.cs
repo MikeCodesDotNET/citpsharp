@@ -30,9 +30,8 @@ namespace Imp.CitpSharp
 		public void AddRequest(PeerInfo peer, RequestStreamPacket packet)
 		{
 			Debug.Assert(packet.SourceId == SourceId, "Patch source ID does not match this source");
-			Debug.Assert(packet.Version != null);
 
-			var request = new StreamRequest(peer, packet.Version.Value, packet.FrameFormat, packet.FrameWidth, packet.FrameHeight, packet.Fps);
+			var request = new StreamRequest(peer, packet.Version, packet.FrameFormat, packet.FrameWidth, packet.FrameHeight, packet.Fps);
 			_requests[request] = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout);
 
 			computeResolvedRequests();
@@ -83,23 +82,11 @@ namespace Imp.CitpSharp
 
 					for(int i = 0; i < fragments.Length; ++i)
 					{
-						yield return new StreamFramePacket
-						{
-							Version = pair.Value.Version,
-							MediaServerUuid = _device.Uuid,
-							SourceIdentifier = SourceId,
-							FrameFormat = pair.Key.Format,
-							FrameWidth = (ushort)pair.Key.FrameWidth,
-							FrameHeight = (ushort)pair.Key.FrameHeight,
-							FrameBuffer = fragments[i],
-							FragmentInfo = new StreamFramePacket.FragmentPreamble
-							{
-								FrameIndex = _frameIndex,
-								FragmentCount = (ushort)fragments.Length,
-								FragmentIndex = (ushort)i,
-								FragmentByteOffset = (uint)(CitpImage.MaximumFragmentedImageBufferLength * i)
-							}
-						};
+					    var fragmentInfo = new StreamFramePacket.FragmentPreamble(_frameIndex, (ushort)fragments.Length, (ushort)i,
+					        (uint)(CitpImage.MaximumFragmentedImageBufferLength * i));
+
+					    yield return new StreamFramePacket(pair.Value.Version, _device.Uuid, SourceId, pair.Key.Format,
+					        (ushort)image.ActualWidth, (ushort)image.ActualHeight, fragments[i], fragmentInfo);
 					}
 				}
 				else
@@ -113,17 +100,9 @@ namespace Imp.CitpSharp
 						continue;
 					}
 
-					yield return new StreamFramePacket
-					{
-						Version = pair.Value.Version,
-						MediaServerUuid = _device.Uuid,
-						SourceIdentifier = SourceId,
-						FrameFormat = pair.Key.Format,
-						FrameWidth = (ushort)pair.Key.FrameWidth,
-						FrameHeight = (ushort)pair.Key.FrameHeight,
-						FrameBuffer = image.Data
-					};
-				}
+                    yield return new StreamFramePacket(pair.Value.Version, _device.Uuid, SourceId, pair.Key.Format,
+                           (ushort)image.ActualWidth, (ushort)image.ActualHeight, image.Data);
+                }
 
 				pair.Value.LastOutput = timeNow;
 			}
@@ -224,7 +203,7 @@ namespace Imp.CitpSharp
 
 		    if (!_streams.TryGetValue(packet.SourceId, out source))
 		    {
-			    CitpVideoSourceInformation info;
+			    VideoSourceInformation info;
 			    if (!_device.VideoSourceInformation.TryGetValue(packet.SourceId, out info))
 			    {
 				    _logger.LogError($"Peer '{peer}' requested stream whuch does not exist on this server");

@@ -5,7 +5,13 @@ namespace Imp.CitpSharp.Packets.Msex
 		public NegativeAcknowledgePacket()
 			: base(MsexMessageType.NegativeAcknowledgeMessage) { }
 
-		public MsexMessageType ReceivedContentType { get; set; }
+	    public NegativeAcknowledgePacket(MsexVersion version, MsexMessageType receivedContentType, ushort requestResponseIndex = 0)
+	        : base(MsexMessageType.NegativeAcknowledgeMessage, version, requestResponseIndex)
+	    {
+	        ReceivedContentType = receivedContentType;
+	    }
+
+		public MsexMessageType ReceivedContentType { get; private set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{

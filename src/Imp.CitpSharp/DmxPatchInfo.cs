@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	///     Contains DMX patch information, serializes to a string
+	///     Represents DMX patching information for an MSEX layer
 	/// </summary>
 	[PublicAPI]
 	public struct DmxPatchInfo : IEquatable<DmxPatchInfo>
@@ -21,8 +21,14 @@ namespace Imp.CitpSharp
 				RegexOptions.CultureInvariant);
 
 
-
-		public static DmxPatchInfo Parse([NotNull] string s)
+	    /// <summary>
+	    ///     Parse <see cref="DmxPatchInfo"/> from it's string-formatted representation.
+	    /// </summary>
+	    /// <param name="s">String formatted <see cref="DmxPatchInfo"/></param>
+	    /// <returns><see cref="DmxPatchInfo"/> represented by string</returns>
+	    /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null" />.</exception>
+	    /// <exception cref="FormatException">String is not a valid <see cref="DmxPatchInfo"/> string</exception>
+	    public static DmxPatchInfo Parse([NotNull] string s)
 		{
 			if (s == null)
 				throw new ArgumentNullException(nameof(s));
@@ -30,11 +36,17 @@ namespace Imp.CitpSharp
 			var result = TryParse(s);
 
 			if (!result.HasValue)
-				throw new FormatException("String is not a valid CITP DmxConnectionString");
+				throw new FormatException("String is not a valid DmxPatchInfo string");
 
 			return result.Value;
 		}
 
+        /// <summary>
+        ///     Try and parse <see cref="DmxPatchInfo"/> from it's string-formatted representation.
+        /// </summary>
+        /// <param name="s">String formatted <see cref="DmxPatchInfo"/></param>
+        /// <param name="value"><see cref="DmxPatchInfo"/> represented by string, or default value if parse fails</param>
+        /// <returns>True if parse was successful, otherwise false</returns>
 		public static bool TryParse([CanBeNull] string s, out DmxPatchInfo value)
 		{
 			value = default(DmxPatchInfo);
@@ -48,6 +60,12 @@ namespace Imp.CitpSharp
 			return true;
 		}
 
+        /// <summary>
+        ///     Try and parse <see cref="DmxPatchInfo"/> from it's string-formatted representation.
+        /// </summary>
+        /// <param name="s">String formatted <see cref="DmxPatchInfo"/></param>
+        /// <returns><see cref="DmxPatchInfo"/> represented by string, or null value if parse fails</returns>
+        [CanBeNull]
 		public static DmxPatchInfo? TryParse([CanBeNull] string s)
 		{
 			if (s == null)
@@ -99,22 +117,64 @@ namespace Imp.CitpSharp
 		}
 
 
-
-		public static DmxPatchInfo FromArtNet(int net, int universe, int channel, Guid? personalityId = null)
+        /// <summary>
+        ///     Creates <see cref="DmxPatchInfo"/> for a layer patched to Art-Net.
+        /// </summary>
+        /// <param name="net">Art-Net net value (Use 0 for Art-Net 2)</param>
+        /// <param name="subNetAndUniverse">Art-Net combined sub-net and universe value</param>
+        /// <param name="channel">Art-Net channel value</param>
+        /// <param name="personalityId">Patched personality identifier</param>
+        /// <returns><see cref="DmxPatchInfo"/> for Art-Net values</returns>
+		public static DmxPatchInfo FromArtNet(int net, int subNetAndUniverse, int channel, Guid? personalityId = null)
 		{
-			return new DmxPatchInfo(DmxProtocol.ArtNet, channel, net, universe, null, personalityId);
+			return new DmxPatchInfo(DmxProtocol.ArtNet, channel, net, subNetAndUniverse, null, personalityId);
 		}
 
-		public static DmxPatchInfo FromBsre131(int universe, int channel, Guid? personalityId = null)
+        /// <summary>
+        ///     Creates <see cref="DmxPatchInfo"/> for a layer patched to Art-Net.
+        /// </summary>
+        /// <param name="net">Art-Net net value (Use 0 for Art-Net 2)</param>
+        /// <param name="subnet">Art-Net sub-net value</param>
+        /// <param name="universe">Art-Net universe value</param>
+        /// <param name="channel">Art-Net channel value</param>
+        /// <param name="personalityId">Patched personality identifier</param>
+        /// <returns><see cref="DmxPatchInfo"/> for Art-Net values</returns>
+        public static DmxPatchInfo FromArtNet(int net, int subnet, int universe, int channel, Guid? personalityId = null)
+        {
+            return new DmxPatchInfo(DmxProtocol.ArtNet, channel, net, (subnet << 4) + universe, null, personalityId);
+        }
+
+        /// <summary>
+        ///     Creates <see cref="DmxPatchInfo"/> for a layer patched to E131 (sACN)
+        /// </summary>
+        /// <param name="universe">E1.31 universe value</param>
+        /// <param name="channel">E1.31 channel value</param>
+        /// <param name="personalityId">Patched personality identifier</param>
+        /// <returns><see cref="DmxPatchInfo"/> for E1.31 values</returns>
+        public static DmxPatchInfo FromBsre131(int universe, int channel, Guid? personalityId = null)
 		{
 			return new DmxPatchInfo(DmxProtocol.Bsre131, channel, null, universe, null, personalityId);
 		}
 
+        /// <summary>
+        ///     Creates <see cref="DmxPatchInfo"/> for a layer patched to ETC-Net
+        /// </summary>
+        /// <param name="channel">ETC-Net channel value</param>
+        /// <param name="personalityId">Patched personality identifier</param>
+        /// <returns><see cref="DmxPatchInfo"/> for ETC-Net values</returns>
 		public static DmxPatchInfo FromEtcNet2(int channel, Guid? personalityId = null)
 		{
 			return new DmxPatchInfo(DmxProtocol.EtcNet2, channel, null, null, null, personalityId);
 		}
 
+        /// <summary>
+        ///     Creates <see cref="DmxPatchInfo"/> for a layer patched to MA-Net
+        /// </summary>
+        /// <param name="type">MA-Net type value</param>
+        /// <param name="universe">MA-Net universe value</param>
+        /// <param name="channel">MA-Net channel value</param>
+        /// <param name="personalityId">Patched personality identifier</param>
+        /// <returns><see cref="DmxPatchInfo"/> for MA-Net values</returns>
 		public static DmxPatchInfo FromMaNet(int type, int universe, int channel, Guid? personalityId = null)
 		{
 			return new DmxPatchInfo(DmxProtocol.MaNet, channel, null, universe, type, personalityId);
@@ -135,6 +195,9 @@ namespace Imp.CitpSharp
 		}
 
 
+        /// <summary>
+        ///     DMX IP protocol type
+        /// </summary>
 		[PublicAPI]
 		public enum DmxProtocol
 		{
@@ -144,7 +207,6 @@ namespace Imp.CitpSharp
 			EtcNet2,
 			MaNet
 		}
-
 
 
 		public DmxProtocol Protocol { get; }
@@ -158,7 +220,8 @@ namespace Imp.CitpSharp
 		public Guid? PersonalityId { get; }
 
 
-		public override string ToString()
+	    [NotNull]
+	    public override string ToString()
 		{
 			string personalityId = PersonalityId.HasValue ? "/PersonalityID/" + PersonalityId.Value.ToString("B") : string.Empty;
 

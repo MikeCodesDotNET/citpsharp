@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
@@ -8,7 +9,14 @@ namespace Imp.CitpSharp.Packets.Msex
 		public ClientInformationPacket()
 			: base(MsexMessageType.ClientInformationMessage) { }
 
-		public ImmutableHashSet<MsexVersion> SupportedMsexVersions { get; set; }
+	    public ClientInformationPacket(MsexVersion version, IEnumerable<MsexVersion> supportedMsexVersions, ushort requestResponseIndex = 0)
+            : base(MsexMessageType.ClientInformationMessage, version, requestResponseIndex)
+	    {
+	        SupportedMsexVersions = supportedMsexVersions.ToImmutableHashSet();
+
+	    }
+
+	    public ImmutableHashSet<MsexVersion> SupportedMsexVersions { get; private set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{

@@ -8,19 +8,26 @@ using Imp.CitpSharp.Packets.Msex;
 
 namespace Imp.CitpSharp
 {
-    public class CitpServerService : CitpService
+    /// <summary>
+    ///     Base class for CITP services implementing a TCP server and streaming video services
+    /// </summary>
+    public abstract class CitpServerService : CitpService
     {
         public static readonly TimeSpan StreamTimerInterval = TimeSpan.FromMilliseconds(1000d / 60d);
 
         private bool _isDisposed;
 
+        private readonly ICitpServerDevice _device;
+
         private readonly TcpServer _tcpServer;
         private readonly RegularTimer _streamTimer;
 
-        public CitpServerService(ICitpLogService logger, bool isUseLegacyMulticastIp,
+        protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, bool isUseLegacyMulticastIp,
             NetworkInterface networkInterface = null)
-            : base(logger, isUseLegacyMulticastIp, networkInterface)
+            : base(logger, device, isUseLegacyMulticastIp, networkInterface)
         {
+            _device = device;
+
             var localIp = IPAddress.Any;
             if (networkInterface != null)
             {

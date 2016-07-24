@@ -4,24 +4,27 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+    /// <summary>
+    ///     Base interface for CITP devices which have server functionality
+    /// </summary>
     [PublicAPI]
     public interface ICitpServerDevice : ICitpDevice
     {
         /// <summary>
-        ///     The unique identifier of the stream provider
+        ///     The unique identifier of this server device
         /// </summary>
         Guid Uuid { get; }
 
         /// <summary>
-        ///     An hashset of supported image formats for CITP peers making streaming requests from this media server
+        ///     Hashset of supported image formats for CITP peers making streaming requests from this server device
         /// </summary>
         ImmutableHashSet<MsexImageFormat> SupportedStreamFormats { get; }
 
         /// <summary>
-        ///     An dictionary containing information on available streaming video sources, where the key is the unique video source
+        ///     Dictionary containing information on available streaming video sources, where the key is the unique video source
         ///     ID.
         /// </summary>
-        ImmutableDictionary<int, CitpVideoSourceInformation> VideoSourceInformation { get; }
+        ImmutableDictionary<int, VideoSourceInformation> VideoSourceInformation { get; }
 
         /// <summary>
         ///     Requests a frame from a streaming video source

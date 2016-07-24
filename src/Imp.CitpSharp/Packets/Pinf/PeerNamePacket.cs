@@ -5,7 +5,13 @@
 		public PeerNamePacket()
 			: base(PinfMessageType.PeerNameMessage) { }
 
-		public string Name { get; set; }
+	    public PeerNamePacket(string name)
+	        : base(PinfMessageType.PeerNameMessage)
+	    {
+	        Name = name;
+	    }
+
+		public string Name { get; private set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{

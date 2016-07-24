@@ -1,5 +1,3 @@
-using System;
-
 namespace Imp.CitpSharp.Packets.Msex
 {
 	internal class ElementThumbnailPacket : MsexPacket
@@ -7,91 +5,57 @@ namespace Imp.CitpSharp.Packets.Msex
 		public ElementThumbnailPacket()
 			: base(MsexMessageType.ElementThumbnailMessage) { }
 
-		public MsexLibraryType LibraryType { get; set; }
-		public byte LibraryNumber { get; set; }
-		public MsexLibraryId? LibraryId { get; set; }
+	    public ElementThumbnailPacket(MsexVersion version, MsexLibraryType libraryType, MsexId library, byte elementNumber,
+	        MsexImageFormat thumbnailFormat, ushort thumbnailWidth, ushort thumbnailHeight, byte[] thumbnailBuffer,
+	        ushort requestResponseIndex = 0)
+	        : base(MsexMessageType.ElementThumbnailMessage, version, requestResponseIndex)
+	    {
+	        LibraryType = libraryType;
+	        Library = library;
+	        ElementNumber = elementNumber;
+	        ThumbnailFormat = thumbnailFormat;
+	        ThumbnailWidth = thumbnailWidth;
+	        ThumbnailHeight = ThumbnailHeight;
+	        ThumbnailBuffer = thumbnailBuffer;
+	    }
 
-		public byte ElementNumber { get; set; }
+        public MsexLibraryType LibraryType { get; private set; }
+		public MsexId Library { get; private set; }
 
-		public MsexImageFormat ThumbnailFormat { get; set; }
-		public ushort ThumbnailWidth { get; set; }
-		public ushort ThumbnailHeight { get; set; }
-		public byte[] ThumbnailBuffer { get; set; }
+		public byte ElementNumber { get; private set; }
+
+		public MsexImageFormat ThumbnailFormat { get; private set; }
+		public ushort ThumbnailWidth { get; private set; }
+		public ushort ThumbnailHeight { get; private set; }
+		public byte[] ThumbnailBuffer { get; private set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
 			base.SerializeToStream(writer);
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-					writer.Write((byte)LibraryType);
-					writer.Write(LibraryNumber);
-					writer.Write(ElementNumber);
-					writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
-					writer.Write(ThumbnailWidth);
-					writer.Write(ThumbnailHeight);
-					writer.Write((ushort)ThumbnailBuffer.Length);
-					writer.Write(ThumbnailBuffer);
-					break;
-
-				case MsexVersion.Version1_1:
-				case MsexVersion.Version1_2:
-					writer.Write((byte)LibraryType);
-
-					if (!LibraryId.HasValue)
-						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1 & V1.2");
-
-					writer.Write(LibraryId.Value);
-					writer.Write(ElementNumber);
-					writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
-					writer.Write(ThumbnailWidth);
-					writer.Write(ThumbnailHeight);
-					writer.Write((ushort)ThumbnailBuffer.Length);
-					writer.Write(ThumbnailBuffer);
-					break;
-			}
+            writer.Write((byte)LibraryType);
+            writer.Write(Library, Version);
+            writer.Write(ElementNumber);
+            writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
+            writer.Write(ThumbnailWidth);
+            writer.Write(ThumbnailHeight);
+            writer.Write((ushort)ThumbnailBuffer.Length);
+            writer.Write(ThumbnailBuffer);
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-				{
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryNumber = reader.ReadByte();
-					ElementNumber = reader.ReadByte();
+            LibraryType = (MsexLibraryType)reader.ReadByte();
+            Library = reader.ReadMsexId(Version);
+            ElementNumber = reader.ReadByte();
+            ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+            ThumbnailWidth = reader.ReadUInt16();
+            ThumbnailHeight = reader.ReadUInt16();
 
-					ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
-
-					ThumbnailWidth = reader.ReadUInt16();
-					ThumbnailHeight = reader.ReadUInt16();
-
-					int thumbnailBufferLength = reader.ReadUInt16();
-					ThumbnailBuffer = reader.ReadBytes(thumbnailBufferLength);
-				}
-					break;
-
-				case MsexVersion.Version1_1:
-				case MsexVersion.Version1_2:
-				{
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = reader.ReadLibraryId();
-					ElementNumber = reader.ReadByte();
-
-					ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
-
-					ThumbnailWidth = reader.ReadUInt16();
-					ThumbnailHeight = reader.ReadUInt16();
-
-					int thumbnailBufferLength = reader.ReadUInt16();
-					ThumbnailBuffer = reader.ReadBytes(thumbnailBufferLength);
-				}
-					break;
-			}
+            int thumbnailBufferLength = reader.ReadUInt16();
+            ThumbnailBuffer = reader.ReadBytes(thumbnailBufferLength);
 		}
 	}
 }

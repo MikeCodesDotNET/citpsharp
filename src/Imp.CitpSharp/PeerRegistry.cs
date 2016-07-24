@@ -10,7 +10,7 @@ namespace Imp.CitpSharp
 {
 	internal class PeerInfo : IEquatable<PeerInfo>
 	{
-		public PeerInfo(PeerKind kind, [NotNull] string name, [NotNull] string state, ushort listeningTcpPort,
+		public PeerInfo(CitpPeerType peerType, [NotNull] string name, [NotNull] string state, ushort listeningTcpPort,
 			[NotNull] IPAddress ip)
 		{
 			if (name == null)
@@ -20,7 +20,7 @@ namespace Imp.CitpSharp
 			if (ip == null)
 				throw new ArgumentNullException(nameof(ip));
 
-			Kind = kind;
+			PeerType = peerType;
 			Name = name;
 			State = state;
 			ListeningTcpPort = listeningTcpPort;
@@ -28,11 +28,11 @@ namespace Imp.CitpSharp
 		}
 
 		public PeerInfo([NotNull] string name, [NotNull] IPAddress ip)
-			: this(PeerKind.Unknown, name, string.Empty, 0, ip)
+			: this(CitpPeerType.Unknown, name, string.Empty, 0, ip)
 		{
 		}
 
-		public PeerKind Kind { get; }
+		public CitpPeerType PeerType { get; }
 		public string Name { get; }
 		public string State { get; }
 		public ushort ListeningTcpPort { get; }
@@ -46,7 +46,7 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return Kind == other.Kind && string.Equals(Name, other.Name) && Ip.Equals(other.Ip);
+			return PeerType == other.PeerType && string.Equals(Name, other.Name) && Ip.Equals(other.Ip);
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -62,7 +62,7 @@ namespace Imp.CitpSharp
 		{
 			unchecked
 			{
-				int hashCode = (int)Kind;
+				int hashCode = (int)PeerType;
 				hashCode = (hashCode * 397) ^ Name.GetHashCode();
 				hashCode = (hashCode * 397) ^ Ip.GetHashCode();
 				return hashCode;
@@ -82,7 +82,7 @@ namespace Imp.CitpSharp
 
 		public PeerInfo AddPeer(PeerLocationPacket packet, IPAddress ip)
 		{
-			var peer = new PeerInfo(packet.Kind, packet.Name, packet.State, packet.ListeningTcpPort, ip);
+			var peer = new PeerInfo(packet.PeerType, packet.Name, packet.State, packet.ListeningTcpPort, ip);
 
 			if (_peers.ContainsKey(peer))
 				_peers[peer] = DateTime.Now;

@@ -71,18 +71,5 @@ namespace Imp.CitpSharp
 				return hashCode;
 			}
 		}
-
-		internal ElementLibraryUpdatedPacket ToPacket()
-		{
-			return new ElementLibraryUpdatedPacket
-			{
-				LibraryType = LibraryType,
-				LibraryNumber = LibraryNumber,
-				LibraryId = LibraryId,
-				UpdateFlags = UpdateFlags,
-				AffectedElements = AffectedElements,
-				AffectedLibraries = AffectedLibraries
-			};
-		}
 	}
 }

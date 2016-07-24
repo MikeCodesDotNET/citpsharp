@@ -8,7 +8,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public VideoSourcesPacket()
 			: base(MsexMessageType.VideoSourcesMessage) { }
 
-		public ImmutableSortedSet<CitpVideoSourceInformation> Sources { get; set; }
+		public ImmutableSortedSet<VideoSourceInformation> Sources { get; set; }
 
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
@@ -52,7 +52,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				ushort width = reader.ReadUInt16();
 				ushort height = reader.ReadUInt16();
 
-				return new CitpVideoSourceInformation(sourceIdentifier, sourceName, flags, width, height, physicalOutput,
+				return new VideoSourceInformation(sourceIdentifier, sourceName, flags, width, height, physicalOutput,
 					layerNumber);
 
 			}).ToImmutableSortedSet();

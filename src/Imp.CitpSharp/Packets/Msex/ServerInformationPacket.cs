@@ -5,114 +5,130 @@ using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
-	internal class ServerInformationPacket : MsexPacket
-	{
-		public ServerInformationPacket()
-			: base(MsexMessageType.ServerInformationMessage) { }
+    internal class ServerInformationPacket : MsexPacket
+    {
+        public ServerInformationPacket()
+           : base(MsexMessageType.ServerInformationMessage) { }
 
-		public Guid Uuid { get; set; }
+        public ServerInformationPacket(MsexMessageType messageType, MsexVersion version, string productName,
+            byte productVersionMajor, byte productVersionMinor, IEnumerable<DmxPatchInfo> layerDmxSources, ushort requestResponseIndex = 0)
+            : base(messageType, version, requestResponseIndex)
+        {
+            Uuid = Guid.Empty;
+            ProductName = productName;
+            ProductVersionMajor = productVersionMajor;
+            ProductVersionMinor = productVersionMinor;
+            ProductVersionBugfix = 0;
+            SupportedMsexVersions = ImmutableHashSet<MsexVersion>.Empty;
+            SupportedLibraryTypes = ImmutableHashSet<MsexLibraryType>.Empty;
+            ThumbnailFormats = ImmutableHashSet<MsexImageFormat>.Empty;
+            StreamFormats = ImmutableHashSet<MsexImageFormat>.Empty;
+            LayerDmxSources = layerDmxSources.ToImmutableList();
+        }
 
-		public string ProductName { get; set; }
+        public ServerInformationPacket(MsexVersion version, Guid uuid, string productName,
+            byte productVersionMajor, byte productVersionMinor, byte productVersionBugfix,
+            IEnumerable<MsexVersion> supportedMsexVersions, IEnumerable<MsexLibraryType> supportedLibraryTypes,
+            IEnumerable<MsexImageFormat> thumbnailFormats, IEnumerable<MsexImageFormat> streamFormats,
+            IEnumerable<DmxPatchInfo> layerDmxSources, ushort requestResponseIndex = 0)
+            : base(MsexMessageType.ServerInformationMessage, version, requestResponseIndex)
+        {
+            Uuid = uuid;
+            ProductName = productName;
+            ProductVersionMajor = productVersionMajor;
+            ProductVersionMinor = productVersionMinor;
+            ProductVersionBugfix = productVersionBugfix;
+            SupportedMsexVersions = supportedMsexVersions.ToImmutableHashSet();
+            SupportedLibraryTypes = supportedLibraryTypes.ToImmutableHashSet();
+            ThumbnailFormats = thumbnailFormats.ToImmutableHashSet();
+            StreamFormats = streamFormats.ToImmutableHashSet();
+            LayerDmxSources = layerDmxSources.ToImmutableList();
+        }
 
-		public byte ProductVersionMajor { get; set; }
-		public byte ProductVersionMinor { get; set; }
-		public byte ProductVersionBugfix { get; set; }
+        public Guid Uuid { get; private set; }
 
-		public ImmutableHashSet<MsexVersion> SupportedMsexVersions { get; set; }
+        public string ProductName { get; private set; }
 
-		public ImmutableHashSet<MsexLibraryType> SupportedLibraryTypes { get; set; }
+        public byte ProductVersionMajor { get; private set; }
+        public byte ProductVersionMinor { get; private set; }
+        public byte ProductVersionBugfix { get; private set; }
 
-		public ImmutableHashSet<MsexImageFormat> ThumbnailFormats { get; set; }
-		public ImmutableHashSet<MsexImageFormat> StreamFormats { get; set; }
+        public ImmutableHashSet<MsexVersion> SupportedMsexVersions { get; private set; }
 
-		public ImmutableList<DmxPatchInfo> LayerDmxSources { get; set; }
+        public ImmutableHashSet<MsexLibraryType> SupportedLibraryTypes { get; private set; }
 
-		protected override void SerializeToStream(CitpBinaryWriter writer)
-		{
-			base.SerializeToStream(writer);
+        public ImmutableHashSet<MsexImageFormat> ThumbnailFormats { get; private set; }
+        public ImmutableHashSet<MsexImageFormat> StreamFormats { get; private set; }
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-				case MsexVersion.Version1_1:
-					writer.Write(ProductName);
-					writer.Write(ProductVersionMajor);
-					writer.Write(ProductVersionMinor);
-					writer.Write(LayerDmxSources, TypeCode.Byte, d => writer.Write(d, true));
-					break;
+        public ImmutableList<DmxPatchInfo> LayerDmxSources { get; private set; }
 
-				case MsexVersion.Version1_2:
-					writer.Write(Uuid);
-					writer.Write(ProductName);
+        protected override void SerializeToStream(CitpBinaryWriter writer)
+        {
+            base.SerializeToStream(writer);
 
-					writer.Write(ProductVersionMajor);
-					writer.Write(ProductVersionMinor);
-					writer.Write(ProductVersionBugfix);
+            if (Version == MsexVersion.Version1_2)
+                writer.Write(Uuid);
 
-					writer.Write(SupportedMsexVersions, TypeCode.Byte, v => writer.Write(v, true));
+            writer.Write(ProductName);
+            writer.Write(ProductVersionMajor);
+            writer.Write(ProductVersionMinor);
 
-					ushort supportedLibraryTypes = 0;
-					foreach (var t in SupportedLibraryTypes)
-						supportedLibraryTypes |= (ushort)(2 ^ (int)t);
-					writer.Write(supportedLibraryTypes);
+            if (Version == MsexVersion.Version1_2)
+            {
+                writer.Write(ProductVersionBugfix);
 
-					writer.Write(ThumbnailFormats, TypeCode.Byte, f => writer.Write(f.GetCustomAttribute<CitpId>().Id));
-					writer.Write(StreamFormats, TypeCode.Byte, f => writer.Write(f.GetCustomAttribute<CitpId>().Id));
-					writer.Write(LayerDmxSources, TypeCode.Byte, d => writer.Write(d, true));
+                writer.Write(SupportedMsexVersions, TypeCode.Byte, v => writer.Write(v, true));
 
-					break;
-			}
-		}
+                ushort supportedLibraryTypes = 0;
+                foreach (var t in SupportedLibraryTypes)
+                    supportedLibraryTypes |= (ushort)(2 ^ (int)t);
+                writer.Write(supportedLibraryTypes);
 
-		protected override void DeserializeFromStream(CitpBinaryReader reader)
-		{
-			base.DeserializeFromStream(reader);
+                writer.Write(ThumbnailFormats, TypeCode.Byte, f => writer.Write(f.GetCustomAttribute<CitpId>().Id));
+                writer.Write(StreamFormats, TypeCode.Byte, f => writer.Write(f.GetCustomAttribute<CitpId>().Id));
+            }
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-				case MsexVersion.Version1_1:
-				{
-					ProductName = reader.ReadString();
-					ProductVersionMajor = reader.ReadByte();
-					ProductVersionMinor = reader.ReadByte();
+            writer.Write(LayerDmxSources, TypeCode.Byte, d => writer.Write(d, true));
+        }
 
-					LayerDmxSources = reader.ReadCollection(TypeCode.Byte, 
-						() => DmxPatchInfo.Parse(reader.ReadString(true))).ToImmutableList();
-				}
-					break;
+        protected override void DeserializeFromStream(CitpBinaryReader reader)
+        {
+            base.DeserializeFromStream(reader);
 
-				case MsexVersion.Version1_2:
-				{
-					Uuid = reader.ReadGuid();
+            if (Version == MsexVersion.Version1_2)
+                Uuid = reader.ReadGuid();
 
-					ProductName = reader.ReadString();
-					ProductVersionMajor = reader.ReadByte();
-					ProductVersionMinor = reader.ReadByte();
-					ProductVersionBugfix = reader.ReadByte();
+            ProductName = reader.ReadString();
+            ProductVersionMajor = reader.ReadByte();
+            ProductVersionMinor = reader.ReadByte();
 
-					SupportedMsexVersions = reader.ReadCollection(TypeCode.Byte, () => reader.ReadMsexVersion(true)).ToImmutableHashSet();
+            if (Version == MsexVersion.Version1_2)
+            {
+                ProductVersionBugfix = reader.ReadByte();
 
-					var supportedLibraryTypesList = new List<MsexLibraryType>();
-					var supportedLibraryTypesBits = new BitArray(reader.ReadBytes(2));
-					for (byte i = 0; i < supportedLibraryTypesBits.Length; ++i)
-					{
-						if (supportedLibraryTypesBits[i])
-							supportedLibraryTypesList.Add((MsexLibraryType)i);
-					}
-					SupportedLibraryTypes = supportedLibraryTypesList.ToImmutableHashSet();
+                SupportedMsexVersions =
+                    reader.ReadCollection(TypeCode.Byte, () => reader.ReadMsexVersion(true)).ToImmutableHashSet();
 
-					ThumbnailFormats = reader.ReadCollection(TypeCode.Byte,
-						() => CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString())).ToImmutableHashSet();
+                var supportedLibraryTypesList = new List<MsexLibraryType>();
+                var supportedLibraryTypesBits = new BitArray(reader.ReadBytes(2));
+                for (byte i = 0; i < supportedLibraryTypesBits.Length; ++i)
+                {
+                    if (supportedLibraryTypesBits[i])
+                        supportedLibraryTypesList.Add((MsexLibraryType)i);
+                }
+                SupportedLibraryTypes = supportedLibraryTypesList.ToImmutableHashSet();
 
-					StreamFormats = reader.ReadCollection(TypeCode.Byte,
-						() => CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString())).ToImmutableHashSet();
+                ThumbnailFormats = reader.ReadCollection(TypeCode.Byte,
+                    () => CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()))
+                    .ToImmutableHashSet();
 
-					LayerDmxSources = reader.ReadCollection(TypeCode.Byte,
-							() => DmxPatchInfo.Parse(reader.ReadString(true))).ToImmutableList();
-				}
-					break;
-			}
-		}
-	}
+                StreamFormats = reader.ReadCollection(TypeCode.Byte,
+                    () => CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString()))
+                    .ToImmutableHashSet();
+            }
+
+            LayerDmxSources = reader.ReadCollection(TypeCode.Byte,
+                       () => DmxPatchInfo.Parse(reader.ReadString(true))).ToImmutableList();
+        }
+    }
 }

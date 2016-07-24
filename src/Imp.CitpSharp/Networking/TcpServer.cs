@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -17,6 +18,8 @@ namespace Imp.CitpSharp.Networking
         private readonly TcpListener _tcpListener;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
+        private readonly Task _listenTask;
+
         public TcpServer(ICitpLogService logger, IPEndPoint localEndPoint)
         {
             _logger = logger;
@@ -24,7 +27,7 @@ namespace Imp.CitpSharp.Networking
 
             ListenPort = localEndPoint.Port;
 
-            Task.Run(() => listenThread(_cancellationTokenSource.Token));
+            _listenTask = listenAsync(_cancellationTokenSource.Token);
         }
 
         public void Dispose()
@@ -34,6 +37,7 @@ namespace Imp.CitpSharp.Networking
 
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
+            _listenTask.Wait();
 
             _isDisposed = true;
         }
@@ -44,7 +48,7 @@ namespace Imp.CitpSharp.Networking
 
         public int ListenPort { get; }
 
-        private async void listenThread(CancellationToken ct)
+        private async Task listenAsync(CancellationToken ct)
         {
             _tcpListener.Start();
 

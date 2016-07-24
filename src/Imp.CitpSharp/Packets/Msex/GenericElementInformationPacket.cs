@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
@@ -8,51 +8,40 @@ namespace Imp.CitpSharp.Packets.Msex
 		public GenericElementInformationPacket()
 			: base(MsexMessageType.GenericElementInformationMessage) { }
 
-		public MsexLibraryType LibraryType { get; set; }
-		public MsexLibraryId LibraryId { get; set; }
+	    public GenericElementInformationPacket(MsexVersion version, MsexLibraryType libraryType, MsexLibraryId libraryId,
+	        IEnumerable<GenericInformation> information, ushort requestResponseIndex = 0)
+	        : base(MsexMessageType.GenericElementInformationMessage, version, requestResponseIndex)
+	    {
+	        LibraryType = libraryType;
+	        LibraryId = libraryId;
+	        Information = information.ToImmutableSortedSet();
+	    }
 
-		public ImmutableSortedSet<GenericInformation> Information { get; set; }
+        public MsexLibraryType LibraryType { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
+
+		public ImmutableSortedSet<GenericInformation> Information { get; private set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
 			base.SerializeToStream(writer);
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_1:
-					writer.Write(LibraryId);
-					writer.Write(Information, TypeCode.Byte, e => e.Serialize(writer, Version.Value));
-					break;
-
-				case MsexVersion.Version1_2:
-					writer.Write((byte)LibraryType);
-					writer.Write(LibraryId);
-					writer.Write(Information, TypeCode.UInt16, e => e.Serialize(writer, Version.Value));
-					break;
-			}
+            writer.Write((byte)LibraryType);
+            writer.Write(LibraryId);
+            writer.Write(Information, GetCollectionLengthType(), e => e.Serialize(writer, Version));
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_1:
-					LibraryId = reader.ReadLibraryId();
-					Information = reader.ReadCollection(TypeCode.Byte, () => GenericInformation.Deserialize(reader, Version.Value))
-							.ToImmutableSortedSet();
-				
-					break;
+            if (Version == MsexVersion.Version1_2)
+                LibraryType = (MsexLibraryType)reader.ReadByte();
 
-				case MsexVersion.Version1_2:
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryId = reader.ReadLibraryId();
-					Information = reader.ReadCollection(TypeCode.UInt16, () => GenericInformation.Deserialize(reader, Version.Value))
-							.ToImmutableSortedSet();
-					
-					break;
-			}
+            LibraryId = reader.ReadLibraryId();
+            Information = reader.ReadCollection(GetCollectionLengthType(), 
+                () => GenericInformation.Deserialize(reader, Version))
+                    .ToImmutableSortedSet();
 		}
 	}
 }

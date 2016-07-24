@@ -18,22 +18,22 @@ namespace Imp.CitpSharp.Packets
 		private static readonly int CitpContentTypePosition = 16;
 
 
-		protected CitpPacket(CitpLayerType layerType)
+		protected CitpPacket(CitpLayerType layerType, ushort requestResponseIndex = 0)
 		{
 			LayerType = layerType;
-			MessagePart = 1;
+		    RequestResponseIndex = requestResponseIndex;
+			MessagePart = 0;
 			MessagePartCount = 1;
 		}
 
 		public CitpLayerType LayerType { get; }
 
-		public ushort RequestResponseIndex { get; set; }
-		public ushort MessagePartCount { get; set; }
-		public ushort MessagePart { get; set; }
+		public ushort RequestResponseIndex { get; private set; }
+		public ushort MessagePartCount { get; private set; }
+		public ushort MessagePart { get; private set; }
 
-		public IPEndPoint RemoteEndpoint { get; private set; }
 
-		public static CitpPacket FromByteArray(byte[] data, IPEndPoint remoteEndpoint = null)
+		public static CitpPacket FromByteArray(byte[] data)
 		{
 			CitpPacket packet;
 
@@ -154,13 +154,9 @@ namespace Imp.CitpSharp.Packets
 				default:
 					throw new NotImplementedException("Unimplemented CITP content type");
 			}
-
-
-
+            
 			using (var reader = new CitpBinaryReader(new MemoryStream(data)))
 				packet.DeserializeFromStream(reader);
-
-			packet.RemoteEndpoint = remoteEndpoint;
 
 			return packet;
 		}

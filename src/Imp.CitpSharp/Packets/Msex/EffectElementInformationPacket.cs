@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Imp.CitpSharp.Packets.Msex
@@ -8,70 +8,34 @@ namespace Imp.CitpSharp.Packets.Msex
 		public EffectElementInformationPacket()
 			: base(MsexMessageType.EffectElementInformationMessage) { }
 
-		public byte LibraryNumber { get; set; }
-		public MsexLibraryId? LibraryId { get; set; }
+	    public EffectElementInformationPacket(MsexVersion version, MsexId library, IEnumerable<EffectInformation> effects,
+	        ushort requestResponseIndex = 0)
+	        : base(MsexMessageType.EffectElementInformationMessage, version, requestResponseIndex)
+	    {
+	        Library = library;
+	        Effects = effects.ToImmutableSortedSet();
+	    }
 
-		public ImmutableSortedSet<EffectInformation> Effects { get; set; }
+		public MsexId Library { get; private set; }
+
+		public ImmutableSortedSet<EffectInformation> Effects { get; private set; }
 
 		protected override void SerializeToStream(CitpBinaryWriter writer)
 		{
 			base.SerializeToStream(writer);
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-					writer.Write(LibraryNumber);
-					writer.Write(Effects, TypeCode.Byte, e => e.Serialize(writer, Version.Value));
-					break;
-
-				case MsexVersion.Version1_1:
-					if (!LibraryId.HasValue)
-						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.1");
-
-					writer.Write(LibraryId.Value);
-					writer.Write(Effects, TypeCode.Byte, e => e.Serialize(writer, Version.Value));
-					break;
-
-				case MsexVersion.Version1_2:
-					if (!LibraryId.HasValue)
-						throw new InvalidOperationException("LibraryId has no value. Required for MSEX V1.2");
-
-					writer.Write(LibraryId.Value);
-					writer.Write(Effects, TypeCode.UInt16, e => e.Serialize(writer, Version.Value));
-					break;
-			}
-		}
+            writer.Write(Library, Version);
+            writer.Write(Effects, GetCollectionLengthType(), e => e.Serialize(writer, Version));
+        }
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-
-					LibraryNumber = reader.ReadByte();
-					Effects = reader.ReadCollection(TypeCode.Byte, () => EffectInformation.Deserialize(reader, Version.Value))
-						.ToImmutableSortedSet();
-				
-					break;
-
-				case MsexVersion.Version1_1:
-				
-					LibraryId = reader.ReadLibraryId();
-					Effects = reader.ReadCollection(TypeCode.Byte, () => EffectInformation.Deserialize(reader, Version.Value))
-						.ToImmutableSortedSet();
-
-					break;
-
-				case MsexVersion.Version1_2:
-				
-					LibraryId = reader.ReadLibraryId();
-					Effects = reader.ReadCollection(TypeCode.UInt16, () => EffectInformation.Deserialize(reader, Version.Value))
-						.ToImmutableSortedSet();
-
-					break;
-			}
+            Library = reader.ReadMsexId(Version);
+            Effects = reader.ReadCollection(GetCollectionLengthType(),
+                () => EffectInformation.Deserialize(reader, Version))
+                .ToImmutableSortedSet();
 		}
 	}
 }

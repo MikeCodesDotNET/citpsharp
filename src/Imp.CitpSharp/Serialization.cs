@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using JetBrains.Annotations;
@@ -35,6 +36,24 @@ namespace Imp.CitpSharp
 			Write(id.SubLevel2);
 			Write(id.SubLevel3);
 		}
+
+	    public void Write(MsexId id, MsexVersion version)
+	    {
+	        if (version == MsexVersion.Version1_0)
+	        {
+	            if (!id.LibraryNumber.HasValue)
+	                throw new InvalidOperationException("Cannot find library number value in MsexId - required by MSEX version 1.0");
+
+	            Write(id.LibraryNumber.Value);
+	        }
+	        else
+	        {
+                if (!id.LibraryId.HasValue)
+                    throw new InvalidOperationException("Cannot find library ID value in MsexId - required by MSEX version 1.1+");
+
+                Write(id.LibraryId.Value);
+            }
+	    }
 
 		public void Write(MsexVersion version, bool isMinorFirst)
 		{
@@ -148,7 +167,12 @@ namespace Imp.CitpSharp
 			return MsexLibraryId.FromByteArray(ReadBytes(4));
 		}
 
-		public MsexVersion ReadMsexVersion(bool isMinorFirst)
+	    public MsexId ReadMsexId(MsexVersion version)
+	    {
+	        return version == MsexVersion.Version1_0 ? new MsexId(ReadByte()) : new MsexId(ReadLibraryId());
+	    }
+
+	    public MsexVersion ReadMsexVersion(bool isMinorFirst)
 		{
 			byte major, minor;
 

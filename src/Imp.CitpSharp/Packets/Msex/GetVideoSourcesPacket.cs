@@ -4,5 +4,11 @@ namespace Imp.CitpSharp.Packets.Msex
 	{
 		public GetVideoSourcesPacket()
 			: base(MsexMessageType.GetVideoSourcesMessage) { }
+
+	    public GetVideoSourcesPacket(MsexVersion version, ushort requestResponseIndex = 0)
+	        : base(MsexMessageType.GetVideoSourcesMessage, version, requestResponseIndex)
+	    {
+	        
+	    }
 	}
 }

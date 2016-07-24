@@ -1,123 +1,152 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
-	internal class LayerStatusPacket : MsexPacket
-	{
-		public LayerStatusPacket()
-			: base(MsexMessageType.LayerStatusMessage) { }
+    internal class LayerStatusPacket : MsexPacket
+    {
+        public LayerStatusPacket()
+            : base(MsexMessageType.LayerStatusMessage) { }
 
-		public ImmutableList<LayerStatus> LayerStatuses { get; set; }
+        public LayerStatusPacket(MsexVersion version, IEnumerable<LayerStatus> layerStatuses,
+            ushort requestResponseIndex = 0)
+            : base(MsexMessageType.LayerStatusMessage, version, requestResponseIndex)
+        {
+            LayerStatuses = layerStatuses.ToImmutableList();
+        }
 
-		protected override void SerializeToStream(CitpBinaryWriter writer)
-		{
-			base.SerializeToStream(writer);
+        public ImmutableList<LayerStatus> LayerStatuses { get; private set; }
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-				case MsexVersion.Version1_1:
-					writer.Write(LayerStatuses, TypeCode.Byte, l =>
-					{
-						writer.Write(l.LayerNumber);
-						writer.Write(l.PhysicalOutput);
-						writer.Write(l.MediaLibraryNumber);
-						writer.Write(l.MediaNumber);
-						writer.Write(l.MediaName);
-						writer.Write(l.MediaPosition);
-						writer.Write(l.MediaLength);
-						writer.Write(l.MediaFps);
-						writer.Write((uint)l.LayerStatusFlags);
-					});
-					break;
+        protected override void SerializeToStream(CitpBinaryWriter writer)
+        {
+            base.SerializeToStream(writer);
 
-				case MsexVersion.Version1_2:
-					writer.Write(LayerStatuses, TypeCode.Byte, l =>
-					{
-						writer.Write(l.LayerNumber);
-						writer.Write(l.PhysicalOutput);
-						writer.Write((byte)l.MediaLibraryType);
+            writer.Write(LayerStatuses, TypeCode.Byte, l => l.Serialize(writer, Version));
+        }
 
-						if (!l.MediaLibraryId.HasValue)
-							throw new InvalidOperationException("MediaLibraryId has no value. Required for MSEX V1.2");
+        protected override void DeserializeFromStream(CitpBinaryReader reader)
+        {
+            base.DeserializeFromStream(reader);
 
-						writer.Write(l.MediaLibraryId.Value);
-						writer.Write(l.MediaNumber);
-						writer.Write(l.MediaName);
-						writer.Write(l.MediaPosition);
-						writer.Write(l.MediaLength);
-						writer.Write(l.MediaFps);
-						writer.Write((uint)l.LayerStatusFlags);
-					});
-					break;
-			}
-		}
-
-		protected override void DeserializeFromStream(CitpBinaryReader reader)
-		{
-			base.DeserializeFromStream(reader);
-
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-				case MsexVersion.Version1_1:
-				
-					LayerStatuses = reader.ReadCollection(TypeCode.Byte, () => new LayerStatus
-					{
-						LayerNumber = reader.ReadByte(),
-						PhysicalOutput = reader.ReadByte(),
-						MediaLibraryNumber = reader.ReadByte(),
-						MediaNumber = reader.ReadByte(),
-						MediaName = reader.ReadString(),
-						MediaPosition = reader.ReadUInt32(),
-						MediaLength = reader.ReadUInt32(),
-						MediaFps = reader.ReadByte(),
-						LayerStatusFlags = (MsexLayerStatusFlags)reader.ReadUInt32()
-
-					}).ToImmutableList();
-				
-					break;
-
-				case MsexVersion.Version1_2:
-				
-					LayerStatuses = reader.ReadCollection(TypeCode.Byte, () => new LayerStatus
-					{
-						LayerNumber = reader.ReadByte(),
-						PhysicalOutput = reader.ReadByte(),
-						MediaLibraryType = (MsexLibraryType)reader.ReadByte(),
-						MediaLibraryId = reader.ReadLibraryId(),
-						MediaNumber = reader.ReadByte(),
-						MediaName = reader.ReadString(),
-						MediaPosition = reader.ReadUInt32(),
-						MediaLength = reader.ReadUInt32(),
-						MediaFps = reader.ReadByte(),
-						LayerStatusFlags = (MsexLayerStatusFlags)reader.ReadUInt32()
-
-					}).ToImmutableList();
-				
-					break;
-			}
-		}
+            LayerStatuses = reader.ReadCollection(TypeCode.Byte, () => LayerStatus.Deserialize(reader, Version))
+                .ToImmutableList();
+        }
 
 
-		internal class LayerStatus 
-		{
-			public byte LayerNumber { get; set; }
-			public byte PhysicalOutput { get; set; }
 
-			public byte MediaLibraryNumber { get; set; }
+        internal class LayerStatus : IEquatable<LayerStatus>
+        {
+            public static LayerStatus Deserialize(CitpBinaryReader reader, MsexVersion version)
+            {
+                byte layerNumber = reader.ReadByte();
+                byte physicalOutput = reader.ReadByte();
 
-			public MsexLibraryType MediaLibraryType { get; set; }
-			public MsexLibraryId? MediaLibraryId { get; set; }
+                var mediaLibraryType = MsexLibraryType.None;
+                if (version != MsexVersion.Version1_0)
+                    mediaLibraryType = (MsexLibraryType)reader.ReadByte();
 
-			public byte MediaNumber { get; set; }
-			public string MediaName { get; set; }
-			public uint MediaPosition { get; set; }
-			public uint MediaLength { get; set; }
-			public byte MediaFps { get; set; }
+                var mediaLibrary = reader.ReadMsexId(version);
+                byte mediaNumber = reader.ReadByte();
+                string mediaName = reader.ReadString();
+                uint mediaPosition = reader.ReadUInt32();
+                uint mediaLength = reader.ReadUInt32();
+                byte mediaFps = reader.ReadByte();
+                var layerStatusFlags = (MsexLayerStatusFlags)reader.ReadUInt32();
 
-			public MsexLayerStatusFlags LayerStatusFlags { get; set; }
-		}
-	}
+                return new LayerStatus(layerNumber, physicalOutput, mediaLibraryType, mediaLibrary, mediaNumber,
+                    mediaName, mediaPosition, mediaLength, mediaFps, layerStatusFlags);
+            }
+
+            public LayerStatus(byte layerNumber, byte physicalOutput, MsexLibraryType mediaLibraryType,
+                MsexId mediaLibrary, byte mediaNumber, string mediaName, uint mediaPosition, uint mediaLength,
+                byte mediaFps, MsexLayerStatusFlags layerStatusFlags)
+            {
+                LayerNumber = layerNumber;
+                PhysicalOutput = physicalOutput;
+                MediaLibraryType = mediaLibraryType;
+                MediaLibrary = mediaLibrary;
+                MediaNumber = mediaNumber;
+                MediaName = mediaName;
+                MediaPosition = mediaPosition;
+                MediaLength = mediaLength;
+                MediaFps = mediaFps;
+                LayerStatusFlags = layerStatusFlags;
+            }
+
+            public byte LayerNumber { get; }
+            public byte PhysicalOutput { get; }
+
+
+            public MsexLibraryType MediaLibraryType { get; }
+            public MsexId MediaLibrary { get; }
+
+            public byte MediaNumber { get; }
+            public string MediaName { get; }
+            public uint MediaPosition { get; }
+            public uint MediaLength { get; }
+            public byte MediaFps { get; }
+
+            public MsexLayerStatusFlags LayerStatusFlags { get; }
+
+
+            public void Serialize(CitpBinaryWriter writer, MsexVersion version)
+            {
+                writer.Write(LayerNumber);
+                writer.Write(PhysicalOutput);
+
+                if (version != MsexVersion.Version1_0)
+                    writer.Write((byte)MediaLibraryType);
+
+                writer.Write(MediaLibrary, version);
+                writer.Write(MediaNumber);
+                writer.Write(MediaName);
+                writer.Write(MediaPosition);
+                writer.Write(MediaLength);
+                writer.Write(MediaFps);
+                writer.Write((uint)LayerStatusFlags);
+            }
+
+            public bool Equals([CanBeNull] LayerStatus other)
+            {
+                if (ReferenceEquals(null, other))
+                    return false;
+                if (ReferenceEquals(this, other))
+                    return true;
+                return LayerNumber == other.LayerNumber && PhysicalOutput == other.PhysicalOutput
+                       && MediaLibraryType == other.MediaLibraryType && MediaLibrary.Equals(other.MediaLibrary)
+                       && MediaNumber == other.MediaNumber && string.Equals(MediaName, other.MediaName)
+                       && MediaPosition == other.MediaPosition && MediaLength == other.MediaLength
+                       && MediaFps == other.MediaFps && LayerStatusFlags == other.LayerStatusFlags;
+            }
+
+            public override bool Equals([CanBeNull] object obj)
+            {
+                if (ReferenceEquals(null, obj))
+                    return false;
+                if (ReferenceEquals(this, obj))
+                    return true;
+                return obj.GetType() == GetType() && Equals((LayerStatus)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hashCode = LayerNumber.GetHashCode();
+                    hashCode = (hashCode * 397) ^ PhysicalOutput.GetHashCode();
+                    hashCode = (hashCode * 397) ^ (int)MediaLibraryType;
+                    hashCode = (hashCode * 397) ^ MediaLibrary.GetHashCode();
+                    hashCode = (hashCode * 397) ^ MediaNumber.GetHashCode();
+                    hashCode = (hashCode * 397) ^ MediaName.GetHashCode();
+                    hashCode = (hashCode * 397) ^ (int)MediaPosition;
+                    hashCode = (hashCode * 397) ^ (int)MediaLength;
+                    hashCode = (hashCode * 397) ^ MediaFps.GetHashCode();
+                    hashCode = (hashCode * 397) ^ (int)LayerStatusFlags;
+                    return hashCode;
+                }
+            }
+        }
+    }
 }

@@ -1,107 +1,80 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using JetBrains.Annotations;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
-	internal class GetElementLibraryInformationPacket : MsexPacket
-	{
-		public GetElementLibraryInformationPacket()
-			: base(MsexMessageType.GetElementLibraryInformationMessage) { }
+    internal class GetElementLibraryInformationPacket : MsexPacket
+    {
+        public GetElementLibraryInformationPacket()
+            : base(MsexMessageType.GetElementLibraryInformationMessage) { }
 
-		public MsexLibraryType LibraryType { get; set; }
-		public MsexLibraryId? LibraryParentId { get; set; }
-		public bool ShouldRequestAllLibraries { get; set; }
-		public ImmutableSortedSet<byte> RequestedLibraryNumbers { get; set; }
+        public GetElementLibraryInformationPacket(MsexVersion version, MsexLibraryType libraryType,
+            [CanBeNull] MsexLibraryId? libraryParentId, IEnumerable<byte> requestedLibraryNumbers, ushort requestResponseIndex = 0)
+            : base(MsexMessageType.GetElementLibraryInformationMessage, version, requestResponseIndex)
+        {
+            LibraryType = libraryType;
 
-		protected override void SerializeToStream(CitpBinaryWriter writer)
-		{
-			base.SerializeToStream(writer);
+            if (version != MsexVersion.Version1_0 && libraryParentId == null)
+                throw new ArgumentNullException(nameof(libraryParentId), "Cannot be null for Msex V1.1+");
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-					writer.Write((byte)LibraryType);
+            LibraryParentId = libraryParentId;
+            ShouldRequestAllLibraries = false;
+            RequestedLibraryNumbers = requestedLibraryNumbers.ToImmutableSortedSet();
+        }
 
-					if (ShouldRequestAllLibraries)
-						writer.Write((byte)0);
-					else
-						writer.Write(RequestedLibraryNumbers, TypeCode.Byte, writer.Write);
-					
-					break;
+        public GetElementLibraryInformationPacket(MsexVersion version, MsexLibraryType libraryType,
+            [CanBeNull] MsexLibraryId? libraryParentId, ushort requestResponseIndex = 0)
+            : base(MsexMessageType.GetElementLibraryInformationMessage, version, requestResponseIndex)
+        {
+            LibraryType = libraryType;
 
-				case MsexVersion.Version1_1:
-					writer.Write((byte)LibraryType);
+            if (version != MsexVersion.Version1_0 && libraryParentId == null)
+                throw new ArgumentNullException(nameof(libraryParentId), "Cannot be null for Msex V1.1+");
 
-					if (!LibraryParentId.HasValue)
-						throw new InvalidOperationException("LibraryParentId has no value. Required for MSEX V1.1");
+            LibraryParentId = libraryParentId;
+            ShouldRequestAllLibraries = true;
+            RequestedLibraryNumbers = ImmutableSortedSet<byte>.Empty;
+        }
 
-					writer.Write(LibraryParentId.Value);
+        public MsexLibraryType LibraryType { get; private set; }
+        public MsexLibraryId? LibraryParentId { get; private set; }
+        public bool ShouldRequestAllLibraries { get; private set; }
+        public ImmutableSortedSet<byte> RequestedLibraryNumbers { get; private set; }
 
-					if (ShouldRequestAllLibraries)
-						writer.Write((byte)0);
-					else
-						writer.Write(RequestedLibraryNumbers, TypeCode.Byte, writer.Write);
+        protected override void SerializeToStream(CitpBinaryWriter writer)
+        {
+            base.SerializeToStream(writer);
 
-					break;
+            writer.Write((byte)LibraryType);
 
-				case MsexVersion.Version1_2:
-					writer.Write((byte)LibraryType);
+            if (Version != MsexVersion.Version1_0)
+            {
+                Debug.Assert(LibraryParentId.HasValue); // This should be enforced in the constructor
+                writer.Write(LibraryParentId.Value);
+            }
 
-					if (!LibraryParentId.HasValue)
-						throw new InvalidOperationException("LibraryParentId has no value. Required for MSEX V1.2");
+            if (ShouldRequestAllLibraries)
+                writer.Write((ushort)0);
+            else
+                writer.Write(RequestedLibraryNumbers, GetCollectionLengthType(), writer.Write);
+        }
 
-					writer.Write(LibraryParentId.Value);
+        protected override void DeserializeFromStream(CitpBinaryReader reader)
+        {
+            base.DeserializeFromStream(reader);
 
-					if (ShouldRequestAllLibraries)
-						writer.Write((ushort)0);
-					else
-						writer.Write(RequestedLibraryNumbers, TypeCode.UInt16, writer.Write);
+            LibraryType = (MsexLibraryType)reader.ReadByte();
 
-					break;
-			}
-		}
+            if (Version != MsexVersion.Version1_0)
+                LibraryParentId = reader.ReadLibraryId();
 
-		protected override void DeserializeFromStream(CitpBinaryReader reader)
-		{
-			base.DeserializeFromStream(reader);
+            RequestedLibraryNumbers = reader.ReadCollection(GetCollectionLengthType(), reader.ReadByte).ToImmutableSortedSet();
 
-			switch (Version)
-			{
-				case MsexVersion.Version1_0:
-				
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-
-					RequestedLibraryNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
-
-					if (RequestedLibraryNumbers.Count == 0)
-						ShouldRequestAllLibraries = true;
-				
-					break;
-
-				case MsexVersion.Version1_1:
-				
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryParentId = reader.ReadLibraryId();
-
-					RequestedLibraryNumbers = reader.ReadCollection(TypeCode.Byte, reader.ReadByte).ToImmutableSortedSet();
-
-					if (RequestedLibraryNumbers.Count == 0)
-						ShouldRequestAllLibraries = true;
-
-					break;
-
-				case MsexVersion.Version1_2:
-				
-					LibraryType = (MsexLibraryType)reader.ReadByte();
-					LibraryParentId = reader.ReadLibraryId();
-
-					RequestedLibraryNumbers = reader.ReadCollection(TypeCode.UInt16, reader.ReadByte).ToImmutableSortedSet();
-
-					if (RequestedLibraryNumbers.Count == 0)
-						ShouldRequestAllLibraries = true;
-
-					break;
-			}
-		}
-	}
+            if (RequestedLibraryNumbers.Count == 0)
+                ShouldRequestAllLibraries = true;
+        }
+    }
 }

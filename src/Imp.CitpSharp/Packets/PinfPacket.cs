@@ -7,8 +7,8 @@ namespace Imp.CitpSharp.Packets
 	{
 		public static readonly int CitpMessageTypePosition = 20;
 
-		protected PinfPacket(PinfMessageType messageType)
-			: base(CitpLayerType.PeerInformationLayer)
+		protected PinfPacket(PinfMessageType messageType, ushort requestResponseIndex = 0)
+			: base(CitpLayerType.PeerInformationLayer, requestResponseIndex)
 		{
 			MessageType = messageType;
 		}

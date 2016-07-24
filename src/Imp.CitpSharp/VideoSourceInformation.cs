@@ -4,10 +4,10 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	[PublicAPI]
-	public sealed class CitpVideoSourceInformation : IEquatable<CitpVideoSourceInformation>,
-		IComparable<CitpVideoSourceInformation>
+	public sealed class VideoSourceInformation : IEquatable<VideoSourceInformation>,
+		IComparable<VideoSourceInformation>
 	{
-		public CitpVideoSourceInformation(ushort sourceIdentifier, string sourceName, MsexVideoSourcesFlags flags,
+		public VideoSourceInformation(ushort sourceIdentifier, string sourceName, MsexVideoSourcesFlags flags,
 			ushort width, ushort height, byte? physicalOutput = null, byte? layerNumber = null)
 		{
 			SourceIdentifier = sourceIdentifier;
@@ -30,12 +30,12 @@ namespace Imp.CitpSharp
 		public ushort Width { get; }
 		public ushort Height { get; }
 
-		public int CompareTo([CanBeNull] CitpVideoSourceInformation other)
+		public int CompareTo([CanBeNull] VideoSourceInformation other)
 		{
 			return ReferenceEquals(other, null) ? 1 : SourceIdentifier.CompareTo(other.SourceIdentifier);
 		}
 
-		public bool Equals([CanBeNull] CitpVideoSourceInformation other)
+		public bool Equals([CanBeNull] VideoSourceInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -52,7 +52,7 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			return obj is CitpVideoSourceInformation && Equals((CitpVideoSourceInformation)obj);
+			return obj is VideoSourceInformation && Equals((VideoSourceInformation)obj);
 		}
 
 		public override int GetHashCode()
