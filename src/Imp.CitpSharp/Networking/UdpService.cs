@@ -11,7 +11,6 @@ namespace Imp.CitpSharp.Networking
 {
     internal sealed class UdpService : IDisposable
     {
-	    const int BufferLength = 65536;
 	    const int CitpUdpPort = 4809;
 	    static readonly IPAddress CitpMulticastIp = IPAddress.Parse("239.224.0.180");
 	    static readonly IPAddress CitpMulticastLegacyIp = IPAddress.Parse("224.0.0.180");
@@ -24,16 +23,25 @@ namespace Imp.CitpSharp.Networking
 
 	    public UdpService(bool isUseLegacyMulticastIp, NetworkInterface networkInterface = null)
 	    {
-	        MulticastIp = isUseLegacyMulticastIp ? CitpMulticastLegacyIp : CitpMulticastIp;
-
-	        _client = new UdpClient(CitpUdpPort)
-	        {
-	            MulticastLoopback = false,
-	            ExclusiveAddressUse = false
-	        };
+	        var localIp = IPAddress.Any;
 
 	        if (networkInterface != null)
-	            _client.JoinMulticastGroup(MulticastIp, networkInterface.GetIPProperties().UnicastAddresses.First().Address);
+	            localIp = networkInterface.GetIPProperties().UnicastAddresses.First().Address;
+
+
+            MulticastIp = isUseLegacyMulticastIp ? CitpMulticastLegacyIp : CitpMulticastIp;
+
+	        _client = new UdpClient
+	        {
+	            MulticastLoopback = false
+	        };
+
+            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+
+            _client.Client.Bind(new IPEndPoint(localIp, CitpUdpPort));
+
+            if (networkInterface != null)
+	            _client.JoinMulticastGroup(MulticastIp);
             else
                 _client.JoinMulticastGroup(MulticastIp);
 
@@ -71,15 +79,35 @@ namespace Imp.CitpSharp.Networking
             {
                 while (true)
                 {
+                    UdpReceiveResult result;
+
                     try
                     {
-                        var result = await Task.Run(() =>_client.ReceiveAsync(), ct).ConfigureAwait(false);
+                        //result = await Task.Run(_client.ReceiveAsync, ct).ConfigureAwait(false);
+                        result = await _client.ReceiveAsync().ConfigureAwait(false);
 
                     }
                     catch (SocketException ex)
                     {
-
+                        break;
                     }
+
+                    CitpPacket packet;
+
+                    try
+                    {
+                        packet = CitpPacket.FromByteArray(result.Buffer);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        continue;
+                    }
+                    catch (NotSupportedException ex)
+                    {
+                        continue;
+                    }
+
+                    PacketReceived?.Invoke(this, new CitpUdpPacketReceivedEventArgs(packet, result.RemoteEndPoint.Address));
                 }
             }
             finally
@@ -87,12 +115,17 @@ namespace Imp.CitpSharp.Networking
                 _client.DropMulticastGroup(MulticastIp);
             }
         }
+
+        private void deserializePacket(byte[] buffer)
+        {
+            
+        }
     }
 
 
     internal class CitpUdpPacketReceivedEventArgs : EventArgs
     {
-        CitpUdpPacketReceivedEventArgs(CitpPacket packet, IPAddress ip)
+        public CitpUdpPacketReceivedEventArgs(CitpPacket packet, IPAddress ip)
         {
             Packet = packet;
             Ip = ip;

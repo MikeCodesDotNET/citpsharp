@@ -14,7 +14,7 @@ namespace Imp.CitpSharp
     /// </summary>
     public abstract class CitpService : IDisposable
     {
-        public static readonly TimeSpan PeerLocationPacketInterval = TimeSpan.FromSeconds(1000);
+        public static readonly TimeSpan PeerLocationPacketInterval = TimeSpan.FromSeconds(1);
         private readonly ICitpDevice _device;
 
         private readonly bool _isUseLegacyMulticastIp;
@@ -23,6 +23,7 @@ namespace Imp.CitpSharp
 
         private readonly RegularTimer _peerLocationTimer;
         private readonly PeerRegistry _peerRegistry = new PeerRegistry();
+
         private readonly UdpService _udpService;
 
         private bool _isDisposed;
@@ -40,10 +41,10 @@ namespace Imp.CitpSharp
 
             _peerLocationTimer = new RegularTimer(PeerLocationPacketInterval);
             _peerLocationTimer.Elapsed += (s, e) => SendPeerLocationPacket();
+            _peerLocationTimer.Start();
         }
 
-        public virtual int TcpListenPort => 0;
-
+        public abstract CitpPeerType DeviceType { get; }
 
         public void Dispose()
         {
@@ -75,9 +76,14 @@ namespace Imp.CitpSharp
 
 
 
+        internal void SendUdpPacket(CitpPacket packet)
+        {
+            _udpService.SendPacket(packet);
+        }
+
         protected virtual void SendPeerLocationPacket()
         {
-            
+            SendUdpPacket(new PeerLocationPacket(false, 0, DeviceType, _device.PeerName, _device.State));
         }
 
         internal virtual void OnPinfPacketReceived(PinfPacket packet, IPAddress ip)

@@ -2,11 +2,11 @@
 
 namespace Imp.CitpSharp.DummyVisualizer
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            var device = new DummyVisualizerDevice();
+            var device = new DummyVisualizerDevice(Guid.NewGuid(), Environment.MachineName, "Online");
 
             var service = new CitpVisualizerService(new CitpConsoleLogger(CitpLoggerLevel.Debug), device, true);
 

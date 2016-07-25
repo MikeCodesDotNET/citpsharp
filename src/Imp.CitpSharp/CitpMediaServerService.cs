@@ -16,5 +16,7 @@ namespace Imp.CitpSharp
         {
             _device = device;
         }
+
+        public override CitpPeerType DeviceType => CitpPeerType.MediaServer;
     }
 }

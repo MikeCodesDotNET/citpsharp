@@ -1,4 +1,5 @@
 ﻿using System.Net.NetworkInformation;
+using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
@@ -15,5 +16,7 @@ namespace Imp.CitpSharp
         {
             _device = device;
         }
+
+        public override CitpPeerType DeviceType => CitpPeerType.Visualizer;
     }
 }

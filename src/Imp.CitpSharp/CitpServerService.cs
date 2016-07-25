@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using Imp.CitpSharp.Networking;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Msex;
+using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
@@ -64,6 +65,13 @@ namespace Imp.CitpSharp
         }
 
 
+        public int TcpListenPort => _tcpServer.ListenPort;
+
+        protected override void SendPeerLocationPacket()
+        {
+            SendUdpPacket(new PeerLocationPacket(true, (ushort)TcpListenPort, DeviceType, _device.PeerName, _device.State));
+        }
+
         public void ProcessStreamFrameRequests(int? sourceId = null)
         {
 
@@ -109,7 +117,5 @@ namespace Imp.CitpSharp
         {
 
         }
-
-        public override int TcpListenPort => _tcpServer.ListenPort;
     }
 }

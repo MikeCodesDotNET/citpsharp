@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -257,8 +258,22 @@ namespace Imp.CitpSharp.Packets
 
 		protected virtual void DeserializeFromStream(CitpBinaryReader reader)
 		{
-			// Read Header
-			reader.ReadBytes(CitpHeaderLength);
+            reader.ReadBytes(CitpCookie.Length);
+
+		    byte versionMajor = reader.ReadByte();
+		    byte versionMinor = reader.ReadByte();
+
+		    if (versionMajor != CitpVersionMajor || versionMinor != CitpVersionMinor)
+		        throw new InvalidOperationException($"Unsupported CITP version: v{versionMajor}.{versionMinor}");
+
+		    RequestResponseIndex = reader.ReadUInt16();
+
+		    uint messageSize = reader.ReadUInt32();
+		    MessagePartCount = reader.ReadUInt16();
+		    MessagePart = reader.ReadUInt16();
+
+		    var layerType = CitpEnumHelper.GetEnumFromIdString<CitpLayerType>(reader.ReadIdString());
+            Debug.Assert(layerType == LayerType);
 		}
 	}
 }
