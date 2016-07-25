@@ -10,9 +10,9 @@ namespace Imp.CitpSharp.Packets.Msex
         public ServerInformationPacket()
            : base(MsexMessageType.ServerInformationMessage) { }
 
-        public ServerInformationPacket(MsexMessageType messageType, MsexVersion version, string productName,
+        public ServerInformationPacket(MsexVersion version, string productName,
             byte productVersionMajor, byte productVersionMinor, IEnumerable<DmxPatchInfo> layerDmxSources, ushort requestResponseIndex = 0)
-            : base(messageType, version, requestResponseIndex)
+            : base(MsexMessageType.ServerInformationMessage, version, requestResponseIndex)
         {
             Uuid = Guid.Empty;
             ProductName = productName;

@@ -51,6 +51,12 @@ namespace Imp.CitpSharp
         /// </summary>
         IEnumerable<ICitpMediaServerLayer> Layers { get; }
 
+		/// <summary>
+		///		Dictionary containing information on all element libraries
+		/// </summary>
+		IReadOnlyDictionary<MsexLibraryId, ElementLibrary> ElementLibraries { get; }
+
+
         /// <summary>
         ///     When true, indicates to <see cref="CitpMediaServerService" /> that the contents of one of the media server
         ///     libraries has been updated
@@ -63,64 +69,23 @@ namespace Imp.CitpSharp
         /// <returns>An enumerable of library update information objects</returns>
         IEnumerable<ElementLibraryUpdatedInformation> GetLibraryUpdateMessages();
 
-        /// <summary>
-        ///     Requests information from the media server about specific element libraries.
-        /// </summary>
-        /// <param name="libraryType">The type of the libraries</param>
-        /// <param name="parentLibraryId">The ID of the parent library, or the root ID if there is no parent</param>
-        /// <param name="libraryIndices">The indices of the libraries to request information on</param>
-        /// <returns>An enumerable of library information for the library indices requested</returns>
-        IEnumerable<ElementLibraryInformation> GetElementLibraryInformation(MsexLibraryType libraryType,
-            MsexLibraryId? parentLibraryId, IEnumerable<byte> libraryIndices);
 
-        /// <summary>
-        ///     Requests information from the media server about specific media elements in a library
-        /// </summary>
-        /// <param name="libraryId">ID of the library</param>
-        /// <param name="elementNumbers">Element numbers of items in the library to request information on</param>
-        /// <returns>An enumerable of media element information for the element numbers requested</returns>
-        IEnumerable<MediaInformation> GetMediaElementInformation(MsexId libraryId, IEnumerable<byte> elementNumbers);
+	    /// <summary>
+	    ///     Requests a library thumbnail from the media server
+	    /// </summary>
+	    /// <param name="request">Image request parameters to be used for requested thumbnail</param>
+	    /// <param name="elementLibrary">Library to request thumbnail for</param>
+	    /// <returns><see cref="MsexId" /> and <see cref="CitpImage" /> for requested library</returns>
+	    Tuple<MsexId, CitpImage> GetElementLibraryThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary);
 
-        /// <summary>
-        ///     Requests information from the media server about specific effect elements in a library
-        /// </summary>
-        /// <param name="libraryId">ID of the library</param>
-        /// <param name="elementNumbers">Element numbers of items in the library to request information on</param>
-        /// <returns>An enumerable of effect element information for the element numbers requested</returns>
-        IEnumerable<EffectInformation> GetEffectElementInformation(MsexId libraryId, IEnumerable<byte> elementNumbers);
-
-        /// <summary>
-        ///     Requests information from the media server about specific generic elements in a library
-        /// </summary>
-        /// <param name="libraryType">Type of the library</param>
-        /// <param name="libraryId">ID of the library</param>
-        /// <param name="elementNumbers">Element numbers of items in the library to request information on</param>
-        /// <returns>An enumerable of generic element information for the element numbers requested</returns>
-        IEnumerable<GenericInformation> GetGenericElementInformation(MsexLibraryType libraryType,
-            MsexLibraryId libraryId,
-            IEnumerable<byte> elementNumbers);
-
-        /// <summary>
-        ///     Requests library thumbnails from the media server for specific libraries
-        /// </summary>
-        /// <param name="request">Image request parameters to be used for all requested thumbnails</param>
-        /// <param name="libraryType">Type of the libraries to request thumbnails for</param>
-        /// <param name="libraryIds">IDs of the libraries to request thumbnails for</param>
-        /// <returns>An enumerable of Tuples with the <see cref="MsexId" /> and <see cref="CitpImage" /> for each requested library</returns>
-        IEnumerable<Tuple<MsexId, CitpImage>> GetElementLibraryThumbnails(CitpImageRequest request,
-            MsexLibraryType libraryType,
-            IEnumerable<MsexId> libraryIds);
-
-        /// <summary>
-        ///     Requests element thumbnails from the media server for specific elements
-        /// </summary>
-        /// <param name="request">Image request parameters to be used for all requested thumbnails</param>
-        /// <param name="libraryType">Type of the library containing elements to request thumbnails for</param>
-        /// <param name="libraryId">ID of the library containing elements to request thumbnails for</param>
-        /// <param name="elementNumbers">Element numbers of the elements to request thumbnails for</param>
-        /// <returns>An enumerable of Tuples with the element number and <see cref="CitpImage" /> for each requested library</returns>
-        IEnumerable<Tuple<byte, CitpImage>> GetElementThumbnails(CitpImageRequest request, MsexLibraryType libraryType,
-            MsexId libraryId, IEnumerable<byte> elementNumbers);
+	    /// <summary>
+	    ///     Requests an element thumbnail from the media server
+	    /// </summary>
+	    /// <param name="request">Image request parameters to be used for requested thumbnail</param>
+	    /// <param name="elementLibrary">Information for library which contains element</param>
+	    /// <param name="element">Element to request thumbnail for</param>
+	    /// <returns><see cref="MsexId" /> and <see cref="CitpImage" /> for requested element</returns>
+	    Tuple<byte, CitpImage> GetElementThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary, ElementInformation element);
     }
 
 

@@ -9,15 +9,15 @@ namespace Imp.CitpSharp.DummyVisualizer
 			Console.WriteLine("--------------------------------------------------------------------------");
 			Console.WriteLine("      CitpSharp - Copyright 2016 David Butler / The Impersonal Stereo     ");
 			Console.WriteLine("--------------------------------------------------------------------------");
-			Console.WriteLine("                        Dummy Visualizer Test App                         ");
+			Console.WriteLine("                       Dummy Media Server Test App                        ");
 			Console.WriteLine("--------------------------------------------------------------------------");
 			Console.WriteLine();
 
-			var device = new DummyVisualizerDevice(Guid.NewGuid(), Environment.MachineName, "Online");
+			var device = new DummyMediaServerDevice(Guid.NewGuid(), Environment.MachineName, "Online", "Dummy Media Server", 1, 0, 0);
 
 	        try
 	        {
-				var service = new CitpVisualizerService(new CitpDebugLogger(CitpLoggerLevel.Debug, true, true), device, true, true);
+				var service = new CitpMediaServerService(new CitpDebugLogger(CitpLoggerLevel.Debug, true, true), device, true, true);
 
 				Console.WriteLine("Server started on any network adapter");
 

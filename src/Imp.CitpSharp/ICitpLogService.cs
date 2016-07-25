@@ -35,48 +35,75 @@ namespace Imp.CitpSharp
 
 
     [PublicAPI]
-    public class CitpConsoleLogger : ICitpLogService
+    public class CitpDebugLogger : ICitpLogService
     {
         private readonly CitpLoggerLevel _logLevel;
 
-        public CitpConsoleLogger(CitpLoggerLevel logLevel)
+	    private readonly bool _isWriteToDebug;
+	    private readonly bool _isWriteToConsole;
+
+        public CitpDebugLogger(CitpLoggerLevel logLevel, bool isWriteToDebug = true, bool isWriteToConsole = false)
         {
             _logLevel = logLevel;
+	        _isWriteToDebug = isWriteToDebug;
+	        _isWriteToConsole = isWriteToConsole;
         }
 
         public void LogDebug(string message)
         {
-            if (_logLevel <= CitpLoggerLevel.Debug)
-                writeToDebug(CitpLoggerLevel.Debug, message);
+	        if (_logLevel <= CitpLoggerLevel.Debug)
+	        {
+		        writeToDebug(CitpLoggerLevel.Debug, message);
+		        writeToConsole(CitpLoggerLevel.Debug, message);
+	        }
         }
 
         public void LogInfo(string message)
         {
-            if (_logLevel <= CitpLoggerLevel.Info)
-                writeToDebug(CitpLoggerLevel.Info, message);
+	        if (_logLevel <= CitpLoggerLevel.Info)
+	        {
+		        writeToDebug(CitpLoggerLevel.Info, message);
+				writeToConsole(CitpLoggerLevel.Info, message);
+			}
         }
 
         public void LogWarning(string message)
         {
-            if (_logLevel <= CitpLoggerLevel.Warning)
-                writeToDebug(CitpLoggerLevel.Warning, message);
+	        if (_logLevel <= CitpLoggerLevel.Warning)
+	        {
+		        writeToDebug(CitpLoggerLevel.Warning, message);
+		        writeToConsole(CitpLoggerLevel.Warning, message);
+	        }
         }
 
         public void LogError(string message)
         {
-            if (_logLevel <= CitpLoggerLevel.Error)
-                writeToDebug(CitpLoggerLevel.Error, message);
+	        if (_logLevel <= CitpLoggerLevel.Error)
+	        {
+		        writeToDebug(CitpLoggerLevel.Error, message);
+		        writeToConsole(CitpLoggerLevel.Error, message);
+	        }
         }
 
         public void LogException(Exception ex)
         {
-            if (_logLevel <= CitpLoggerLevel.Error)
-                writeToDebug(CitpLoggerLevel.Error, ex.ToString());
+	        if (_logLevel <= CitpLoggerLevel.Error)
+	        {
+		        writeToDebug(CitpLoggerLevel.Error, ex.ToString());
+		        writeToConsole(CitpLoggerLevel.Error, ex.ToString());
+	        }
         }
 
         private void writeToDebug(CitpLoggerLevel level, string message)
         {
-            Debug.WriteLine("CitpSharp ({0}): {1}", level, message);
+			if (_isWriteToDebug)
+				Debug.WriteLine($"CitpSharp ({level}): {message}");
         }
-    }
+
+		private void writeToConsole(CitpLoggerLevel level, string message)
+		{
+			if (_isWriteToConsole)
+				Console.WriteLine($"{DateTime.Now} {level}: {message}");
+		}
+	}
 }

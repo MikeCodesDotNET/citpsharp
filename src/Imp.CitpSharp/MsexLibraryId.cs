@@ -27,6 +27,20 @@ namespace Imp.CitpSharp
 			SubLevel3 = subLevel3;
 		}
 
+		public bool IsChildOf(MsexLibraryId other)
+		{
+			return other.Level <= Level &&
+				(other.Level == 1 
+				||(other.Level == 2 && SubLevel1 == other.SubLevel1)
+				|| (other.Level == 3 && SubLevel1 == other.SubLevel1 && SubLevel2 == other.SubLevel2));
+		}
+
+		public bool IsParentOf(MsexLibraryId other)
+		{
+			return other.IsChildOf(this);
+		}
+
+
 		public int CompareTo(MsexLibraryId other)
 		{
 			if (SubLevel1 < other.SubLevel1)

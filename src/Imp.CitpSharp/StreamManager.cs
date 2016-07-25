@@ -23,6 +23,11 @@ namespace Imp.CitpSharp
 			SourceId = sourceId;
 		}
 
+
+		public event EventHandler<CitpImageRequest> RequestAdded;
+		public event EventHandler<CitpImageRequest> RequestRemoved;
+
+
 		public ushort SourceId { get; }
 
 		public IEnumerable<CitpImageRequest> ResolvedRequests => _resolvedRequests.Keys;
@@ -66,7 +71,7 @@ namespace Imp.CitpSharp
 				var image = _device.GetVideoSourceFrame(SourceId, pair.Key);
 				if (image == null)
 				{
-					_logger.LogError($"Failed to get image for stream request on source {SourceId}");
+					//_logger.LogError($"Failed to get image for stream request on source {SourceId}");
 					continue;
 				}
 
@@ -165,6 +170,28 @@ namespace Imp.CitpSharp
 					updatedRequests.Add(bgrRequest, new StreamInfo(fps, MsexVersion.Version1_0, DateTime.MinValue));
 				}
 			}
+
+			foreach (var pair in _resolvedRequests.ToList())
+			{
+				if (updatedRequests.ContainsKey(pair.Key))
+					continue;
+
+				_resolvedRequests.Remove(pair.Key);
+				RequestRemoved?.Invoke(this, pair.Key);
+			}
+
+			foreach (var pair in updatedRequests)
+			{
+				if (_resolvedRequests.ContainsKey(pair.Key))
+				{
+					_resolvedRequests[pair.Key] = pair.Value;
+				}
+				else
+				{
+					_resolvedRequests.Add(pair.Key, pair.Value);
+					RequestAdded?.Invoke(this, pair.Key);
+				}
+			}
 		}
 
 
@@ -197,6 +224,11 @@ namespace Imp.CitpSharp
 		    _device = device;
 	    }
 
+
+	    public event EventHandler<CitpImageRequest> RequestAdded;
+	    public event EventHandler<CitpImageRequest> RequestRemoved;
+
+
 	    public void AddRequest(PeerInfo peer, RequestStreamPacket packet)
 	    {
 		    StreamSource source;
@@ -211,36 +243,35 @@ namespace Imp.CitpSharp
 			    }
 
 			    source = new StreamSource(_logger, _device, info.SourceIdentifier);
+			    source.RequestAdded += (s, e) => RequestAdded?.Invoke(s, e);
+			    source.RequestRemoved += (s, e) => RequestRemoved?.Invoke(s, e);
 				_streams.Add(info.SourceIdentifier, source);
 		    }
 		    
 			source.AddRequest(peer, packet);
 	    }
 
-		public IEnumerable<StreamFramePacket> GetPackets()
-	    {
-		    var packets = new List<StreamFramePacket>();
-		    var timeNow = DateTime.Now;
-
-		    foreach (var pair in _streams)
-		    {
-			    pair.Value.RemoveExpiredRequests(timeNow);
-				packets.AddRange(pair.Value.GetPackets(timeNow));
-		    }
-
-		    return packets;
-	    }
-
-		public IEnumerable<StreamFramePacket> GetPackets(ushort sourceId)
+		public IEnumerable<StreamFramePacket> GetPackets(ushort? sourceId = null)
 		{
 			var packets = new List<StreamFramePacket>();
 			var timeNow = DateTime.Now;
 
-			StreamSource source;
-			if (_streams.TryGetValue(sourceId, out source))
+			if (sourceId.HasValue)
 			{
-				source.RemoveExpiredRequests(timeNow);
-				packets.AddRange(source.GetPackets(timeNow));
+				StreamSource source;
+				if (_streams.TryGetValue(sourceId.Value, out source))
+				{
+					source.RemoveExpiredRequests(timeNow);
+					packets.AddRange(source.GetPackets(timeNow));
+				}
+			}
+			else
+			{
+				foreach (var pair in _streams)
+				{
+					pair.Value.RemoveExpiredRequests(timeNow);
+					packets.AddRange(pair.Value.GetPackets(timeNow));
+				}
 			}
 
 			return packets;

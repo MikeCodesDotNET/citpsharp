@@ -1,5 +1,4 @@
 ﻿using System.Net.NetworkInformation;
-using Imp.CitpSharp.Packets.Pinf;
 
 namespace Imp.CitpSharp
 {
@@ -11,8 +10,8 @@ namespace Imp.CitpSharp
         private readonly ICitpVisualizerDevice _device;
 
         public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device,
-            bool isUseLegacyMulticastIp, NetworkInterface networkInterface = null)
-            : base(logger, device, isUseLegacyMulticastIp, networkInterface)
+            bool isUseLegacyMulticastIp, bool isRunStreamTimer, NetworkInterface networkInterface = null)
+            : base(logger, device, isUseLegacyMulticastIp, isRunStreamTimer, networkInterface)
         {
             _device = device;
         }

@@ -9,7 +9,7 @@ namespace Imp.CitpSharp
 	public abstract class ElementInformation : IComparable<ElementInformation>
 	{
 		protected ElementInformation(ElementKind kind, byte elementNumber, byte dmxRangeMin,
-			byte dmxRangeMax, [NotNull] string name, uint serialNumber = 0)
+			byte dmxRangeMax, [NotNull] string name, uint serialNumber)
 		{
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
@@ -64,6 +64,8 @@ namespace Imp.CitpSharp
 
 		internal abstract void Serialize(CitpBinaryWriter writer, MsexVersion version);
 
+
+
 		protected enum ElementKind
 		{
 			Media,
@@ -77,30 +79,9 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public sealed class MediaInformation : ElementInformation, IEquatable<MediaInformation>
 	{
-		internal static MediaInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
-		{
-			byte elementNumber = reader.ReadByte();
-
-			uint serialNumber = 0;
-			if (version == MsexVersion.Version1_2)
-				reader.ReadUInt32();
-
-			byte dmxRangeMin = reader.ReadByte();
-			byte dmxRangeMax = reader.ReadByte();
-			string name = reader.ReadString();
-			var mediaVersionTimestamp = DateTimeHelpers.ConvertFromUnixTimestamp(reader.ReadUInt64());
-			ushort mediaWidth = reader.ReadUInt16();
-			ushort mediaHeight = reader.ReadUInt16();
-			uint mediaLength = reader.ReadUInt32();
-			byte mediaFps = reader.ReadByte();
-
-			return new MediaInformation(elementNumber, dmxRangeMin, dmxRangeMax, name, mediaVersionTimestamp, mediaWidth,
-				mediaHeight, mediaLength, mediaFps, serialNumber);
-		}
-
 		public MediaInformation(byte elementNumber, byte dmxRangeMin, byte dmxRangeMax,
 			[NotNull] string name, DateTime mediaVersionTimestamp, ushort mediaWidth, ushort mediaHeight, uint mediaLength,
-			byte mediaFps, uint serialNumber = 0)
+			byte mediaFps, uint serialNumber)
 			: base(ElementKind.Media, elementNumber, dmxRangeMin, dmxRangeMax, name, serialNumber)
 		{
 			MediaVersionTimestamp = mediaVersionTimestamp;
@@ -109,6 +90,7 @@ namespace Imp.CitpSharp
 			MediaLength = mediaLength;
 			MediaFps = mediaFps;
 		}
+
 
 		public DateTime MediaVersionTimestamp { get; }
 		public ushort MediaWidth { get; }
@@ -150,6 +132,27 @@ namespace Imp.CitpSharp
 			}
 		}
 
+		internal static MediaInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
+		{
+			byte elementNumber = reader.ReadByte();
+
+			uint serialNumber = 0;
+			if (version == MsexVersion.Version1_2)
+				reader.ReadUInt32();
+
+			byte dmxRangeMin = reader.ReadByte();
+			byte dmxRangeMax = reader.ReadByte();
+			string name = reader.ReadString();
+			var mediaVersionTimestamp = DateTimeHelpers.ConvertFromUnixTimestamp(reader.ReadUInt64());
+			ushort mediaWidth = reader.ReadUInt16();
+			ushort mediaHeight = reader.ReadUInt16();
+			uint mediaLength = reader.ReadUInt32();
+			byte mediaFps = reader.ReadByte();
+
+			return new MediaInformation(elementNumber, dmxRangeMin, dmxRangeMax, name, mediaVersionTimestamp, mediaWidth,
+				mediaHeight, mediaLength, mediaFps, serialNumber);
+		}
+
 		internal override void Serialize(CitpBinaryWriter writer, MsexVersion version)
 		{
 			writer.Write(ElementNumber);
@@ -173,24 +176,8 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public sealed class EffectInformation : ElementInformation, IEquatable<EffectInformation>
 	{
-		internal static EffectInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
-		{
-			byte elementNumber = reader.ReadByte();
-
-			uint serialNumber = 0;
-			if (version == MsexVersion.Version1_2)
-				serialNumber = reader.ReadUInt32();
-
-			byte dmxRangeMin = reader.ReadByte();
-			byte dmxRangeMax = reader.ReadByte();
-			string name = reader.ReadString();
-			var effectParameterNames = reader.ReadCollection(TypeCode.Byte, reader.ReadString).ToImmutableList();
-
-			return new EffectInformation(elementNumber, dmxRangeMin, dmxRangeMax, name, effectParameterNames, serialNumber);
-		}
-
 		public EffectInformation(byte elementNumber, byte dmxRangeMin, byte dmxRangeMax, [NotNull] string name,
-			[NotNull] ImmutableList<string> effectParameterNames, uint serialNumber = 0)
+			[NotNull] ImmutableList<string> effectParameterNames, uint serialNumber)
 			: base(ElementKind.Effect, elementNumber, dmxRangeMin, dmxRangeMax, name, serialNumber)
 		{
 			if (effectParameterNames == null)
@@ -228,6 +215,22 @@ namespace Imp.CitpSharp
 			}
 		}
 
+		internal static EffectInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
+		{
+			byte elementNumber = reader.ReadByte();
+
+			uint serialNumber = 0;
+			if (version == MsexVersion.Version1_2)
+				serialNumber = reader.ReadUInt32();
+
+			byte dmxRangeMin = reader.ReadByte();
+			byte dmxRangeMax = reader.ReadByte();
+			string name = reader.ReadString();
+			var effectParameterNames = reader.ReadCollection(TypeCode.Byte, reader.ReadString).ToImmutableList();
+
+			return new EffectInformation(elementNumber, dmxRangeMin, dmxRangeMax, name, effectParameterNames, serialNumber);
+		}
+
 		internal override void Serialize(CitpBinaryWriter writer, MsexVersion version)
 		{
 			writer.Write(ElementNumber);
@@ -247,23 +250,8 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public sealed class GenericInformation : ElementInformation, IEquatable<GenericInformation>
 	{
-		internal static GenericInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
-		{
-			byte elementNumber = reader.ReadByte();
-			uint serialNumber = 0;
-
-			if (version == MsexVersion.Version1_2)
-				serialNumber = reader.ReadUInt32();
-
-			byte dmxRangeMin = reader.ReadByte();
-			byte dmxRangeMax = reader.ReadByte();
-			string name = reader.ReadString();
-			var versionTimestamp = DateTimeHelpers.ConvertFromUnixTimestamp(reader.ReadUInt64());
-
-			return new GenericInformation(elementNumber, dmxRangeMin, dmxRangeMax, name, versionTimestamp, serialNumber);
-		}
-
-		public GenericInformation(byte elementNumber, byte dmxRangeMin, byte dmxRangeMax, [NotNull] string name,  DateTime versionTimestamp, uint serialNumber = 0) 
+		public GenericInformation(byte elementNumber, byte dmxRangeMin, byte dmxRangeMax, [NotNull] string name,
+			DateTime versionTimestamp, uint serialNumber)
 			: base(ElementKind.Generic, elementNumber, dmxRangeMin, dmxRangeMax, name, serialNumber)
 		{
 			VersionTimestamp = versionTimestamp;
@@ -293,6 +281,22 @@ namespace Imp.CitpSharp
 			{
 				return (base.GetHashCode() * 397) ^ VersionTimestamp.GetHashCode();
 			}
+		}
+
+		internal static GenericInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
+		{
+			byte elementNumber = reader.ReadByte();
+			uint serialNumber = 0;
+
+			if (version == MsexVersion.Version1_2)
+				serialNumber = reader.ReadUInt32();
+
+			byte dmxRangeMin = reader.ReadByte();
+			byte dmxRangeMax = reader.ReadByte();
+			string name = reader.ReadString();
+			var versionTimestamp = DateTimeHelpers.ConvertFromUnixTimestamp(reader.ReadUInt64());
+
+			return new GenericInformation(elementNumber, dmxRangeMin, dmxRangeMax, name, versionTimestamp, serialNumber);
 		}
 
 		internal override void Serialize(CitpBinaryWriter writer, MsexVersion version)

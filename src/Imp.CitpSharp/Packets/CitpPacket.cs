@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Text;
 using Imp.CitpSharp.Packets.Msex;
 using Imp.CitpSharp.Packets.Pinf;
@@ -11,12 +10,16 @@ namespace Imp.CitpSharp.Packets
 {
 	internal abstract class CitpPacket
 	{
-		private static readonly byte[] CitpCookie = Encoding.UTF8.GetBytes("CITP");
-		private static readonly byte CitpVersionMajor = 1;
-		private static readonly byte CitpVersionMinor = 0;
+		public static readonly byte[] CitpCookie = Encoding.UTF8.GetBytes("CITP");
+		private const byte CitpVersionMajor = 1;
+		private const byte CitpVersionMinor = 0;
 
-		private static readonly int CitpHeaderLength = 20;
-		private static readonly int CitpContentTypePosition = 16;
+		private const int HeaderLength = 20;
+
+		public const int PacketLengthIndex = 8;
+		public const int ContentTypeIndex = 16;
+
+		public const int MinimumPacketLength = 24;
 
 
 		protected CitpPacket(CitpLayerType layerType, ushort requestResponseIndex = 0)
@@ -43,7 +46,7 @@ namespace Imp.CitpSharp.Packets
 			if (layerType == null)
 			{
 				var layerTypeArray = new byte[4];
-				Buffer.BlockCopy(data, CitpContentTypePosition, layerTypeArray, 0, 4);
+				Buffer.BlockCopy(data, ContentTypeIndex, layerTypeArray, 0, 4);
 				throw new InvalidOperationException(
 					$"Unrecognised CITP content type: {Encoding.UTF8.GetString(layerTypeArray, 0, layerTypeArray.Length)}");
 			}
@@ -164,7 +167,7 @@ namespace Imp.CitpSharp.Packets
 
 		private static CitpLayerType? getLayerType(byte[] data)
 		{
-			string typeString = Encoding.UTF8.GetString(data, CitpContentTypePosition, 4);
+			string typeString = Encoding.UTF8.GetString(data, ContentTypeIndex, 4);
 			return CitpEnumHelper.GetEnumFromIdString<CitpLayerType>(typeString);
 		}
 
@@ -180,7 +183,7 @@ namespace Imp.CitpSharp.Packets
 
 			var fullData = serializePacket(false);
 
-			int maximumDataSize = maximumPacketSize - CitpHeaderLength;
+			int maximumDataSize = maximumPacketSize - HeaderLength;
 
 			int numPackets = (int)Math.Ceiling(fullData.Length / (float)maximumDataSize);
 
@@ -193,9 +196,9 @@ namespace Imp.CitpSharp.Packets
 				else
 					packetDataLength = maximumDataSize;
 
-				var packet = new byte[packetDataLength + CitpHeaderLength];
+				var packet = new byte[packetDataLength + HeaderLength];
 
-				Buffer.BlockCopy(fullData, i * maximumDataSize, packet, CitpHeaderLength, packetDataLength);
+				Buffer.BlockCopy(fullData, i * maximumDataSize, packet, HeaderLength, packetDataLength);
 
 				writeInHeader(packet, requestResponseIndex, i, numPackets);
 
@@ -212,7 +215,7 @@ namespace Imp.CitpSharp.Packets
 			using (var writer = new CitpBinaryWriter(new MemoryStream()))
 			{
 				if (isAddHeader)
-					writer.Write(new byte[CitpHeaderLength]);
+					writer.Write(new byte[HeaderLength]);
 
 				SerializeToStream(writer);
 

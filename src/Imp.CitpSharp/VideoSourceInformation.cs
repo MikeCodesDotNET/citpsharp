@@ -7,6 +7,20 @@ namespace Imp.CitpSharp
 	public sealed class VideoSourceInformation : IEquatable<VideoSourceInformation>,
 		IComparable<VideoSourceInformation>
 	{
+		internal static VideoSourceInformation Deserialize(CitpBinaryReader reader)
+		{
+			ushort sourceIdentifier = reader.ReadUInt16();
+			string sourceName = reader.ReadString();
+			byte physicalOutput = reader.ReadByte();
+			byte layerNumber = reader.ReadByte();
+			var flags = (MsexVideoSourcesFlags)reader.ReadUInt16();
+			ushort width = reader.ReadUInt16();
+			ushort height = reader.ReadUInt16();
+
+			return new VideoSourceInformation(sourceIdentifier, sourceName, flags, width, height, physicalOutput,
+				layerNumber);
+		}
+
 		public VideoSourceInformation(ushort sourceIdentifier, string sourceName, MsexVideoSourcesFlags flags,
 			ushort width, ushort height, byte? physicalOutput = null, byte? layerNumber = null)
 		{
@@ -33,6 +47,27 @@ namespace Imp.CitpSharp
 		public int CompareTo([CanBeNull] VideoSourceInformation other)
 		{
 			return ReferenceEquals(other, null) ? 1 : SourceIdentifier.CompareTo(other.SourceIdentifier);
+		}
+
+		internal void Serialize(CitpBinaryWriter writer)
+		{
+			writer.Write(SourceIdentifier);
+			writer.Write(SourceName);
+
+			if (PhysicalOutput.HasValue)
+				writer.Write(PhysicalOutput.Value);
+			else
+				writer.Write((byte)0xFF);
+
+			if (LayerNumber.HasValue)
+				writer.Write(LayerNumber.Value);
+			else
+				writer.Write((byte)0xFF);
+
+			writer.Write((ushort)Flags);
+
+			writer.Write(Width);
+			writer.Write(Height);
 		}
 
 		public bool Equals([CanBeNull] VideoSourceInformation other)

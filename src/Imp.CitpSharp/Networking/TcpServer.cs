@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -10,24 +9,21 @@ namespace Imp.CitpSharp.Networking
 {
     internal sealed class TcpServer : IDisposable
     {
-        public const int AcceptTcpClientTimeoutMs = 250;
-
         private bool _isDisposed;
 
         private readonly ICitpLogService _logger;
         private readonly TcpListener _tcpListener;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        private readonly Task _listenTask;
-
         public TcpServer(ICitpLogService logger, IPEndPoint localEndPoint)
         {
             _logger = logger;
             _tcpListener = new TcpListener(localEndPoint);
 
-            ListenPort = localEndPoint.Port;
+			_tcpListener.Start();
+	        ListenPort = ((IPEndPoint)_tcpListener.LocalEndpoint).Port;
 
-            _listenTask = listenAsync(_cancellationTokenSource.Token);
+			listen(_cancellationTokenSource.Token);
         }
 
         public void Dispose()
@@ -37,7 +33,6 @@ namespace Imp.CitpSharp.Networking
 
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
-            _listenTask.Wait();
 
             _isDisposed = true;
         }
@@ -46,12 +41,10 @@ namespace Imp.CitpSharp.Networking
         public event EventHandler<TcpPacketReceivedEventArgs> PacketReceived;
         public event EventHandler<TcpServerConnection> ConnectionClosed;
 
-        public int ListenPort { get; }
+	    public int ListenPort { get; }
 
-        private async Task listenAsync(CancellationToken ct)
+        private async void listen(CancellationToken ct)
         {
-            _tcpListener.Start();
-
             try
             {
                 while (true)

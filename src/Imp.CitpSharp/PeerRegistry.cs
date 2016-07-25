@@ -46,7 +46,7 @@ namespace Imp.CitpSharp
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return PeerType == other.PeerType && string.Equals(Name, other.Name) && Ip.Equals(other.Ip);
+			return string.Equals(Name, other.Name) && Ip.Equals(other.Ip);
 		}
 
 		public override bool Equals([CanBeNull] object obj)
@@ -113,6 +113,18 @@ namespace Imp.CitpSharp
 				if (now - pair.Value > PeerTimeout)
 					_peers.Remove(pair.Key);
 			}
+		}
+
+		[CanBeNull]
+		public PeerInfo FindPeer(string name, IPAddress ip)
+		{
+			var peer = new PeerInfo(name, ip);
+
+			PeerInfo existingPeer;
+			if (!Peers.TryGetValue(peer, out existingPeer))
+				return null;
+
+			return existingPeer;
 		}
 	}
 }
