@@ -5,13 +5,13 @@ namespace Imp.CitpSharp.Packets.Msex
 		public ElementThumbnailPacket()
 			: base(MsexMessageType.ElementThumbnailMessage) { }
 
-	    public ElementThumbnailPacket(MsexVersion version, MsexLibraryType libraryType, MsexId library, byte elementNumber,
+	    public ElementThumbnailPacket(MsexVersion version, MsexLibraryType libraryType, MsexLibraryId libraryId, byte elementNumber,
 	        MsexImageFormat thumbnailFormat, ushort thumbnailWidth, ushort thumbnailHeight, byte[] thumbnailBuffer,
 	        ushort requestResponseIndex = 0)
 	        : base(MsexMessageType.ElementThumbnailMessage, version, requestResponseIndex)
 	    {
 	        LibraryType = libraryType;
-	        Library = library;
+	        LibraryId = libraryId;
 	        ElementNumber = elementNumber;
 	        ThumbnailFormat = thumbnailFormat;
 	        ThumbnailWidth = thumbnailWidth;
@@ -20,7 +20,7 @@ namespace Imp.CitpSharp.Packets.Msex
 	    }
 
         public MsexLibraryType LibraryType { get; private set; }
-		public MsexId Library { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
 
 		public byte ElementNumber { get; private set; }
 
@@ -34,7 +34,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.SerializeToStream(writer);
 
             writer.Write((byte)LibraryType);
-            writer.Write(Library, Version);
+            writer.Write(LibraryId, Version);
             writer.Write(ElementNumber);
             writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
             writer.Write(ThumbnailWidth);
@@ -48,7 +48,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.DeserializeFromStream(reader);
 
             LibraryType = (MsexLibraryType)reader.ReadByte();
-            Library = reader.ReadMsexId(Version);
+            LibraryId = reader.ReadLibraryId(Version);
             ElementNumber = reader.ReadByte();
             ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
             ThumbnailWidth = reader.ReadUInt16();

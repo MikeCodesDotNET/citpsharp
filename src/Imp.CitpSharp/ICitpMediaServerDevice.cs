@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
@@ -34,58 +35,53 @@ namespace Imp.CitpSharp
         /// <summary>
         ///     An enumerable of MSEX versions supported by this media server
         /// </summary>
-        IEnumerable<MsexVersion> SupportedMsexVersions { get; }
+        IImmutableSet<MsexVersion> SupportedMsexVersions { get; }
 
-        /// <summary>
-        ///     An enumerable of library types available on this media server
-        /// </summary>
-        IEnumerable<MsexLibraryType> SupportedLibraryTypes { get; }
+		/// <summary>
+		///     An enumerable of library types available on this media server
+		/// </summary>
+		IImmutableSet<MsexLibraryType> SupportedLibraryTypes { get; }
 
-        /// <summary>
-        ///     An enumerable of supported image formats for CITP peers making thumbnail requests from this media server
-        /// </summary>
-        IEnumerable<MsexImageFormat> SupportedThumbnailFormats { get; }
+		/// <summary>
+		///     An enumerable of supported image formats for CITP peers making thumbnail requests from this media server
+		/// </summary>
+		IImmutableSet<MsexImageFormat> SupportedThumbnailFormats { get; }
 
         /// <summary>
         ///     An enumerable of available layers on this media server
         /// </summary>
-        IEnumerable<ICitpMediaServerLayer> Layers { get; }
+        IImmutableList<ICitpMediaServerLayer> Layers { get; }
 
 		/// <summary>
 		///		Dictionary containing information on all element libraries
 		/// </summary>
-		IReadOnlyDictionary<MsexLibraryId, ElementLibrary> ElementLibraries { get; }
-
-
-        /// <summary>
-        ///     When true, indicates to <see cref="CitpMediaServerService" /> that the contents of one of the media server
-        ///     libraries has been updated
-        /// </summary>
-        bool HasLibraryBeenUpdated { get; }
+		IImmutableDictionary<MsexLibraryId, ElementLibrary> ElementLibraries { get; }
 
         /// <summary>
         ///     Requests information from the media server on which libraries have been updated.
         /// </summary>
         /// <returns>An enumerable of library update information objects</returns>
-        IEnumerable<ElementLibraryUpdatedInformation> GetLibraryUpdateMessages();
+        IImmutableList<ElementLibraryUpdatedInformation> GetLibraryUpdateInformation();
 
 
-	    /// <summary>
-	    ///     Requests a library thumbnail from the media server
-	    /// </summary>
-	    /// <param name="request">Image request parameters to be used for requested thumbnail</param>
-	    /// <param name="elementLibrary">Library to request thumbnail for</param>
-	    /// <returns><see cref="MsexId" /> and <see cref="CitpImage" /> for requested library</returns>
-	    Tuple<MsexId, CitpImage> GetElementLibraryThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary);
+		/// <summary>
+		///     Requests a library thumbnail from the media server
+		/// </summary>
+		/// <param name="request">Image request parameters to be used for requested thumbnail</param>
+		/// <param name="elementLibrary">Library to request thumbnail for</param>
+		/// <returns><see cref="CitpImage" /> for requested library or null if thumbnail is not available for request</returns>
+		[CanBeNull]
+		CitpImage GetElementLibraryThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary);
 
-	    /// <summary>
-	    ///     Requests an element thumbnail from the media server
-	    /// </summary>
-	    /// <param name="request">Image request parameters to be used for requested thumbnail</param>
-	    /// <param name="elementLibrary">Information for library which contains element</param>
-	    /// <param name="element">Element to request thumbnail for</param>
-	    /// <returns><see cref="MsexId" /> and <see cref="CitpImage" /> for requested element</returns>
-	    Tuple<byte, CitpImage> GetElementThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary, ElementInformation element);
+		/// <summary>
+		///     Requests an element thumbnail from the media server
+		/// </summary>
+		/// <param name="request">Image request parameters to be used for requested thumbnail</param>
+		/// <param name="elementLibrary">Information for library which contains element</param>
+		/// <param name="element">Element to request thumbnail for</param>
+		/// <returns><see cref="MsexLibraryId" /> and <see cref="CitpImage" /> for requested element</returns>
+		[CanBeNull]
+		CitpImage GetElementThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary, ElementInformation element);
     }
 
 

@@ -9,9 +9,8 @@ namespace Imp.CitpSharp
     {
         private readonly ICitpVisualizerDevice _device;
 
-        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device,
-            bool isUseLegacyMulticastIp, bool isRunStreamTimer, NetworkInterface networkInterface = null)
-            : base(logger, device, isUseLegacyMulticastIp, isRunStreamTimer, networkInterface)
+        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
+            : base(logger, device, flags, networkInterface)
         {
             _device = device;
         }

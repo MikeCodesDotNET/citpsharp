@@ -53,7 +53,7 @@ namespace Imp.CitpSharp.Packets.Msex
             if (Version != MsexVersion.Version1_0)
             {
                 Debug.Assert(LibraryParentId.HasValue); // This should be enforced in the constructor
-                writer.Write(LibraryParentId.Value);
+                writer.Write(LibraryParentId.Value, Version);
             }
 
             if (ShouldRequestAllLibraries)
@@ -69,7 +69,7 @@ namespace Imp.CitpSharp.Packets.Msex
             LibraryType = (MsexLibraryType)reader.ReadByte();
 
             if (Version != MsexVersion.Version1_0)
-                LibraryParentId = reader.ReadLibraryId();
+                LibraryParentId = reader.ReadLibraryId(Version);
 
             RequestedLibraryNumbers = reader.ReadCollection(GetCollectionLengthType(), reader.ReadByte).ToImmutableSortedSet();
 

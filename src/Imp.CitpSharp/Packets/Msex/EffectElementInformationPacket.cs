@@ -8,15 +8,15 @@ namespace Imp.CitpSharp.Packets.Msex
 		public EffectElementInformationPacket()
 			: base(MsexMessageType.EffectElementInformationMessage) { }
 
-	    public EffectElementInformationPacket(MsexVersion version, MsexId library, IEnumerable<EffectInformation> effects,
+	    public EffectElementInformationPacket(MsexVersion version, MsexLibraryId libraryId, IEnumerable<EffectInformation> effects,
 	        ushort requestResponseIndex = 0)
 	        : base(MsexMessageType.EffectElementInformationMessage, version, requestResponseIndex)
 	    {
-	        Library = library;
+	        LibraryId = libraryId;
 	        Effects = effects.ToImmutableSortedSet();
 	    }
 
-		public MsexId Library { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
 
 		public ImmutableSortedSet<EffectInformation> Effects { get; private set; }
 
@@ -24,7 +24,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write(Library, Version);
+            writer.Write(LibraryId, Version);
             writer.Write(Effects, GetCollectionLengthType(), e => e.Serialize(writer, Version));
         }
 
@@ -32,7 +32,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.DeserializeFromStream(reader);
 
-            Library = reader.ReadMsexId(Version);
+            LibraryId = reader.ReadLibraryId(Version);
             Effects = reader.ReadCollection(GetCollectionLengthType(),
                 () => EffectInformation.Deserialize(reader, Version))
                 .ToImmutableSortedSet();

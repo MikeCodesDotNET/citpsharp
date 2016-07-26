@@ -27,9 +27,8 @@ namespace Imp.CitpSharp
 
 		private bool _isDisposed;
 
-		protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, bool isUseLegacyMulticastIp, bool isRunStreamTimer,
-			NetworkInterface networkInterface = null)
-			: base(logger, device, isUseLegacyMulticastIp, networkInterface)
+		protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
+			: base(logger, device, flags, networkInterface)
 		{
 			_device = device;
 
@@ -54,7 +53,7 @@ namespace Imp.CitpSharp
 			_streamTimer = new RegularTimer(StreamTimerInterval);
 			_streamTimer.Elapsed += (s, e) => ProcessStreamFrameRequests();
 
-			if (isRunStreamTimer)
+			if (!flags.HasFlag(CitpServiceFlags.DisableStreaming) && flags.HasFlag(CitpServiceFlags.RunStreamThread))
 				_streamTimer.Start();
 		}
 
@@ -63,6 +62,9 @@ namespace Imp.CitpSharp
 
 		public void ProcessStreamFrameRequests(int? sourceId = null)
 		{
+			if (Flags.HasFlag(CitpServiceFlags.DisableStreaming))
+				throw new InvalidOperationException("Streaming disabled on this service");
+
 			var packets = _streamManager.GetPackets((ushort?)sourceId);
 
 			foreach(var p in packets)
@@ -145,7 +147,7 @@ namespace Imp.CitpSharp
 					break;
 
 				default:
-					client.SendPacket(new NegativeAcknowledgePacket(packet.Version, packet.MessageType, packet.RequestResponseIndex));
+					SendNack(packet, client);
 					break;
 			}
 		}
@@ -159,6 +161,12 @@ namespace Imp.CitpSharp
 
 		internal virtual void OnGetVideoSourcesPacketReceived(GetVideoSourcesPacket packet, TcpServerConnection client)
 		{
+			if (Flags.HasFlag(CitpServiceFlags.DisableStreaming))
+			{
+				SendNack(packet, client);
+				return;
+			}
+
 			Logger.LogInfo($"{client}: Get video sources packet received");
 
 			var response = new VideoSourcesPacket(packet.Version, _device.VideoSourceInformation.Values,
@@ -169,6 +177,12 @@ namespace Imp.CitpSharp
 
 		internal virtual void OnRequestStreamPacketReceived(RequestStreamPacket packet, TcpServerConnection client)
 		{
+			if (Flags.HasFlag(CitpServiceFlags.DisableStreaming))
+			{
+				SendNack(packet, client);
+				return;
+			}
+
 			Logger.LogInfo($"{client}: Requested stream ID {packet.SourceId} @ {packet.FrameWidth}x{packet.FrameHeight}, {packet.Fps} fps,"
 			               + $" {packet.FrameFormat.GetCustomAttribute<CitpId>().IdString}, timeout {packet.Timeout} sec");
 
@@ -179,6 +193,12 @@ namespace Imp.CitpSharp
 			}
 
 			_streamManager.AddRequest(client.Peer, packet);
+		}
+
+		internal void SendNack(MsexPacket packet, TcpServerConnection client)
+		{
+			Logger.LogInfo($"{client}: Nack sent for message type {packet.MessageType}");
+			client.SendPacket(new NegativeAcknowledgePacket(packet.Version, packet.MessageType, packet.RequestResponseIndex));
 		}
 	}
 }

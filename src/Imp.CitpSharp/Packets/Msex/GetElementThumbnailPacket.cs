@@ -9,7 +9,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			: base(MsexMessageType.GetElementThumbnailMessage) { }
 
         public GetElementThumbnailPacket(MsexVersion version, MsexImageFormat thumbnailFormat, ushort thumbnailWidth,
-            ushort thumbnailHeight, MsexThumbnailFlags thumbnailFlags, MsexLibraryType libraryType, MsexId library,
+            ushort thumbnailHeight, MsexThumbnailFlags thumbnailFlags, MsexLibraryType libraryType, MsexLibraryId libraryId,
             IEnumerable<byte> requestedElementNumbers, ushort requestResponseIndex = 0)
             : base(MsexMessageType.GetElementThumbnailMessage, version, requestResponseIndex)
         {
@@ -18,13 +18,13 @@ namespace Imp.CitpSharp.Packets.Msex
             ThumbnailHeight = thumbnailHeight;
             ThumbnailFlags = thumbnailFlags;
             LibraryType = libraryType;
-            Library = library;
+            LibraryId = libraryId;
             ShouldRequestAllThumbnails = false;
             RequestedElementNumbers = requestedElementNumbers.ToImmutableSortedSet();
         }
 
         public GetElementThumbnailPacket(MsexVersion version, MsexImageFormat thumbnailFormat, ushort thumbnailWidth,
-	        ushort thumbnailHeight, MsexThumbnailFlags thumbnailFlags, MsexLibraryType libraryType, MsexId library,
+	        ushort thumbnailHeight, MsexThumbnailFlags thumbnailFlags, MsexLibraryType libraryType, MsexLibraryId libraryId,
 	        ushort requestResponseIndex = 0)
 	        : base(MsexMessageType.GetElementThumbnailMessage, version, requestResponseIndex)
 	    {
@@ -33,7 +33,7 @@ namespace Imp.CitpSharp.Packets.Msex
 	        ThumbnailHeight = thumbnailHeight;
 	        ThumbnailFlags = thumbnailFlags;
 	        LibraryType = libraryType;
-	        Library = library;
+	        LibraryId = libraryId;
 	        ShouldRequestAllThumbnails = true;
             RequestedElementNumbers = ImmutableSortedSet<byte>.Empty;
 	    }
@@ -45,7 +45,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		public MsexThumbnailFlags ThumbnailFlags { get; private set; }
 
 		public MsexLibraryType LibraryType { get; private set; }
-		public MsexId Library { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
 
 		public bool ShouldRequestAllThumbnails { get; private set; }
 
@@ -60,7 +60,7 @@ namespace Imp.CitpSharp.Packets.Msex
             writer.Write(ThumbnailHeight);
             writer.Write((byte)ThumbnailFlags);
             writer.Write((byte)LibraryType);
-            writer.Write(Library, Version);
+            writer.Write(LibraryId, Version);
 
             if (ShouldRequestAllThumbnails)
                 writer.Write((byte)0x00);
@@ -77,7 +77,7 @@ namespace Imp.CitpSharp.Packets.Msex
             ThumbnailHeight = reader.ReadUInt16();
             ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
             LibraryType = (MsexLibraryType)reader.ReadByte();
-            Library = reader.ReadMsexId(Version);
+            LibraryId = reader.ReadLibraryId(Version);
 
             RequestedElementNumbers = reader.ReadCollection(GetCollectionLengthType(), reader.ReadByte).ToImmutableSortedSet();
 

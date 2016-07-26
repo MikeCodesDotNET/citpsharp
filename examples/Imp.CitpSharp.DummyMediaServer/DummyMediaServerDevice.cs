@@ -30,32 +30,33 @@ namespace Imp.CitpSharp.DummyVisualizer
 		public int ProductVersionMinor { get; }
 		public int ProductVersionBugfix { get; }
 
-		public IEnumerable<MsexVersion> SupportedMsexVersions =>
+		public IImmutableSet<MsexVersion> SupportedMsexVersions =>
 			new[]
 			{
 				MsexVersion.Version1_0,
 				MsexVersion.Version1_1,
 				MsexVersion.Version1_2
-			};
+			}.ToImmutableHashSet();
 
 
-		public IEnumerable<MsexLibraryType> SupportedLibraryTypes =>
+		public IImmutableSet<MsexLibraryType> SupportedLibraryTypes =>
 			new[]
 			{
 				MsexLibraryType.Media
-			};
+			}.ToImmutableHashSet();
 
-		public IEnumerable<MsexImageFormat> SupportedThumbnailFormats =>
+		public IImmutableSet<MsexImageFormat> SupportedThumbnailFormats =>
 			new[]
 			{
 				MsexImageFormat.Rgb8,
 				MsexImageFormat.Jpeg,
 				MsexImageFormat.Png
-			};
+			}.ToImmutableHashSet();
 
-		public IEnumerable<ICitpMediaServerLayer> Layers { get; } = Enumerable.Empty<ICitpMediaServerLayer>();
+		public IImmutableList<ICitpMediaServerLayer> Layers { get; } = ImmutableList<ICitpMediaServerLayer>.Empty;
 
-		public IReadOnlyDictionary<MsexLibraryId, ElementLibrary> ElementLibraries { get; } = new Dictionary<MsexLibraryId, ElementLibrary>();
+		public IImmutableDictionary<MsexLibraryId, ElementLibrary> ElementLibraries { get; } =
+			ImmutableDictionary<MsexLibraryId, ElementLibrary>.Empty;
 
 		public bool HasLibraryBeenUpdated { get; set; }
 
@@ -89,19 +90,17 @@ namespace Imp.CitpSharp.DummyVisualizer
 			}.ToImmutableDictionary();
 
 
+		public IImmutableList<ElementLibraryUpdatedInformation> GetLibraryUpdateInformation()
+		{
+			return ImmutableList<ElementLibraryUpdatedInformation>.Empty;
+		}
 
-		public IEnumerable<ElementLibraryUpdatedInformation> GetLibraryUpdateMessages()
+		public CitpImage GetElementLibraryThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Tuple<MsexId, CitpImage> GetElementLibraryThumbnail(CitpImageRequest request,
-			ElementLibraryInformation elementLibrary)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Tuple<byte, CitpImage> GetElementThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary,
+		public CitpImage GetElementThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary,
 			ElementInformation element)
 		{
 			throw new NotImplementedException();

@@ -32,5 +32,11 @@ namespace Imp.CitpSharp.Tests
 
 			orderedLibraryIds.Should().ContainInOrder(libraryIds, "because this is the correct order");
 		}
+
+		[Fact]
+		public void CanIdentifyChild()
+		{
+			MsexLibraryId.Root.IsParentOf(new MsexLibraryId(1)).Should().BeTrue();
+		}
 	}
 }

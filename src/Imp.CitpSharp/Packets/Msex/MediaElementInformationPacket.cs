@@ -8,15 +8,15 @@ namespace Imp.CitpSharp.Packets.Msex
 		public MediaElementInformationPacket()
 			: base(MsexMessageType.MediaElementInformationMessage) { }
 
-	    public MediaElementInformationPacket(MsexVersion version, MsexId library, IEnumerable<MediaInformation> media,
+	    public MediaElementInformationPacket(MsexVersion version, MsexLibraryId libraryId, IEnumerable<MediaInformation> media,
 	        ushort requestResponseIndex = 0)
 	        : base(MsexMessageType.MediaElementInformationMessage, version, requestResponseIndex)
 	    {
-	        Library = library;
+	        LibraryId = libraryId;
 	        Media = media.ToImmutableSortedSet();
 	    }
 
-		public MsexId Library { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
 
 		public ImmutableSortedSet<MediaInformation> Media { get; set; }
 
@@ -24,7 +24,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write(Library, Version);
+            writer.Write(LibraryId, Version);
             writer.Write(Media, GetCollectionLengthType(), m => m.Serialize(writer, Version));
 		}
 
@@ -32,7 +32,7 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.DeserializeFromStream(reader);
 
-            Library = reader.ReadMsexId(Version);
+            LibraryId = reader.ReadLibraryId(Version);
             Media = reader.ReadCollection(GetCollectionLengthType(), () => MediaInformation.Deserialize(reader, Version))
                     .ToImmutableSortedSet();
 		}

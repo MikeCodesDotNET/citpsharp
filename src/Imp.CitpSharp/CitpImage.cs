@@ -19,7 +19,13 @@ namespace Imp.CitpSharp
 
 			Request = request;
 			Data = data;
+
+			if (actualWidth < 1 || actualWidth > ushort.MaxValue)
+				throw new ArgumentOutOfRangeException(nameof(actualWidth), actualWidth, $"Must be in range 1-{ushort.MaxValue}");
 			ActualWidth = actualWidth;
+
+			if (actualHeight < 1 || actualHeight > ushort.MaxValue)
+				throw new ArgumentOutOfRangeException(nameof(actualHeight), actualHeight, $"Must be in range 1-{ushort.MaxValue}");
 			ActualHeight = actualHeight;
 		}
 

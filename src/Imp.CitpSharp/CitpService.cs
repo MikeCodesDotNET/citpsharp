@@ -28,15 +28,16 @@ namespace Imp.CitpSharp
 
         private bool _isDisposed;
 
-        protected CitpService(ICitpLogService logger, ICitpDevice device, bool isUseLegacyMulticastIp,
-            NetworkInterface networkInterface = null)
+        protected CitpService(ICitpLogService logger, ICitpDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
         {
             Logger = logger;
             _device = device;
 
-            _isUseLegacyMulticastIp = isUseLegacyMulticastIp;
+	        Flags = flags;
 
-            UdpService = new UdpService(logger, isUseLegacyMulticastIp, networkInterface);
+            _isUseLegacyMulticastIp = flags.HasFlag(CitpServiceFlags.UseLegacyMulticastIp);
+
+            UdpService = new UdpService(logger, _isUseLegacyMulticastIp, networkInterface);
 			UdpService.PacketReceived += (s, e) => onUdpPacketReceived(e.Packet, e.Ip);
 
             _peerLocationTimer = new RegularTimer(PeerLocationPacketInterval);
@@ -45,6 +46,8 @@ namespace Imp.CitpSharp
         }
 
         public abstract CitpPeerType DeviceType { get; }
+
+		public CitpServiceFlags Flags { get; }
 
         public void Dispose()
         {

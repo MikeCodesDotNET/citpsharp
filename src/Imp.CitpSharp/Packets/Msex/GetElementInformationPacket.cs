@@ -8,27 +8,27 @@ namespace Imp.CitpSharp.Packets.Msex
 		public GetElementInformationPacket()
 			: base(MsexMessageType.GetElementInformationMessage) { }
 
-	    public GetElementInformationPacket(MsexVersion version, MsexLibraryType libraryType, MsexId library,
+	    public GetElementInformationPacket(MsexVersion version, MsexLibraryType libraryType, MsexLibraryId libraryId,
 	        IEnumerable<byte> requestedElementNumbers, ushort requestResponseIndex = 0)
 	        : base(MsexMessageType.GetElementInformationMessage, version, requestResponseIndex)
 	    {
 	        LibraryType = libraryType;
-	        Library = library;
+	        LibraryId = libraryId;
 	        ShouldRequestAllElements = false;
 	        RequestedElementNumbers = requestedElementNumbers.ToImmutableSortedSet();
 	    }
 
-        public GetElementInformationPacket(MsexVersion version, MsexLibraryType libraryType, MsexId library, ushort requestResponseIndex = 0)
+        public GetElementInformationPacket(MsexVersion version, MsexLibraryType libraryType, MsexLibraryId libraryId, ushort requestResponseIndex = 0)
            : base(MsexMessageType.GetElementInformationMessage, version, requestResponseIndex)
         {
             LibraryType = libraryType;
-            Library = library;
+            LibraryId = libraryId;
             ShouldRequestAllElements = true;
             RequestedElementNumbers = ImmutableSortedSet<byte>.Empty;
         }
 
         public MsexLibraryType LibraryType { get; private set; }
-		public MsexId Library { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
 
 		public bool ShouldRequestAllElements { get; private set; }
 		public ImmutableSortedSet<byte> RequestedElementNumbers { get; private set; }
@@ -38,7 +38,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.SerializeToStream(writer);
 
             writer.Write((byte)LibraryType);
-            writer.Write(Library, Version);
+            writer.Write(LibraryId, Version);
 
             if (ShouldRequestAllElements)
                 writer.Write((ushort)0x00);
@@ -51,7 +51,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.DeserializeFromStream(reader);
 
             LibraryType = (MsexLibraryType)reader.ReadByte();
-            Library = reader.ReadMsexId(Version);
+            LibraryId = reader.ReadLibraryId(Version);
 
             RequestedElementNumbers = reader.ReadCollection(GetCollectionLengthType(), reader.ReadByte).ToImmutableSortedSet();
 

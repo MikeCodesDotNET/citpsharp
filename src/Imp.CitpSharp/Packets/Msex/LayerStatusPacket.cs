@@ -47,7 +47,7 @@ namespace Imp.CitpSharp.Packets.Msex
                 if (version != MsexVersion.Version1_0)
                     mediaLibraryType = (MsexLibraryType)reader.ReadByte();
 
-                var mediaLibrary = reader.ReadMsexId(version);
+                var mediaLibrary = reader.ReadLibraryId(version);
                 byte mediaNumber = reader.ReadByte();
                 string mediaName = reader.ReadString();
                 uint mediaPosition = reader.ReadUInt32();
@@ -60,13 +60,13 @@ namespace Imp.CitpSharp.Packets.Msex
             }
 
             public LayerStatus(byte layerNumber, byte physicalOutput, MsexLibraryType mediaLibraryType,
-                MsexId mediaLibrary, byte mediaNumber, string mediaName, uint mediaPosition, uint mediaLength,
+				MsexLibraryId mediaLibraryId, byte mediaNumber, string mediaName, uint mediaPosition, uint mediaLength,
                 byte mediaFps, MsexLayerStatusFlags layerStatusFlags)
             {
                 LayerNumber = layerNumber;
                 PhysicalOutput = physicalOutput;
                 MediaLibraryType = mediaLibraryType;
-                MediaLibrary = mediaLibrary;
+                MediaLibraryId = mediaLibraryId;
                 MediaNumber = mediaNumber;
                 MediaName = mediaName;
                 MediaPosition = mediaPosition;
@@ -80,7 +80,7 @@ namespace Imp.CitpSharp.Packets.Msex
 
 
             public MsexLibraryType MediaLibraryType { get; }
-            public MsexId MediaLibrary { get; }
+            public MsexLibraryId MediaLibraryId { get; }
 
             public byte MediaNumber { get; }
             public string MediaName { get; }
@@ -99,7 +99,7 @@ namespace Imp.CitpSharp.Packets.Msex
                 if (version != MsexVersion.Version1_0)
                     writer.Write((byte)MediaLibraryType);
 
-                writer.Write(MediaLibrary, version);
+                writer.Write(MediaLibraryId, version);
                 writer.Write(MediaNumber);
                 writer.Write(MediaName);
                 writer.Write(MediaPosition);
@@ -115,7 +115,7 @@ namespace Imp.CitpSharp.Packets.Msex
                 if (ReferenceEquals(this, other))
                     return true;
                 return LayerNumber == other.LayerNumber && PhysicalOutput == other.PhysicalOutput
-                       && MediaLibraryType == other.MediaLibraryType && MediaLibrary.Equals(other.MediaLibrary)
+                       && MediaLibraryType == other.MediaLibraryType && MediaLibraryId.Equals(other.MediaLibraryId)
                        && MediaNumber == other.MediaNumber && string.Equals(MediaName, other.MediaName)
                        && MediaPosition == other.MediaPosition && MediaLength == other.MediaLength
                        && MediaFps == other.MediaFps && LayerStatusFlags == other.LayerStatusFlags;
@@ -137,7 +137,7 @@ namespace Imp.CitpSharp.Packets.Msex
                     int hashCode = LayerNumber.GetHashCode();
                     hashCode = (hashCode * 397) ^ PhysicalOutput.GetHashCode();
                     hashCode = (hashCode * 397) ^ (int)MediaLibraryType;
-                    hashCode = (hashCode * 397) ^ MediaLibrary.GetHashCode();
+                    hashCode = (hashCode * 397) ^ MediaLibraryId.GetHashCode();
                     hashCode = (hashCode * 397) ^ MediaNumber.GetHashCode();
                     hashCode = (hashCode * 397) ^ MediaName.GetHashCode();
                     hashCode = (hashCode * 397) ^ (int)MediaPosition;

@@ -28,30 +28,22 @@ namespace Imp.CitpSharp
 			Write(Encoding.UTF8.GetBytes(value.ToString("D")));
 		}
 
-		public void Write(MsexLibraryId id)
-		{
-			Write(id.Level);
-			Write(id.SubLevel1);
-			Write(id.SubLevel2);
-			Write(id.SubLevel3);
-		}
-
-	    public void Write(MsexId id, MsexVersion version)
+	    public void Write(MsexLibraryId id, MsexVersion version)
 	    {
 	        if (version == MsexVersion.Version1_0)
 	        {
-	            if (!id.LibraryNumber.HasValue)
-	                throw new InvalidOperationException("Cannot find library number value in MsexId - required by MSEX version 1.0");
+	            if (!id.IsMsexV1Compatible)
+	                throw new InvalidOperationException("Library id is not compatible with MSEX V1.0");
 
-	            Write(id.LibraryNumber.Value);
+	            Write(id.MsexV1LibraryNumber);
 	        }
 	        else
 	        {
-                if (!id.LibraryId.HasValue)
-                    throw new InvalidOperationException("Cannot find library ID value in MsexId - required by MSEX version 1.1+");
-
-                Write(id.LibraryId.Value);
-            }
+				Write(id.Level);
+				Write(id.SubLevel1);
+				Write(id.SubLevel2);
+				Write(id.SubLevel3);
+			}
 	    }
 
 		public void Write(MsexVersion version, bool isMinorFirst)
@@ -161,14 +153,11 @@ namespace Imp.CitpSharp
 			return Guid.Parse(Encoding.UTF8.GetString(ReadBytes(36), 0, 36));
 		}
 
-		public MsexLibraryId ReadLibraryId()
-		{
-			return MsexLibraryId.FromByteArray(ReadBytes(4));
-		}
-
-	    public MsexId ReadMsexId(MsexVersion version)
+	    public MsexLibraryId ReadLibraryId(MsexVersion version)
 	    {
-	        return version == MsexVersion.Version1_0 ? new MsexId(ReadByte()) : new MsexId(ReadLibraryId());
+	        return version == MsexVersion.Version1_0 
+				? MsexLibraryId.FromMsexV1LibraryNumber((int)ReadByte()) 
+				: MsexLibraryId.FromByteArray(ReadBytes(4));
 	    }
 
 	    public MsexVersion ReadMsexVersion(bool isMinorFirst)

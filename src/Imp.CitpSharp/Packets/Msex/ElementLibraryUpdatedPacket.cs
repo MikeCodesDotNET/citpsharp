@@ -9,20 +9,20 @@ namespace Imp.CitpSharp.Packets.Msex
 		public ElementLibraryUpdatedPacket()
 			: base(MsexMessageType.ElementLibraryUpdatedMessage) { }
 
-	    public ElementLibraryUpdatedPacket(MsexVersion version, MsexLibraryType libraryType, MsexId library,
+	    public ElementLibraryUpdatedPacket(MsexVersion version, MsexLibraryType libraryType, MsexLibraryId libraryId,
 	        MsexElementLibraryUpdatedFlags updateFlags, IEnumerable<byte> affectedElements,
 	        IEnumerable<byte> affectedLibraries, ushort requestResponseIndex = 0)
 	        : base(MsexMessageType.ElementLibraryUpdatedMessage, version, requestResponseIndex)
 	    {
 	        LibraryType = libraryType;
-	        Library = library;
+	        LibraryId = libraryId;
 	        UpdateFlags = updateFlags;
 	        AffectedElements = affectedElements.ToImmutableSortedSet();
 	        AffectedLibraries = affectedLibraries.ToImmutableSortedSet();
 	    }
 
 		public MsexLibraryType LibraryType { get; private set; }
-		public MsexId Library { get; private set; }
+		public MsexLibraryId LibraryId { get; private set; }
 
 		public MsexElementLibraryUpdatedFlags UpdateFlags { get; private set; }
 
@@ -34,7 +34,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.SerializeToStream(writer);
 
             writer.Write((byte)LibraryType);
-            writer.Write(Library, Version);
+            writer.Write(LibraryId, Version);
             writer.Write((byte)UpdateFlags);
 
 		    if (Version == MsexVersion.Version1_2)
@@ -60,7 +60,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.DeserializeFromStream(reader);
 
             LibraryType = (MsexLibraryType)reader.ReadByte();
-            Library = reader.ReadMsexId(Version);
+            LibraryId = reader.ReadLibraryId(Version);
             UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 
 		    if (Version == MsexVersion.Version1_2)

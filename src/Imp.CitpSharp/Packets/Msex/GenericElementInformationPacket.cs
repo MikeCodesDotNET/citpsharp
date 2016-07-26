@@ -27,7 +27,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			base.SerializeToStream(writer);
 
             writer.Write((byte)LibraryType);
-            writer.Write(LibraryId);
+            writer.Write(LibraryId, Version);
             writer.Write(Information, GetCollectionLengthType(), e => e.Serialize(writer, Version));
 		}
 
@@ -38,7 +38,7 @@ namespace Imp.CitpSharp.Packets.Msex
             if (Version == MsexVersion.Version1_2)
                 LibraryType = (MsexLibraryType)reader.ReadByte();
 
-            LibraryId = reader.ReadLibraryId();
+            LibraryId = reader.ReadLibraryId(Version);
             Information = reader.ReadCollection(GetCollectionLengthType(), 
                 () => GenericInformation.Deserialize(reader, Version))
                     .ToImmutableSortedSet();
