@@ -18,13 +18,13 @@ namespace Imp.CitpSharp
         /// <summary>
         ///     Hashset of supported image formats for CITP peers making streaming requests from this server device
         /// </summary>
-        ImmutableHashSet<MsexImageFormat> SupportedStreamFormats { get; }
+        IImmutableSet<MsexImageFormat> SupportedStreamFormats { get; }
 
         /// <summary>
         ///     Dictionary containing information on available streaming video sources, where the key is the unique video source
         ///     ID.
         /// </summary>
-        ImmutableDictionary<int, VideoSourceInformation> VideoSourceInformation { get; }
+        IImmutableDictionary<int, VideoSourceInformation> VideoSourceInformation { get; }
 
         /// <summary>
         ///     Requests a frame from a streaming video source
