@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using Imp.CitpSharp.Networking;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Pinf;
@@ -28,7 +25,7 @@ namespace Imp.CitpSharp
 
         private bool _isDisposed;
 
-        protected CitpService(ICitpLogService logger, ICitpDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
+        protected CitpService(ICitpLogService logger, ICitpDevice device, CitpServiceFlags flags, IPAddress localIp = null)
         {
             Logger = logger;
             _device = device;
@@ -37,7 +34,7 @@ namespace Imp.CitpSharp
 
             _isUseLegacyMulticastIp = flags.HasFlag(CitpServiceFlags.UseLegacyMulticastIp);
 
-            UdpService = new UdpService(logger, _isUseLegacyMulticastIp, networkInterface);
+            UdpService = new UdpService(logger, _isUseLegacyMulticastIp, localIp);
 			UdpService.PacketReceived += (s, e) => onUdpPacketReceived(e.Packet, e.Ip);
 
             _peerLocationTimer = new RegularTimer(PeerLocationPacketInterval);
@@ -53,14 +50,6 @@ namespace Imp.CitpSharp
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        public static IEnumerable<NetworkInterface> GetNetworkInterfaces(bool isGetUpOnly = true)
-        {
-            return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.NetworkInterfaceType == NetworkInterfaceType.Ethernet
-                            && (n.OperationalStatus == OperationalStatus.Up || !isGetUpOnly)
-                            && !n.IsReceiveOnly && n.SupportsMulticast && n.Supports(NetworkInterfaceComponent.IPv4));
         }
 
         protected virtual void Dispose(bool isDisposing)

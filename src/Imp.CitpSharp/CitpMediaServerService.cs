@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Net.NetworkInformation;
+using System.Net;
 using Imp.CitpSharp.Networking;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Msex;
@@ -17,8 +17,8 @@ namespace Imp.CitpSharp
 	{
 		private readonly ICitpMediaServerDevice _device;
 
-		public CitpMediaServerService(ICitpLogService logger, ICitpMediaServerDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
-			: base(logger, device, flags, networkInterface)
+		public CitpMediaServerService(ICitpLogService logger, ICitpMediaServerDevice device, CitpServiceFlags flags, IPAddress localIp = null)
+			: base(logger, device, flags, localIp)
 		{
 			_device = device;
 		}

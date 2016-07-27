@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using Imp.CitpSharp.Networking;
 using Imp.CitpSharp.Packets;
 using Imp.CitpSharp.Packets.Msex;
@@ -27,23 +24,12 @@ namespace Imp.CitpSharp
 
 		private bool _isDisposed;
 
-		protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
-			: base(logger, device, flags, networkInterface)
+		protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, CitpServiceFlags flags, IPAddress localIp = null)
+			: base(logger, device, flags, localIp)
 		{
 			_device = device;
 
 			_streamManager = new StreamManager(logger, device);
-
-			var localIp = IPAddress.Any;
-			if (networkInterface != null)
-			{
-				var ip = networkInterface.GetIPProperties().UnicastAddresses.FirstOrDefault();
-
-				if (ip == null)
-					throw new InvalidOperationException("Network interface does not have a valid IPv4 unicast address");
-
-				localIp = ip.Address;
-			}
 
 			_tcpServer = new TcpServer(logger, new IPEndPoint(localIp, 0));
 			_tcpServer.ConnectionOpened += OnTcpConnectionOpened;

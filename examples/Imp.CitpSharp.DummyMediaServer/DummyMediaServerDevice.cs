@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using JetBrains.Annotations;
 
 namespace Imp.CitpSharp.DummyVisualizer
@@ -73,7 +72,7 @@ namespace Imp.CitpSharp.DummyVisualizer
 			return new CitpImage(request, buffer, request.FrameWidth, request.FrameHeight);
 		}
 
-		public ImmutableHashSet<MsexImageFormat> SupportedStreamFormats =>
+		public IImmutableSet<MsexImageFormat> SupportedStreamFormats =>
 			new[]
 			{
 				MsexImageFormat.Rgb8,
@@ -83,7 +82,7 @@ namespace Imp.CitpSharp.DummyVisualizer
 				MsexImageFormat.FragmentedPng
 			}.ToImmutableHashSet();
 
-		public ImmutableDictionary<int, VideoSourceInformation> VideoSourceInformation =>
+		public IImmutableDictionary<int, VideoSourceInformation> VideoSourceInformation =>
 			new Dictionary<int, VideoSourceInformation>
 			{
 				{1, new VideoSourceInformation(1, "Red", MsexVideoSourcesFlags.None, 1920, 1080)}

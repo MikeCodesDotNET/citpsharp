@@ -1,4 +1,4 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.Net;
 
 namespace Imp.CitpSharp
 {
@@ -9,8 +9,8 @@ namespace Imp.CitpSharp
     {
         private readonly ICitpVisualizerDevice _device;
 
-        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags, NetworkInterface networkInterface = null)
-            : base(logger, device, flags, networkInterface)
+        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags, IPAddress localIp = null)
+            : base(logger, device, flags, localIp)
         {
             _device = device;
         }

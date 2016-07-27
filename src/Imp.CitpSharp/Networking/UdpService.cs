@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,17 +19,11 @@ namespace Imp.CitpSharp.Networking
 	    private readonly UdpClient _client;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-	    public UdpService(ICitpLogService logger, bool isUseLegacyMulticastIp, NetworkInterface networkInterface = null)
+	    public UdpService(ICitpLogService logger, bool isUseLegacyMulticastIp, IPAddress localIp = null)
 	    {
 		    _logger = logger;
 
 			_logger.LogInfo("Starting UDP service...");
-
-			var localIp = IPAddress.Any;
-
-	        if (networkInterface != null)
-	            localIp = networkInterface.GetIPProperties().UnicastAddresses.First().Address;
-
 
             MulticastIp = isUseLegacyMulticastIp ? CitpMulticastLegacyIp : CitpMulticastIp;
 
@@ -42,7 +34,7 @@ namespace Imp.CitpSharp.Networking
 	        };
 
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _client.Client.Bind(new IPEndPoint(localIp, CitpUdpPort));
+            _client.Client.Bind(new IPEndPoint(localIp ?? IPAddress.Any, CitpUdpPort));
             _client.JoinMulticastGroup(MulticastIp);
 
             listen(_cancellationTokenSource.Token);
@@ -60,7 +52,10 @@ namespace Imp.CitpSharp.Networking
 
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
+
+#if !NET45
 			_client.Dispose();
+#endif
 
 		    _isDisposed = true;
 
