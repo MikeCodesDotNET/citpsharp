@@ -4,22 +4,50 @@ using JetBrains.Annotations;
 namespace Imp.CitpSharp
 {
 	/// <summary>
-	///     Represents a unique position in an MSEX element library.
+	///     Unique identifier for a library of MSEX elements
 	/// </summary>
 	[PublicAPI]
 	public struct MsexLibraryId : IEquatable<MsexLibraryId>, IComparable<MsexLibraryId>
 	{
+		/// <summary>
+		///		The MSEX root library
+		/// </summary>
 		public static MsexLibraryId Root { get; } = new MsexLibraryId(0);
 
+		/// <summary>
+		///		Creates an <see cref="MsexLibraryId"/> from an MSEX V1.0 library number (for compatibility)
+		/// </summary>
+		/// <param name="libraryNumber"></param>
+		/// <returns><see cref="MsexLibraryId"/> with <see cref="Level"/> of 1 and <see cref="SubLevel1"/> of <see cref="LibraryNumber"/></returns>
 		public static MsexLibraryId FromMsexV1LibraryNumber(int libraryNumber) => new MsexLibraryId(1, libraryNumber);
+
+		/// <summary>
+		///		Creates an MsexLibraryId from an MSEX V1.0 library number (for compatibility)
+		/// </summary>
+		/// <param name="libraryNumber"></param>
+		/// <returns><see cref="MsexLibraryId"/> with <see cref="Level"/> of 1 and <see cref="SubLevel1"/> of <see cref="LibraryNumber"/></returns>
 		public static MsexLibraryId FromMsexV1LibraryNumber(byte libraryNumber) => new MsexLibraryId((byte)1, libraryNumber);
 
+		/// <summary>
+		///		Creates an MSEX library ID
+		/// </summary>
+		/// <param name="level"></param>
+		/// <param name="subLevel1"></param>
+		/// <param name="subLevel2"></param>
+		/// <param name="subLevel3"></param>
 		public MsexLibraryId(int level, int subLevel1 = 0, int subLevel2 = 0, int subLevel3 = 0)
 			: this((byte)level, (byte)subLevel1, (byte)subLevel2, (byte)subLevel3)
 		{
 			
 		}
 
+		/// <summary>
+		///		Creates an MSEX library ID
+		/// </summary>
+		/// <param name="level"></param>
+		/// <param name="subLevel1"></param>
+		/// <param name="subLevel2"></param>
+		/// <param name="subLevel3"></param>
 		public MsexLibraryId(byte level, byte subLevel1 = 0, byte subLevel2 = 0, byte subLevel3 = 0)
 			: this()
 		{
@@ -52,11 +80,32 @@ namespace Imp.CitpSharp
 			
 		}
 
+		/// <summary>
+		///		Level of this library ID
+		/// </summary>
 		public byte Level { get; }
+
+		/// <summary>
+		///		Sub-level 1 index of this library ID
+		/// </summary>
+		/// <remarks>Only valid if <see cref="Level"/> > 1</remarks>
 		public byte SubLevel1 { get; }
+
+		/// <summary>
+		///		Sub-level 2 index of this library ID
+		/// </summary>
+		/// <remarks>Only valid if <see cref="Level"/> > 2</remarks>
 		public byte SubLevel2 { get; }
+
+		/// <summary>
+		///		Sub-level 3 index of this library ID
+		/// </summary>
+		/// <remarks>Only valid if <see cref="Level"/> == 3</remarks>
 		public byte SubLevel3 { get; }
 
+		/// <summary>
+		///		Sub-level of this library at it's level
+		/// </summary>
 		public byte LibraryNumber
 		{
 			get
@@ -77,6 +126,11 @@ namespace Imp.CitpSharp
 			}
 		}
 
+		/// <summary>
+		/// 	Library number of this library ID for compatibility with MSEX V1.0
+		/// </summary>
+		/// <returns>Will throw an exception if Level != 1</returns>
+		/// <exception cref="InvalidOperationException" accessor="get">This library ID cannot be represented as an MSEX V1.0</exception>
 		public byte MsexV1LibraryNumber
 		{
 			get
@@ -88,10 +142,19 @@ namespace Imp.CitpSharp
 			}
 		}
 
+		/// <summary>
+		///		Returns true if library ID is equal to <see cref="Root"/>
+		/// </summary>
 		public bool IsRoot => Level == 0;
 
+		/// <summary>
+		///		Returns true if library ID can be represented as an MSEX V1.0 library number
+		/// </summary>
 		public bool IsMsexV1Compatible => Level == 1;
 
+		/// <summary>
+		///		Returns true if library is not at the maximum <see cref="Level"/>
+		/// </summary>
 		public bool CanHaveChildren => Level != 3;
 
 		public MsexLibraryId SetLevel(byte value) => new MsexLibraryId(this, level: value);
@@ -141,10 +204,10 @@ namespace Imp.CitpSharp
 
 		public bool IsChildOf(MsexLibraryId other)
 		{
-			return other.Level == Level + 1 &&
-				(other.Level == 1
-				|| (other.Level == 2 && SubLevel1 == other.SubLevel1)
-				|| (other.Level == 3 && SubLevel1 == other.SubLevel1 && SubLevel2 == other.SubLevel2));
+			return other.Level == Level - 1 &&
+				(other.Level == 0
+				|| (other.Level == 1 && other.SubLevel1 == SubLevel1)
+				|| (other.Level == 2 && other.SubLevel1 == SubLevel1 && other.SubLevel2 == SubLevel2));
 		}
 
 		public bool IsParentOf(MsexLibraryId other)
@@ -154,10 +217,10 @@ namespace Imp.CitpSharp
 		 
 		public bool IsDescendentOf(MsexLibraryId other)
 		{
-			return other.Level <= Level &&
-				(other.Level == 1 
-				||(other.Level == 2 && SubLevel1 == other.SubLevel1)
-				|| (other.Level == 3 && SubLevel1 == other.SubLevel1 && SubLevel2 == other.SubLevel2));
+			return other.Level < Level &&
+				(other.Level == 0 
+				||(other.Level == 1 && SubLevel1 == other.SubLevel1)
+				|| (other.Level == 2 && SubLevel2 == other.SubLevel2));
 		}
 
 		public bool IsAncestorOf(MsexLibraryId other)

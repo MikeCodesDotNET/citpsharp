@@ -13,7 +13,8 @@ namespace Imp.CitpSharp
 		DisableElementInformation = 1 << 2,
 		DisableLibraryThumbnails = 1 << 3,
 		DisableElementThumbnails = 1 << 4,
-		RunStreamThread = 1 << 5,
-		UseLegacyMulticastIp = 1 << 6
+		DisableLayerStatus = 1 << 5,
+		RunStreamThread = 1 << 6,
+		UseLegacyMulticastIp = 1 << 7
     }
 }

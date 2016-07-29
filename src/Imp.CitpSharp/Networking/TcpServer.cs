@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +18,11 @@ namespace Imp.CitpSharp.Networking
         private readonly ICitpLogService _logger;
         private readonly TcpListener _tcpListener;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+
+		private ImmutableHashSet<TcpServerConnection> _clients = ImmutableHashSet<TcpServerConnection>.Empty;
+
+	    public static bool IsTcpPortAvailable(int port)
+			=> IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().All(e => e.Port != port);
 
         public TcpServer(ICitpLogService logger, IPEndPoint localEndPoint)
         {
@@ -43,6 +52,8 @@ namespace Imp.CitpSharp.Networking
 
 	    public int ListenPort { get; }
 
+	    public IEnumerable<TcpServerConnection> ConnectedClients => _clients;
+
         private async void listen(CancellationToken ct)
         {
             try
@@ -54,8 +65,13 @@ namespace Imp.CitpSharp.Networking
                         var client = await Task.Run(() => _tcpListener.AcceptTcpClientAsync(), ct).ConfigureAwait(false);
 
                         var clientWrapper = new TcpServerConnection(_logger, client);
+	                    _clients = _clients.Add(clientWrapper);
+
                         clientWrapper.ConnectionOpened += (s, e) => ConnectionOpened?.Invoke(s, e);
                         clientWrapper.ConnectionClosed += (s, e) => ConnectionClosed?.Invoke(s, e);
+						clientWrapper.ConnectionClosed += onClientWrapperClosed;
+                        ;
+
                         clientWrapper.PacketReceived += (s, e) => PacketReceived?.Invoke(s, e);
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -65,7 +81,8 @@ namespace Imp.CitpSharp.Networking
                     }
                     catch (SocketException ex)
                     {
-                        
+                        _logger.LogError("Socket exception in TCP server");
+						_logger.LogException(ex);
                     }
                 }
             }
@@ -74,7 +91,12 @@ namespace Imp.CitpSharp.Networking
                 _tcpListener.Stop();
             }
         }
-    }
+
+		private void onClientWrapperClosed(object sender, TcpServerConnection e)
+		{
+			_clients = _clients.Remove(e);
+		}
+	}
 
 
 

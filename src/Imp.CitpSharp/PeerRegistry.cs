@@ -76,7 +76,7 @@ namespace Imp.CitpSharp
 	{
 		static readonly TimeSpan PeerTimeout = TimeSpan.FromMilliseconds(10000);
 
-		private readonly Dictionary<PeerInfo, DateTime> _peers = new Dictionary<PeerInfo, DateTime>();
+		private ImmutableDictionary<PeerInfo, DateTime> _peers = ImmutableDictionary<PeerInfo, DateTime>.Empty;
 
 		public ImmutableHashSet<PeerInfo> Peers => _peers.Keys.ToImmutableHashSet();
 
@@ -84,10 +84,9 @@ namespace Imp.CitpSharp
 		{
 			var peer = new PeerInfo(packet.PeerType, packet.Name, packet.State, packet.ListeningTcpPort, ip);
 
-			if (_peers.ContainsKey(peer))
-				_peers[peer] = DateTime.Now;
-			else
-				_peers.Add(peer, DateTime.Now);
+			_peers = _peers.ContainsKey(peer) 
+				? _peers.SetItem(peer, DateTime.Now) 
+				: _peers.Add(peer, DateTime.Now);
 
 			return peer;
 		}
@@ -96,10 +95,9 @@ namespace Imp.CitpSharp
 		{
 			var peer = new PeerInfo(packet.Name, ip);
 
-			if (_peers.ContainsKey(peer))
-				_peers[peer] = DateTime.Now;
-			else
-				_peers.Add(peer, DateTime.Now);
+			_peers = _peers.ContainsKey(peer) 
+				? _peers.SetItem(peer, DateTime.Now) 
+				: _peers.Add(peer, DateTime.Now);
 
 			return peer;
 		}
@@ -108,10 +106,10 @@ namespace Imp.CitpSharp
 		{
 			var now = DateTime.Now;
 
-			foreach (var pair in _peers.ToList())
+			foreach (var pair in _peers)
 			{
 				if (now - pair.Value > PeerTimeout)
-					_peers.Remove(pair.Key);
+					_peers = _peers.Remove(pair.Key);
 			}
 		}
 

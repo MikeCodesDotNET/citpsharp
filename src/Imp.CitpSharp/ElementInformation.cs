@@ -5,6 +5,9 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	/// <summary>
+	///		Abstract class implementing properties shared by all element types
+	/// </summary>
 	[PublicAPI]
 	public abstract class ElementInformation : IComparable<ElementInformation>
 	{
@@ -76,6 +79,9 @@ namespace Imp.CitpSharp
 
 
 
+	/// <summary>
+	///		Information on a media element in an MSEX <see cref="ElementLibrary"/>
+	/// </summary>
 	[PublicAPI]
 	public sealed class MediaInformation : ElementInformation, IEquatable<MediaInformation>
 	{
@@ -172,7 +178,9 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	/// <summary>
+	///		Information on an effect element in an MSEX <see cref="ElementLibrary"/>
+	/// </summary>
 	[PublicAPI]
 	public sealed class EffectInformation : ElementInformation, IEquatable<EffectInformation>
 	{
@@ -246,7 +254,9 @@ namespace Imp.CitpSharp
 	}
 
 
-
+	/// <summary>
+	///		Information on a generic element in an MSEX <see cref="ElementLibrary"/>
+	/// </summary>
 	[PublicAPI]
 	public sealed class GenericInformation : ElementInformation, IEquatable<GenericInformation>
 	{

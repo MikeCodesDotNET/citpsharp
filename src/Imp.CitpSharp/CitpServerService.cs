@@ -24,14 +24,23 @@ namespace Imp.CitpSharp
 
 		private bool _isDisposed;
 
-		protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, CitpServiceFlags flags, IPAddress localIp = null)
+		protected CitpServerService(ICitpLogService logger, ICitpServerDevice device, CitpServiceFlags flags, int preferredTcpListenPort = 0, IPAddress localIp = null)
 			: base(logger, device, flags, localIp)
 		{
 			_device = device;
 
 			_streamManager = new StreamManager(logger, device);
 
-			_tcpServer = new TcpServer(logger, new IPEndPoint(localIp, 0));
+			if (preferredTcpListenPort < ushort.MinValue || preferredTcpListenPort > ushort.MaxValue)
+				throw new ArgumentOutOfRangeException(nameof(preferredTcpListenPort), $"Out of valid range {ushort.MinValue} - {ushort.MaxValue}");
+
+			if (!TcpServer.IsTcpPortAvailable(preferredTcpListenPort))
+			{
+				logger.LogWarning($"Preferred TCP listen port ({preferredTcpListenPort}) is unavailable, picking new port");
+				preferredTcpListenPort = 0;
+			}
+
+			_tcpServer = new TcpServer(logger, new IPEndPoint(localIp ?? IPAddress.Any, preferredTcpListenPort));
 			_tcpServer.ConnectionOpened += OnTcpConnectionOpened;
 			_tcpServer.ConnectionClosed += OnTcpConnectionClosed;
 			_tcpServer.PacketReceived += OnTcpPacketReceived;
@@ -43,8 +52,9 @@ namespace Imp.CitpSharp
 				_streamTimer.Start();
 		}
 
-
 		public int TcpListenPort => _tcpServer.ListenPort;
+
+		internal TcpServer TcpServer => _tcpServer;
 
 		public void ProcessStreamFrameRequests(int? sourceId = null)
 		{

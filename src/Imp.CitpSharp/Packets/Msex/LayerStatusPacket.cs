@@ -17,6 +17,11 @@ namespace Imp.CitpSharp.Packets.Msex
             LayerStatuses = layerStatuses.ToImmutableList();
         }
 
+	    public LayerStatusPacket SetVersion(MsexVersion version)
+	    {
+		    return new LayerStatusPacket(version, LayerStatuses, RequestResponseIndex);
+	    }
+
         public ImmutableList<LayerStatus> LayerStatuses { get; private set; }
 
         protected override void SerializeToStream(CitpBinaryWriter writer)

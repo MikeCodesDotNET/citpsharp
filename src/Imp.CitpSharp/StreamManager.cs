@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Imp.CitpSharp.Packets.Msex;
@@ -13,8 +14,8 @@ namespace Imp.CitpSharp
 
 		private uint _frameIndex;
 
-		private readonly Dictionary<StreamRequest, DateTime> _requests = new Dictionary<StreamRequest, DateTime>();
-		private readonly Dictionary<CitpImageRequest, StreamInfo> _resolvedRequests = new Dictionary<CitpImageRequest, StreamInfo>();
+		private ImmutableDictionary<StreamRequest, DateTime> _requests = ImmutableDictionary<StreamRequest, DateTime>.Empty;
+		private ImmutableDictionary<CitpImageRequest, StreamInfo> _resolvedRequests = ImmutableDictionary<CitpImageRequest, StreamInfo>.Empty;
 
 		public StreamSource(ICitpLogService logger, ICitpServerDevice device, ushort sourceId)
 		{
@@ -37,7 +38,7 @@ namespace Imp.CitpSharp
 			Debug.Assert(packet.SourceId == SourceId, "Patch source ID does not match this source");
 
 			var request = new StreamRequest(peer, packet.Version, packet.FrameFormat, packet.FrameWidth, packet.FrameHeight, packet.Fps);
-			_requests[request] = DateTime.Now + TimeSpan.FromSeconds(packet.Timeout);
+			_requests = _requests.SetItem(request, DateTime.Now + TimeSpan.FromSeconds(packet.Timeout));
 
 			computeResolvedRequests();
 		}
@@ -46,14 +47,14 @@ namespace Imp.CitpSharp
 		{
 			bool isRequestsChanged = false;
 
-			foreach (var pair in _requests.ToList())
+			foreach (var pair in _requests)
 			{
 				if (pair.Value >= timeNow)
 					continue;
 
 				_logger.LogInfo($"Stream frame requestse from {pair.Key.Peer} for source {SourceId} timed out");
 
-				_requests.Remove(pair.Key);
+				_requests = _requests.Remove(pair.Key);
 				isRequestsChanged = true;
 			}
 
@@ -171,12 +172,12 @@ namespace Imp.CitpSharp
 				}
 			}
 
-			foreach (var pair in _resolvedRequests.ToList())
+			foreach (var pair in _resolvedRequests)
 			{
 				if (updatedRequests.ContainsKey(pair.Key))
 					continue;
 
-				_resolvedRequests.Remove(pair.Key);
+				_resolvedRequests = _resolvedRequests.Remove(pair.Key);
 				RequestRemoved?.Invoke(this, pair.Key);
 			}
 
@@ -184,11 +185,11 @@ namespace Imp.CitpSharp
 			{
 				if (_resolvedRequests.ContainsKey(pair.Key))
 				{
-					_resolvedRequests[pair.Key] = pair.Value;
+					_resolvedRequests = _resolvedRequests.SetItem(pair.Key, pair.Value);
 				}
 				else
 				{
-					_resolvedRequests.Add(pair.Key, pair.Value);
+					_resolvedRequests = _resolvedRequests.Add(pair.Key, pair.Value);
 					RequestAdded?.Invoke(this, pair.Key);
 				}
 			}
@@ -216,7 +217,7 @@ namespace Imp.CitpSharp
 	    private readonly ICitpLogService _logger;
 	    private readonly ICitpServerDevice _device;
 
-		private readonly Dictionary<ushort, StreamSource> _streams = new Dictionary<ushort, StreamSource>();
+		private ImmutableDictionary<ushort, StreamSource> _streams = ImmutableDictionary<ushort, StreamSource>.Empty;
 
 	    public StreamManager(ICitpLogService logger, ICitpServerDevice device)
 	    {
@@ -245,7 +246,7 @@ namespace Imp.CitpSharp
 			    source = new StreamSource(_logger, _device, info.SourceIdentifier);
 			    source.RequestAdded += (s, e) => RequestAdded?.Invoke(s, e);
 			    source.RequestRemoved += (s, e) => RequestRemoved?.Invoke(s, e);
-				_streams.Add(info.SourceIdentifier, source);
+				_streams = _streams.Add(info.SourceIdentifier, source);
 		    }
 		    
 			source.AddRequest(peer, packet);

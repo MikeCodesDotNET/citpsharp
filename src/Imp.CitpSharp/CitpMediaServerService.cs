@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -15,12 +16,23 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public class CitpMediaServerService : CitpServerService
 	{
+		public static readonly TimeSpan LayerStatusTimerInterval = TimeSpan.FromMilliseconds(1000d / 4d);
+
 		private readonly ICitpMediaServerDevice _device;
 
-		public CitpMediaServerService(ICitpLogService logger, ICitpMediaServerDevice device, CitpServiceFlags flags, IPAddress localIp = null)
-			: base(logger, device, flags, localIp)
+		private readonly RegularTimer _layerStatusTimer;
+
+		public CitpMediaServerService(ICitpLogService logger, ICitpMediaServerDevice device, CitpServiceFlags flags, 
+			int preferredTcpListenPort = 0, IPAddress localIp = null)
+			: base(logger, device, flags, preferredTcpListenPort, localIp)
 		{
 			_device = device;
+
+			_layerStatusTimer = new RegularTimer(LayerStatusTimerInterval);
+			_layerStatusTimer.Elapsed += (s, e) => sendLayerStatusPacket();
+
+			if (!flags.HasFlag(CitpServiceFlags.DisableLayerStatus))
+				_layerStatusTimer.Start();
 		}
 
 		public override CitpPeerType DeviceType => CitpPeerType.MediaServer;
@@ -90,7 +102,7 @@ namespace Imp.CitpSharp
 				IEnumerable<byte> libraryNumbers = packet.RequestedLibraryNumbers;
 
 				if (packet.ShouldRequestAllLibraries)
-					libraryNumbers = Enumerable.Range(0, 255).Select(i => (byte)i);
+					libraryNumbers = Enumerable.Range(0, 256).Select(i => (byte)i);
 				
 				var idsToSelect = libraryNumbers.Select(i => parentLibraryId.SetLevel(parentLibraryId.Level + 1).SetLibraryNumber(i));
 				
@@ -270,7 +282,28 @@ namespace Imp.CitpSharp
 
 		}
 
+		private void sendLayerStatusPacket()
+		{
+			if (!TcpServer.ConnectedClients.Any())
+				return;
 
+			var packet = new LayerStatusPacket(MsexVersion.Version1_2,
+				_device.Layers.Select((l, i) =>
+					new LayerStatusPacket.LayerStatus((byte)i, (byte)l.PhysicalOutput,
+						l.MediaLibraryType, l.MediaLibraryId, (byte)l.MediaIndex,
+						l.MediaName, l.MediaFrame, l.MediaNumFrames,
+						(byte)l.MediaFps, l.LayerStatusFlags)));
+
+			foreach (var client in TcpServer.ConnectedClients)
+			{
+				if (client.SupportedMsexVersions.Contains(MsexVersion.Version1_2))
+					client.SendPacket(packet);
+				else if (client.SupportedMsexVersions.Contains(MsexVersion.Version1_1))
+					client.SendPacket(packet.SetVersion(MsexVersion.Version1_1));
+				else
+					client.SendPacket(packet.SetVersion(MsexVersion.Version1_0));
+			}
+		}
 
 		private IReadOnlyDictionary<MsexLibraryId, ElementLibrary> filterLibraries(MsexLibraryType libraryType,
 			MsexLibraryId? libraryParentId)

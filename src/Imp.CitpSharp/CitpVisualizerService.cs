@@ -9,8 +9,8 @@ namespace Imp.CitpSharp
     {
         private readonly ICitpVisualizerDevice _device;
 
-        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags, IPAddress localIp = null)
-            : base(logger, device, flags, localIp)
+        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags, int preferredTcpListenPort, IPAddress localIp = null)
+            : base(logger, device, flags, preferredTcpListenPort, localIp)
         {
             _device = device;
         }

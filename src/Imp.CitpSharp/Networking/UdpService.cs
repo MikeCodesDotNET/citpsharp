@@ -71,11 +71,20 @@ namespace Imp.CitpSharp.Networking
         public void SendPacket(CitpPacket packet)
         {
             var buffer = packet.ToByteArray();
-	        var sendTask = _client.SendAsync(buffer, buffer.Length, new IPEndPoint(MulticastIp, CitpUdpPort));
-			sendTask.Wait();
 
-	        if (sendTask.Result != buffer.Length)
-		        _logger.LogWarning($"Failed to send UDP packet, {sendTask.Result}/{buffer.Length} bytes sent");
+	        try
+	        {
+				var sendTask = _client.SendAsync(buffer, buffer.Length, new IPEndPoint(MulticastIp, CitpUdpPort));
+				sendTask.Wait();
+
+				if (sendTask.Result != buffer.Length)
+					_logger.LogWarning($"Failed to send UDP packet, {sendTask.Result}/{buffer.Length} bytes sent");
+			}
+	        catch (Exception ex)
+	        {
+				_logger.LogError("Exception whilst sending UDP CITP packet");
+				_logger.LogException(ex);
+			}
         }
 
         private async void listen(CancellationToken ct)

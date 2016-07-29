@@ -3,6 +3,9 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	/// <summary>
+	///		Immutable class representing information on a single video source available for streaming via CITP
+	/// </summary>
 	[PublicAPI]
 	public sealed class VideoSourceInformation : IEquatable<VideoSourceInformation>,
 		IComparable<VideoSourceInformation>
@@ -21,6 +24,16 @@ namespace Imp.CitpSharp
 				layerNumber);
 		}
 
+		/// <summary>
+		///		Constructs video source with all required information
+		/// </summary>
+		/// <param name="sourceIdentifier"></param>
+		/// <param name="sourceName"></param>
+		/// <param name="flags"></param>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <param name="physicalOutput"></param>
+		/// <param name="layerNumber"></param>
 		public VideoSourceInformation(ushort sourceIdentifier, string sourceName, MsexVideoSourcesFlags flags,
 			ushort width, ushort height, byte? physicalOutput = null, byte? layerNumber = null)
 		{
@@ -33,17 +46,46 @@ namespace Imp.CitpSharp
 			Height = height;
 		}
 
+		/// <summary>
+		///		Unique identifier for this video source
+		/// </summary>
 		public ushort SourceIdentifier { get; }
+
+		/// <summary>
+		///		User-facing name of this video source
+		/// </summary>
 		public string SourceName { get; }
 
+		/// <summary>
+		///		Optional physical output index.
+		/// </summary>
 		public byte? PhysicalOutput { get; }
+
+		/// <summary>
+		///		Optional layer index
+		/// </summary>
 		public byte? LayerNumber { get; }
 
+		/// <summary>
+		///		Additional information on this source
+		/// </summary>
 		public MsexVideoSourcesFlags Flags { get; }
 
+		/// <summary>
+		///		Width of video source
+		/// </summary>
 		public ushort Width { get; }
+
+		/// <summary>
+		///		Height of video source
+		/// </summary>
 		public ushort Height { get; }
 
+		/// <summary>
+		///		CompareTo implementation orders by <see cref="SourceIdentifier"/>
+		/// </summary>
+		/// <param name="other"></param>
+		/// <returns></returns>
 		public int CompareTo([CanBeNull] VideoSourceInformation other)
 		{
 			return ReferenceEquals(other, null) ? 1 : SourceIdentifier.CompareTo(other.SourceIdentifier);
@@ -70,6 +112,11 @@ namespace Imp.CitpSharp
 			writer.Write(Height);
 		}
 
+		/// <summary>
+		///		Compares all properties of this video source with another
+		/// </summary>
+		/// <param name="other"></param>
+		/// <returns></returns>
 		public bool Equals([CanBeNull] VideoSourceInformation other)
 		{
 			if (ReferenceEquals(null, other))
@@ -81,6 +128,11 @@ namespace Imp.CitpSharp
 			       && Width == other.Width && Height == other.Height;
 		}
 
+		/// <summary>
+		///		Compares all properties of this video source with another
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
 		public override bool Equals([CanBeNull] object obj)
 		{
 			if (ReferenceEquals(null, obj))
@@ -90,6 +142,10 @@ namespace Imp.CitpSharp
 			return obj is VideoSourceInformation && Equals((VideoSourceInformation)obj);
 		}
 
+		/// <summary>
+		///		Returns hashcode based on all properties of this video source
+		/// </summary>
+		/// <returns></returns>
 		public override int GetHashCode()
 		{
 			unchecked

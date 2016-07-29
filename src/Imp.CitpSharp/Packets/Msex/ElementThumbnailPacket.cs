@@ -15,7 +15,7 @@ namespace Imp.CitpSharp.Packets.Msex
 	        ElementNumber = elementNumber;
 	        ThumbnailFormat = thumbnailFormat;
 	        ThumbnailWidth = thumbnailWidth;
-	        ThumbnailHeight = ThumbnailHeight;
+	        ThumbnailHeight = thumbnailHeight;
 	        ThumbnailBuffer = thumbnailBuffer;
 	    }
 

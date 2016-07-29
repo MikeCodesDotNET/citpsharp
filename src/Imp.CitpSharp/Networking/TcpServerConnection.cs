@@ -51,12 +51,12 @@ namespace Imp.CitpSharp.Networking
                 {
                     numBytesReceived = stream.Read(receivedbuffer, 0, bufferLength);
                 }
-                catch (IOException ex)
+                catch (IOException)
                 {
 					_logger.LogInfo($"{_client}: Connection unexpectedly closed");
 					break;
                 }
-                catch (ObjectDisposedException ex)
+                catch (ObjectDisposedException)
                 {
 					_logger.LogInfo($"{_client}: Connection unexpectedly closed");
 					break;
@@ -120,7 +120,7 @@ namespace Imp.CitpSharp.Networking
             }
             catch (Exception ex)
             {
-				_logger.LogError("Exception whilst sending TCP CITP packet");
+				_logger.LogError($"Exception whilst sending TCP CITP packet to client {this}");
 				_logger.LogException(ex);
             }
         }
