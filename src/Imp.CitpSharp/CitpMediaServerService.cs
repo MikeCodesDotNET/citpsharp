@@ -16,13 +16,21 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public class CitpMediaServerService : CitpServerService
 	{
-		public static readonly TimeSpan LayerStatusTimerInterval = TimeSpan.FromMilliseconds(1000d / 4d);
+		private static readonly TimeSpan LayerStatusTimerInterval = TimeSpan.FromMilliseconds(1000d / 4d);
 
 		private readonly ICitpMediaServerDevice _device;
 
 		private readonly RegularTimer _layerStatusTimer;
 
-		public CitpMediaServerService(ICitpLogService logger, ICitpMediaServerDevice device, CitpServiceFlags flags, 
+		/// <summary>
+		///		Constructs <see cref="CitpMediaServerService"/>
+		/// </summary>
+		/// <param name="logger">Implementation of <see cref="ICitpLogService"/></param>
+		/// <param name="device">Implementation of <see cref="ICitpMediaServerDevice"/> used to resolve requests from service</param>
+		/// <param name="flags">Optional flags used to configure service behavior</param>
+		/// <param name="preferredTcpListenPort">Service will attempt to start on this port if available, otherwise an available port will be used</param>
+		/// <param name="localIp">Address of network interface to start network services on</param>
+		public CitpMediaServerService(ICitpLogService logger, ICitpMediaServerDevice device, CitpServiceFlags flags = CitpServiceFlags.None, 
 			int preferredTcpListenPort = 0, IPAddress localIp = null)
 			: base(logger, device, flags, preferredTcpListenPort, localIp)
 		{
@@ -35,6 +43,9 @@ namespace Imp.CitpSharp
 				_layerStatusTimer.Start();
 		}
 
+		/// <summary>
+		///		Type of CITP device
+		/// </summary>
 		public override CitpPeerType DeviceType => CitpPeerType.MediaServer;
 
 		internal override void OnClientInformationPacketReceived(ClientInformationPacket packet, TcpServerConnection client)
@@ -216,7 +227,7 @@ namespace Imp.CitpSharp
 
 				var responsePacket = new ElementLibraryThumbnailPacket(packet.Version, packet.LibraryType, id, 
 					image.Request.Format, (ushort)image.ActualWidth, (ushort)image.ActualHeight,
-					image.Data, packet.RequestResponseIndex);
+					image.ImageBuffer, packet.RequestResponseIndex);
 
 				client.SendPacket(responsePacket);
 			}
@@ -275,7 +286,7 @@ namespace Imp.CitpSharp
 
 				var responsePacket = new ElementThumbnailPacket(packet.Version, packet.LibraryType, packet.LibraryId, i,
 					image.Request.Format, (ushort)image.ActualWidth, (ushort)image.ActualHeight,
-					image.Data, packet.RequestResponseIndex);
+					image.ImageBuffer, packet.RequestResponseIndex);
 
 				client.SendPacket(responsePacket);
 			}

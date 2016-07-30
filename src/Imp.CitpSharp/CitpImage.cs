@@ -12,13 +12,20 @@ namespace Imp.CitpSharp
 		public const int MaximumImageBufferLength = 65433;
 		public const int MaximumFragmentedImageBufferLength = 65421;
 
-		public CitpImage(CitpImageRequest request, [NotNull] byte[] data, int actualWidth, int actualHeight)
+		/// <summary>
+		///		Constructs a <see cref="CitpImage"/> from a request and an image buffer
+		/// </summary>
+		/// <param name="request">Request used to create <see cref="ImageBuffer"/></param>
+		/// <param name="imageBuffer">Byte data of requested image</param>
+		/// <param name="actualWidth">Actual width of the image in <see cref="ImageBuffer"/></param>
+		/// <param name="actualHeight">Actual height of the image in <see cref="ImageBuffer"/></param>
+		public CitpImage(CitpImageRequest request, [NotNull] byte[] imageBuffer, int actualWidth, int actualHeight)
 		{
-			if (data == null)
-				throw new ArgumentNullException(nameof(data));
+			if (imageBuffer == null)
+				throw new ArgumentNullException(nameof(imageBuffer));
 
 			Request = request;
-			Data = data;
+			ImageBuffer = imageBuffer;
 
 			if (actualWidth < 1 || actualWidth > ushort.MaxValue)
 				throw new ArgumentOutOfRangeException(nameof(actualWidth), actualWidth, $"Must be in range 1-{ushort.MaxValue}");
@@ -27,6 +34,9 @@ namespace Imp.CitpSharp
 			if (actualHeight < 1 || actualHeight > ushort.MaxValue)
 				throw new ArgumentOutOfRangeException(nameof(actualHeight), actualHeight, $"Must be in range 1-{ushort.MaxValue}");
 			ActualHeight = actualHeight;
+
+			if (!Request.IsFragmentedFormat && imageBuffer.Length > MaximumImageBufferLength)
+				throw new ArgumentException($"Image too large to send via CITP. Limit is {MaximumImageBufferLength} bytes", nameof(imageBuffer));
 		}
 
 		/// <summary>
@@ -37,15 +47,15 @@ namespace Imp.CitpSharp
 		/// <summary>
 		///     The byte data of the image
 		/// </summary>
-		public byte[] Data { get; }
+		public byte[] ImageBuffer { get; }
 
 		/// <summary>
-		///     The actual width of the image contained in <see cref="Data" />
+		///     The actual width of the image contained in <see cref="ImageBuffer" />
 		/// </summary>
 		public int ActualWidth { get; }
 
 		/// <summary>
-		///     The actual height of the image contained in <see cref="Data" />
+		///     The actual height of the image contained in <see cref="ImageBuffer" />
 		/// </summary>
 		public int ActualHeight { get; }
 	}
@@ -98,6 +108,10 @@ namespace Imp.CitpSharp
 		public bool IsBgrOrder { get; }
 
 
+		/// <summary>
+		///		True if the requested image format is a fragmented format
+		/// </summary>
+		public bool IsFragmentedFormat => Format == MsexImageFormat.FragmentedJpeg || Format == MsexImageFormat.FragmentedPng;
 
 		public bool Equals(CitpImageRequest other)
 		{

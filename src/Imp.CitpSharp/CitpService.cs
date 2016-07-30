@@ -13,28 +13,26 @@ namespace Imp.CitpSharp
     [PublicAPI]
     public abstract class CitpService : IDisposable
     {
-        public static readonly TimeSpan PeerLocationPacketInterval = TimeSpan.FromSeconds(1);
+        private  static readonly TimeSpan PeerLocationPacketInterval = TimeSpan.FromSeconds(1);
+
         private readonly ICitpDevice _device;
-
-        private readonly bool _isUseLegacyMulticastIp;
-
 		private readonly RegularTimer _peerLocationTimer;
-
-        
-        
-
         private bool _isDisposed;
 
-        protected CitpService(ICitpLogService logger, ICitpDevice device, CitpServiceFlags flags, IPAddress localIp = null)
+		/// <summary>
+		///		Constructs base <see cref="CitpServerService"/>
+		/// </summary>
+		/// <param name="logger">Implementation of <see cref="ICitpLogService"/></param>
+		/// <param name="device">Implementation of <see cref="ICitpDevice"/> used to resolve requests from service</param>
+		/// <param name="flags">Optional flags used to configure service behavior</param>
+		/// <param name="localIp">Address of network interface to start network services on</param>
+		protected CitpService(ICitpLogService logger, ICitpDevice device, CitpServiceFlags flags, IPAddress localIp = null)
         {
             Logger = logger;
             _device = device;
-
 	        Flags = flags;
 
-            _isUseLegacyMulticastIp = flags.HasFlag(CitpServiceFlags.UseLegacyMulticastIp);
-
-            UdpService = new UdpService(logger, _isUseLegacyMulticastIp, localIp);
+            UdpService = new UdpService(logger, Flags.HasFlag(CitpServiceFlags.UseLegacyMulticastIp), localIp);
 			UdpService.PacketReceived += (s, e) => onUdpPacketReceived(e.Packet, e.Ip);
 
             _peerLocationTimer = new RegularTimer(PeerLocationPacketInterval);
@@ -42,16 +40,29 @@ namespace Imp.CitpSharp
             _peerLocationTimer.Start();
         }
 
-        public abstract CitpPeerType DeviceType { get; }
+		/// <summary>
+		///		Type of CITP device
+		/// </summary>
+		public abstract CitpPeerType DeviceType { get; }
 
+		/// <summary>
+		///		Flags used to configure CITP service
+		/// </summary>
 		public CitpServiceFlags Flags { get; }
 
+		/// <summary>
+		///		Dispose implementation
+		/// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+		/// <summary>
+		///		Dispose pattern implementation
+		/// </summary>
+		/// <param name="isDisposing"></param>
         protected virtual void Dispose(bool isDisposing)
         {
             if (!_isDisposed)
@@ -72,7 +83,9 @@ namespace Imp.CitpSharp
 	    internal PeerRegistry PeerRegistry { get; } = new PeerRegistry();
 	    internal UdpService UdpService { get; }
 
-
+		/// <summary>
+		///		Sends peer location packet via UDP
+		/// </summary>
         protected virtual void SendPeerLocationPacket()
         {
             UdpService.SendPacket(new PeerLocationPacket(false, 0, DeviceType, _device.PeerName, _device.State));

@@ -78,7 +78,7 @@ namespace Imp.CitpSharp
 
 				if (pair.Key.Format == MsexImageFormat.FragmentedJpeg || pair.Key.Format == MsexImageFormat.FragmentedPng)
 				{
-					var fragments = image.Data.Split(CitpImage.MaximumFragmentedImageBufferLength);
+					var fragments = image.ImageBuffer.Split(CitpImage.MaximumFragmentedImageBufferLength);
 
 					if (fragments.Length > ushort.MaxValue)
 					{
@@ -97,7 +97,7 @@ namespace Imp.CitpSharp
 				}
 				else
 				{
-					if (image.Data.Length > CitpImage.MaximumImageBufferLength)
+					if (image.ImageBuffer.Length > CitpImage.MaximumImageBufferLength)
 					{
 						_logger.LogError($"Provided image buffer for source {SourceId} at resolution {pair.Key.FrameWidth} x {pair.Key.FrameHeight}, "
 						                 + $"format {pair.Key.Format} " + (pair.Key.IsBgrOrder ? "(BGR Mode)" : "") +
@@ -107,7 +107,7 @@ namespace Imp.CitpSharp
 					}
 
                     yield return new StreamFramePacket(pair.Value.Version, _device.Uuid, SourceId, pair.Key.Format,
-                           (ushort)image.ActualWidth, (ushort)image.ActualHeight, image.Data);
+                           (ushort)image.ActualWidth, (ushort)image.ActualHeight, image.ImageBuffer);
                 }
 
 				pair.Value.LastOutput = timeNow;

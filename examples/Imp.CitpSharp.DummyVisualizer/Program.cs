@@ -17,7 +17,7 @@ namespace Imp.CitpSharp.DummyVisualizer
 
 	        try
 	        {
-				var service = new CitpVisualizerService(new CitpDebugLogger(CitpLoggerLevel.Debug, true, true), device, 
+				var service = new CitpVisualizerService(new CitpDebugLogger(CitpLoggerLevel.Debug, true, true), device,
 					CitpServiceFlags.UseLegacyMulticastIp);
 
 				Console.WriteLine("Server started on any network adapter");
