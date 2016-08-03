@@ -144,7 +144,7 @@ namespace Imp.CitpSharp
 
 			uint serialNumber = 0;
 			if (version == MsexVersion.Version1_2)
-				reader.ReadUInt32();
+				serialNumber = reader.ReadUInt32();
 
 			byte dmxRangeMin = reader.ReadByte();
 			byte dmxRangeMax = reader.ReadByte();
