@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Net;
 using Imp.CitpSharp.Packets.Pinf;
 using JetBrains.Annotations;

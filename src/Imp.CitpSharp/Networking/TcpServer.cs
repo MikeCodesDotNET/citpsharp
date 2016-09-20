@@ -70,7 +70,6 @@ namespace Imp.CitpSharp.Networking
                         clientWrapper.ConnectionOpened += (s, e) => ConnectionOpened?.Invoke(s, e);
                         clientWrapper.ConnectionClosed += (s, e) => ConnectionClosed?.Invoke(s, e);
 						clientWrapper.ConnectionClosed += onClientWrapperClosed;
-                        ;
 
                         clientWrapper.PacketReceived += (s, e) => PacketReceived?.Invoke(s, e);
 

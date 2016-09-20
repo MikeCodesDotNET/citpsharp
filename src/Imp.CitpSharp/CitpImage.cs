@@ -9,7 +9,13 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public class CitpImage
 	{
+		/// <summary>
+		///		Maximum length of an image which can be sent via CITP
+		/// </summary>
 		public const int MaximumImageBufferLength = 65433;
+		/// <summary>
+		///		Maximum length of an image fragment which can be sent via CITP
+		/// </summary>
 		public const int MaximumFragmentedImageBufferLength = 65421;
 
 		/// <summary>

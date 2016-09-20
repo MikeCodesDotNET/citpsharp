@@ -3,6 +3,9 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
+	/// <summary>
+	///		Class containing information on an MSEX element library
+	/// </summary>
 	[PublicAPI]
 	public sealed class ElementLibraryInformation : IEquatable<ElementLibraryInformation>,
 		IComparable<ElementLibraryInformation>

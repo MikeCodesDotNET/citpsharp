@@ -11,6 +11,15 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public abstract class ElementInformation : IComparable<ElementInformation>
 	{
+		/// <summary>
+		///		Base constructor for <see cref="ElementInformation"/>
+		/// </summary>
+		/// <param name="kind">Kind of this element</param>
+		/// <param name="elementNumber">Unique number (in library) of this element</param>
+		/// <param name="dmxRangeMin">Minimum value of the range which can be used to select this element when controlling from DMX</param>
+		/// <param name="dmxRangeMax">Maximum value of the range which can be used to select this element when controlling from DMX</param>
+		/// <param name="name">Name of this element</param>
+		/// <param name="serialNumber">Unique serial number of this element</param>
 		protected ElementInformation(ElementKind kind, byte elementNumber, byte dmxRangeMin,
 			byte dmxRangeMax, [NotNull] string name, uint serialNumber)
 		{
@@ -25,14 +34,41 @@ namespace Imp.CitpSharp
 			Name = name;
 		}
 
+		/// <summary>
+		///		Kind of this element
+		/// </summary>
 		protected ElementKind Kind { get; }
 
+		/// <summary>
+		///		Unique number (in library) of this element
+		/// </summary>
 		public byte ElementNumber { get; }
+
+		/// <summary>
+		///		Unique serial number of this element
+		/// </summary>
 		public uint SerialNumber { get; }
+
+		/// <summary>
+		///		Minimum value of the range which can be used to select this element when controlling from DMX
+		/// </summary>
 		public byte DmxRangeMin { get; }
+
+		/// <summary>
+		///		Maximum value of the range which can be used to select this element when controlling from DMX
+		/// </summary>
 		public byte DmxRangeMax { get; }
+
+		/// <summary>
+		///		Name of this element
+		/// </summary>
 		public string Name { get; }
 
+		/// <summary>
+		///		Implementation of <see cref="IComparable"/> to order elements based upon <see cref="Kind"/> and <see cref="ElementNumber"/> properties
+		/// </summary>
+		/// <param name="other">Another instance of <see cref="ElementInformation"/></param>
+		/// <returns>Order compared to <see cref="other"/></returns>
 		public int CompareTo([CanBeNull] ElementInformation other)
 		{
 			if (ReferenceEquals(other, null))
@@ -41,6 +77,9 @@ namespace Imp.CitpSharp
 			return Kind == other.Kind ? ElementNumber.CompareTo(other.ElementNumber) : Kind.CompareTo(other.Kind);
 		}
 
+		/// <summary>
+		///		Returns unique hashcode for this element
+		/// </summary>
 		public override int GetHashCode()
 		{
 			unchecked
@@ -55,6 +94,11 @@ namespace Imp.CitpSharp
 			}
 		}
 
+		/// <summary>
+		///		Base implementation of equality comparison by value
+		/// </summary>
+		/// <param name="other">Another instance of <see cref="ElementInformation"/></param>
+		/// <returns>True if equal, else false</returns>
 		protected bool Equals([CanBeNull] ElementInformation other)
 		{
 			if (ReferenceEquals(null, other))
@@ -68,11 +112,22 @@ namespace Imp.CitpSharp
 		internal abstract void Serialize(CitpBinaryWriter writer, MsexVersion version);
 
 
-
+		/// <summary>
+		///		Kind of <see cref="ElementInformation"/>
+		/// </summary>
 		protected enum ElementKind
 		{
+			/// <summary>
+			///		Instance is <see cref="MediaInformation"/>
+			/// </summary>
 			Media,
+			/// <summary>
+			///		Instance is <see cref="EffectInformation"/>
+			/// </summary>
 			Effect,
+			/// <summary>
+			///		Instance is <see cref="GenericInformation"/>
+			/// </summary>
 			Generic
 		}
 	}

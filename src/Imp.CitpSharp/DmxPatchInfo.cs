@@ -10,10 +10,10 @@ namespace Imp.CitpSharp
 	[PublicAPI]
 	public struct DmxPatchInfo : IEquatable<DmxPatchInfo>
 	{
-		public const string ProtocolNameArtNet = "ArtNet";
-		public const string ProtocolNameBsre131 = "BSRE1.31";
-		public const string ProtocolNameEtcNet2 = "ETCNet2";
-		public const string ProtocolNameMaNet = "MANet";
+		private const string ProtocolNameArtNet = "ArtNet";
+		private const string ProtocolNameBsre131 = "BSRE1.31";
+		private const string ProtocolNameEtcNet2 = "ETCNet2";
+		private const string ProtocolNameMaNet = "MANet";
 
 		private static Regex _dmxConnectionStringRegex =
 			new Regex(
