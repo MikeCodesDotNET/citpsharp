@@ -19,19 +19,41 @@ nuget:
 #       build configuration       #
 #---------------------------------#
 
-platform: Any CPU
+version: '1.0.{build}'
 
 configuration: Release
 
-build:
-  project: Imp.CitpSharp.sln
-  publish_nuget: true
-  publish_nuget_symbols: true
+platform: Any CPU
 
+init:
+- ps: $Env:LABEL = "CI" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
+
+before_build:
+- appveyor-retry dotnet restore -v Minimal
+
+build_script:
+- dotnet build "src\Imp.CitpSharp" -c %CONFIGURATION% --no-dependencies --version-suffix %LABEL%
+
+after_build:
+- dotnet pack "src\Imp.CitpSharp" -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
+
+test_script:
+- dotnet test "tests\Imp.CitpSharp.Tests" -c %CONFIGURATION%
+
+artifacts:
+- path: artifacts\**\*.*
 
 #---------------------------------#
 #           build events          #
 #---------------------------------#
-
-before_build:
-  - nuget restore
+  
+deploy:
+  - provider: NuGet
+    release: Imp.CitpSharp-v$(appveyor_build_version)
+    on:
+      branch: master
+      appveyor_repo_tag: true
+    api_key:
+      secure: rWUYkrDdoedwz/r2XGss/gQ4j9+oRVw/4t5j48vDRFN9sM9Tyl0zlUAby5MMm3ME
+    skip_symbols: false
+    artifact: /.*\.nupkg/
