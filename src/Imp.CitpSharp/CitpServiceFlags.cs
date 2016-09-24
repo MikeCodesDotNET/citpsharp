@@ -8,8 +8,8 @@ namespace Imp.CitpSharp
 	/// </summary>
 	[PublicAPI]
 	[Flags]
-    public enum CitpServiceFlags
-    {
+	public enum CitpServiceFlags
+	{
 		/// <summary>
 		///		Null flag
 		/// </summary>
@@ -46,5 +46,5 @@ namespace Imp.CitpSharp
 		///		Uses the CITP legacy multicast IP rather than the standard multicast IP
 		/// </summary>
 		UseLegacyMulticastIp = 1 << 7
-    }
+	}
 }

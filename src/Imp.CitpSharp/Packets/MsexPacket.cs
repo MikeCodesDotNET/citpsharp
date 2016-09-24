@@ -8,11 +8,11 @@ namespace Imp.CitpSharp.Packets
 		public static readonly int CitpMessageTypePosition = 22;
 
 	    protected MsexPacket(MsexMessageType messageType)
-            : base(CitpLayerType.MediaServerExtensionsLayer)
+			: base(CitpLayerType.MediaServerExtensionsLayer)
 	    {
 	        MessageType = messageType;
-            Version = MsexVersion.UnsupportedVersion;
-        }
+			Version = MsexVersion.UnsupportedVersion;
+		}
 
 		protected MsexPacket(MsexMessageType messageType, MsexVersion version, ushort requestResponseIndex = 0)
 			: base(CitpLayerType.MediaServerExtensionsLayer, requestResponseIndex)
@@ -35,7 +35,7 @@ namespace Imp.CitpSharp.Packets
 	    {
 	        switch (Version)
 	        {
-                case MsexVersion.Version1_0:
+				case MsexVersion.Version1_0:
 	            case MsexVersion.Version1_1:
 	                return TypeCode.Byte;
 	            case MsexVersion.Version1_2:

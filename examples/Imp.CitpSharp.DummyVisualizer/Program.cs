@@ -2,10 +2,10 @@
 
 namespace Imp.CitpSharp.DummyVisualizer
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
+	public class Program
+	{
+		public static void Main(string[] args)
+		{
 			Console.WriteLine("--------------------------------------------------------------------------");
 			Console.WriteLine("      CitpSharp - Copyright 2016 David Butler / The Impersonal Stereo     ");
 			Console.WriteLine("--------------------------------------------------------------------------");
@@ -44,6 +44,6 @@ namespace Imp.CitpSharp.DummyVisualizer
 				Console.WriteLine("Press any key to exit...");
 				Console.ReadKey();
 			}
-        }
-    }
+		}
+	}
 }

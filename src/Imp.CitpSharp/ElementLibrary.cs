@@ -8,8 +8,8 @@ namespace Imp.CitpSharp
 	///		A container of MSEX elements with associated library information
 	/// </summary>
 	[PublicAPI]
-    public class ElementLibrary
-    {
+	public class ElementLibrary
+	{
 		/// <summary>
 		///		Constructs an <see cref="ElementLibrary"/>
 		/// </summary>
@@ -37,5 +37,5 @@ namespace Imp.CitpSharp
 		///		Elements in this library
 		/// </summary>
 		public ImmutableDictionary<byte, ElementInformation> Elements { get; }
-    }
+	}
 }

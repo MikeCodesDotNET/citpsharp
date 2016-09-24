@@ -106,9 +106,9 @@ namespace Imp.CitpSharp
 						continue;
 					}
 
-                    yield return new StreamFramePacket(pair.Value.Version, _device.Uuid, SourceId, pair.Key.Format,
-                           (ushort)image.ActualWidth, (ushort)image.ActualHeight, image.ImageBuffer);
-                }
+					yield return new StreamFramePacket(pair.Value.Version, _device.Uuid, SourceId, pair.Key.Format,
+						   (ushort)image.ActualWidth, (ushort)image.ActualHeight, image.ImageBuffer);
+				}
 
 				pair.Value.LastOutput = timeNow;
 			}
@@ -212,8 +212,8 @@ namespace Imp.CitpSharp
 		}
 	}
 
-    internal class StreamManager
-    {
+	internal class StreamManager
+	{
 	    private readonly ICitpLogService _logger;
 	    private readonly ICitpServerDevice _device;
 

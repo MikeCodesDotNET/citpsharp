@@ -22,20 +22,20 @@ namespace Imp.CitpSharp.Packets.Msex
 	        RequestedLibraryIds = requestedLibrariesIds.ToImmutableSortedSet();
 	    }
 
-        public GetElementLibraryThumbnailPacket(MsexVersion version, MsexImageFormat thumbnailFormat, ushort thumbnailWidth,
-            ushort thumbnailHeight, MsexThumbnailFlags thumbnailFlags, MsexLibraryType libraryType, ushort requestResponseIndex = 0)
-            : base(MsexMessageType.GetElementLibraryThumbnailMessage, version, requestResponseIndex)
-        {
-            ThumbnailFormat = thumbnailFormat;
-            ThumbnailWidth = thumbnailWidth;
-            ThumbnailHeight = thumbnailHeight;
-            ThumbnailFlags = thumbnailFlags;
-            LibraryType = libraryType;
-            ShouldRequestAllThumbnails = true;
-            RequestedLibraryIds = ImmutableSortedSet<MsexLibraryId>.Empty;
-        }
+		public GetElementLibraryThumbnailPacket(MsexVersion version, MsexImageFormat thumbnailFormat, ushort thumbnailWidth,
+			ushort thumbnailHeight, MsexThumbnailFlags thumbnailFlags, MsexLibraryType libraryType, ushort requestResponseIndex = 0)
+			: base(MsexMessageType.GetElementLibraryThumbnailMessage, version, requestResponseIndex)
+		{
+			ThumbnailFormat = thumbnailFormat;
+			ThumbnailWidth = thumbnailWidth;
+			ThumbnailHeight = thumbnailHeight;
+			ThumbnailFlags = thumbnailFlags;
+			LibraryType = libraryType;
+			ShouldRequestAllThumbnails = true;
+			RequestedLibraryIds = ImmutableSortedSet<MsexLibraryId>.Empty;
+		}
 
-        public MsexImageFormat ThumbnailFormat { get; private set; }
+		public MsexImageFormat ThumbnailFormat { get; private set; }
 
 		public ushort ThumbnailWidth { get; private set; }
 		public ushort ThumbnailHeight { get; private set; }
@@ -51,33 +51,33 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
-            writer.Write(ThumbnailWidth);
-            writer.Write(ThumbnailHeight);
-            writer.Write((byte)ThumbnailFlags);
-            writer.Write((byte)LibraryType);
-            if (ShouldRequestAllThumbnails)
-                writer.Write((byte)0);
-            else
-                writer.Write(RequestedLibraryIds, GetCollectionLengthType(),
-                   i => writer.Write(i, Version));
-        }
+			writer.Write(ThumbnailFormat.GetCustomAttribute<CitpId>().Id);
+			writer.Write(ThumbnailWidth);
+			writer.Write(ThumbnailHeight);
+			writer.Write((byte)ThumbnailFlags);
+			writer.Write((byte)LibraryType);
+			if (ShouldRequestAllThumbnails)
+				writer.Write((byte)0);
+			else
+				writer.Write(RequestedLibraryIds, GetCollectionLengthType(),
+				   i => writer.Write(i, Version));
+		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-            ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
-            ThumbnailWidth = reader.ReadUInt16();
-            ThumbnailHeight = reader.ReadUInt16();
-            ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
-            LibraryType = (MsexLibraryType)reader.ReadByte();
+			ThumbnailFormat = CitpEnumHelper.GetEnumFromIdString<MsexImageFormat>(reader.ReadIdString());
+			ThumbnailWidth = reader.ReadUInt16();
+			ThumbnailHeight = reader.ReadUInt16();
+			ThumbnailFlags = (MsexThumbnailFlags)reader.ReadByte();
+			LibraryType = (MsexLibraryType)reader.ReadByte();
 
-            RequestedLibraryIds = reader.ReadCollection(GetCollectionLengthType(), 
-                () => reader.ReadLibraryId(Version)).ToImmutableSortedSet();
+			RequestedLibraryIds = reader.ReadCollection(GetCollectionLengthType(), 
+				() => reader.ReadLibraryId(Version)).ToImmutableSortedSet();
 
-            if (RequestedLibraryIds.Count == 0)
-                ShouldRequestAllThumbnails = true;
+			if (RequestedLibraryIds.Count == 0)
+				ShouldRequestAllThumbnails = true;
 		}
 	}
 }

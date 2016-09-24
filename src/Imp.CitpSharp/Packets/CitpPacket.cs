@@ -158,7 +158,7 @@ namespace Imp.CitpSharp.Packets
 				default:
 					throw new NotImplementedException("Unimplemented CITP content type");
 			}
-            
+			
 			using (var reader = new CitpBinaryReader(new MemoryStream(data)))
 				packet.DeserializeFromStream(reader);
 
@@ -261,7 +261,7 @@ namespace Imp.CitpSharp.Packets
 
 		protected virtual void DeserializeFromStream(CitpBinaryReader reader)
 		{
-            reader.ReadBytes(CitpCookie.Length);
+			reader.ReadBytes(CitpCookie.Length);
 
 		    byte versionMajor = reader.ReadByte();
 		    byte versionMinor = reader.ReadByte();
@@ -276,7 +276,7 @@ namespace Imp.CitpSharp.Packets
 		    MessagePart = reader.ReadUInt16();
 
 		    var layerType = CitpEnumHelper.GetEnumFromIdString<CitpLayerType>(reader.ReadIdString());
-            Debug.Assert(layerType == LayerType);
+			Debug.Assert(layerType == LayerType);
 		}
 	}
 }

@@ -33,56 +33,56 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write((byte)LibraryType);
-            writer.Write(LibraryId, Version);
-            writer.Write((byte)UpdateFlags);
+			writer.Write((byte)LibraryType);
+			writer.Write(LibraryId, Version);
+			writer.Write((byte)UpdateFlags);
 
 		    if (Version == MsexVersion.Version1_2)
 		    {
-                var affectedElements = new BitArray(256);
-                foreach (byte a in AffectedElements)
-                    affectedElements[a] = true;
-                var affectedElementsBytes = new byte[32];
-                ((ICollection)affectedElements).CopyTo(affectedElementsBytes, 0);
-                writer.Write(affectedElementsBytes);
+				var affectedElements = new BitArray(256);
+				foreach (byte a in AffectedElements)
+					affectedElements[a] = true;
+				var affectedElementsBytes = new byte[32];
+				((ICollection)affectedElements).CopyTo(affectedElementsBytes, 0);
+				writer.Write(affectedElementsBytes);
 
-                var affectedLibraries = new BitArray(256);
-                foreach (byte a in AffectedLibraries)
-                    affectedLibraries[a] = true;
-                var affectedLibrariesBytes = new byte[32];
-                ((ICollection)affectedLibraries).CopyTo(affectedLibrariesBytes, 0);
-                writer.Write(affectedLibrariesBytes);
-            }
-        }
+				var affectedLibraries = new BitArray(256);
+				foreach (byte a in AffectedLibraries)
+					affectedLibraries[a] = true;
+				var affectedLibrariesBytes = new byte[32];
+				((ICollection)affectedLibraries).CopyTo(affectedLibrariesBytes, 0);
+				writer.Write(affectedLibrariesBytes);
+			}
+		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-            LibraryType = (MsexLibraryType)reader.ReadByte();
-            LibraryId = reader.ReadLibraryId(Version);
-            UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
+			LibraryType = (MsexLibraryType)reader.ReadByte();
+			LibraryId = reader.ReadLibraryId(Version);
+			UpdateFlags = (MsexElementLibraryUpdatedFlags)reader.ReadByte();
 
 		    if (Version == MsexVersion.Version1_2)
 		    {
-                var affectedElementsList = new List<byte>();
-                var affectedElementsArray = new BitArray(reader.ReadBytes(32));
-                for (byte i = 0; i <= 255; ++i)
-                {
-                    if (affectedElementsArray[i])
-                        affectedElementsList.Add(i);
-                }
-                AffectedElements = affectedElementsList.ToImmutableSortedSet();
+				var affectedElementsList = new List<byte>();
+				var affectedElementsArray = new BitArray(reader.ReadBytes(32));
+				for (byte i = 0; i <= 255; ++i)
+				{
+					if (affectedElementsArray[i])
+						affectedElementsList.Add(i);
+				}
+				AffectedElements = affectedElementsList.ToImmutableSortedSet();
 
-                var affectedLibrariesList = new List<byte>();
-                var affectedLibrariesArray = new BitArray(reader.ReadBytes(32));
-                for (byte i = 0; i <= 255; ++i)
-                {
-                    if (affectedLibrariesArray[i])
-                        affectedLibrariesList.Add(i);
-                }
-                AffectedLibraries = affectedLibrariesList.ToImmutableSortedSet();
-            }
-        }
+				var affectedLibrariesList = new List<byte>();
+				var affectedLibrariesArray = new BitArray(reader.ReadBytes(32));
+				for (byte i = 0; i <= 255; ++i)
+				{
+					if (affectedLibrariesArray[i])
+						affectedLibrariesList.Add(i);
+				}
+				AffectedLibraries = affectedLibrariesList.ToImmutableSortedSet();
+			}
+		}
 	}
 }

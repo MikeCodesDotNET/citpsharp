@@ -7,8 +7,8 @@ using Imp.CitpSharp.Packets;
 
 namespace Imp.CitpSharp.Networking
 {
-    internal sealed class UdpService : IDisposable
-    {
+	internal sealed class UdpService : IDisposable
+	{
 	    const int CitpUdpPort = 4809;
 	    static readonly IPAddress CitpMulticastIp = IPAddress.Parse("239.224.0.180");
 	    static readonly IPAddress CitpMulticastLegacyIp = IPAddress.Parse("224.0.0.180");
@@ -17,7 +17,7 @@ namespace Imp.CitpSharp.Networking
 
 	    private bool _isDisposed;
 	    private readonly UdpClient _client;
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+		private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
 	    public UdpService(ICitpLogService logger, bool isUseLegacyMulticastIp, IPAddress localIp = null)
 	    {
@@ -25,7 +25,7 @@ namespace Imp.CitpSharp.Networking
 
 			_logger.LogInfo("Starting UDP service...");
 
-            MulticastIp = isUseLegacyMulticastIp ? CitpMulticastLegacyIp : CitpMulticastIp;
+			MulticastIp = isUseLegacyMulticastIp ? CitpMulticastLegacyIp : CitpMulticastIp;
 
 	        _client = new UdpClient
 	        {
@@ -33,11 +33,11 @@ namespace Imp.CitpSharp.Networking
 	            MulticastLoopback = false
 	        };
 
-            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _client.Client.Bind(new IPEndPoint(localIp ?? IPAddress.Any, CitpUdpPort));
-            _client.JoinMulticastGroup(MulticastIp);
+			_client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+			_client.Client.Bind(new IPEndPoint(localIp ?? IPAddress.Any, CitpUdpPort));
+			_client.JoinMulticastGroup(MulticastIp);
 
-            listen(_cancellationTokenSource.Token);
+			listen(_cancellationTokenSource.Token);
 
 			_logger.LogInfo("Started UDP service");
 		}
@@ -50,8 +50,8 @@ namespace Imp.CitpSharp.Networking
 
 			_logger.LogInfo("Stopping UDP service...");
 
-            _cancellationTokenSource.Cancel();
-            _cancellationTokenSource.Dispose();
+			_cancellationTokenSource.Cancel();
+			_cancellationTokenSource.Dispose();
 
 #if !NET45
 			_client.Dispose();
@@ -63,14 +63,14 @@ namespace Imp.CitpSharp.Networking
 		}
 
 
-        public event EventHandler<CitpUdpPacketReceivedEventArgs> PacketReceived;
+		public event EventHandler<CitpUdpPacketReceivedEventArgs> PacketReceived;
 
-        public IPAddress MulticastIp { get; }
+		public IPAddress MulticastIp { get; }
 
 
-        public void SendPacket(CitpPacket packet)
-        {
-            var buffer = packet.ToByteArray();
+		public void SendPacket(CitpPacket packet)
+		{
+			var buffer = packet.ToByteArray();
 
 	        try
 	        {
@@ -85,29 +85,29 @@ namespace Imp.CitpSharp.Networking
 				_logger.LogError("Exception whilst sending UDP CITP packet");
 				_logger.LogException(ex);
 			}
-        }
+		}
 
-        private async void listen(CancellationToken ct)
-        {
+		private async void listen(CancellationToken ct)
+		{
 			_logger.LogInfo("UDP listen thread started");
 
-            try
-            {
-                while (true)
-                {
-                    UdpReceiveResult result;
+			try
+			{
+				while (true)
+				{
+					UdpReceiveResult result;
 
-                    try
-                    {
-                        result = await Task.Run(_client.ReceiveAsync, ct).ConfigureAwait(false);
+					try
+					{
+						result = await Task.Run(_client.ReceiveAsync, ct).ConfigureAwait(false);
 
-                    }
-                    catch (SocketException ex)
-                    {
+					}
+					catch (SocketException ex)
+					{
 						_logger.LogError("Exception whilst receiving from UDP socket");
 						_logger.LogException(ex);
 						break;
-                    }
+					}
 
 					if (result.Buffer.Length < CitpPacket.MinimumPacketLength
 						|| result.Buffer[0] != CitpPacket.CitpCookie[0]
@@ -119,7 +119,7 @@ namespace Imp.CitpSharp.Networking
 		                continue;
 	                }
 
-                    CitpPacket packet;
+					CitpPacket packet;
 
 	                try
 	                {
@@ -142,26 +142,26 @@ namespace Imp.CitpSharp.Networking
 		                continue;
 	                }
 
-                    PacketReceived?.Invoke(this, new CitpUdpPacketReceivedEventArgs(packet, result.RemoteEndPoint.Address));
-                }
-            }
-            finally
-            {
-                _client.DropMulticastGroup(MulticastIp);
-            }
-        }
-    }
+					PacketReceived?.Invoke(this, new CitpUdpPacketReceivedEventArgs(packet, result.RemoteEndPoint.Address));
+				}
+			}
+			finally
+			{
+				_client.DropMulticastGroup(MulticastIp);
+			}
+		}
+	}
 
 
-    internal class CitpUdpPacketReceivedEventArgs : EventArgs
-    {
-        public CitpUdpPacketReceivedEventArgs(CitpPacket packet, IPAddress ip)
-        {
-            Packet = packet;
-            Ip = ip;
-        }
+	internal class CitpUdpPacketReceivedEventArgs : EventArgs
+	{
+		public CitpUdpPacketReceivedEventArgs(CitpPacket packet, IPAddress ip)
+		{
+			Packet = packet;
+			Ip = ip;
+		}
 
-        public CitpPacket Packet { get; }
-        public IPAddress Ip { get; }
-    }
+		public CitpPacket Packet { get; }
+		public IPAddress Ip { get; }
+	}
 }

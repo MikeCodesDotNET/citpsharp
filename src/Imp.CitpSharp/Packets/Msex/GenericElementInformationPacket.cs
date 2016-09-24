@@ -17,7 +17,7 @@ namespace Imp.CitpSharp.Packets.Msex
 	        Information = information.ToImmutableSortedSet();
 	    }
 
-        public MsexLibraryType LibraryType { get; private set; }
+		public MsexLibraryType LibraryType { get; private set; }
 		public MsexLibraryId LibraryId { get; private set; }
 
 		public ImmutableSortedSet<GenericInformation> Information { get; private set; }
@@ -26,22 +26,22 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write((byte)LibraryType);
-            writer.Write(LibraryId, Version);
-            writer.Write(Information, GetCollectionLengthType(), e => e.Serialize(writer, Version));
+			writer.Write((byte)LibraryType);
+			writer.Write(LibraryId, Version);
+			writer.Write(Information, GetCollectionLengthType(), e => e.Serialize(writer, Version));
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-            if (Version == MsexVersion.Version1_2)
-                LibraryType = (MsexLibraryType)reader.ReadByte();
+			if (Version == MsexVersion.Version1_2)
+				LibraryType = (MsexLibraryType)reader.ReadByte();
 
-            LibraryId = reader.ReadLibraryId(Version);
-            Information = reader.ReadCollection(GetCollectionLengthType(), 
-                () => GenericInformation.Deserialize(reader, Version))
-                    .ToImmutableSortedSet();
+			LibraryId = reader.ReadLibraryId(Version);
+			Information = reader.ReadCollection(GetCollectionLengthType(), 
+				() => GenericInformation.Deserialize(reader, Version))
+					.ToImmutableSortedSet();
 		}
 	}
 }

@@ -10,7 +10,7 @@ namespace Imp.CitpSharp.Packets.Msex
 			: base(MsexMessageType.ClientInformationMessage) { }
 
 	    public ClientInformationPacket(MsexVersion version, IEnumerable<MsexVersion> supportedMsexVersions, ushort requestResponseIndex = 0)
-            : base(MsexMessageType.ClientInformationMessage, version, requestResponseIndex)
+			: base(MsexMessageType.ClientInformationMessage, version, requestResponseIndex)
 	    {
 	        SupportedMsexVersions = supportedMsexVersions.ToImmutableHashSet();
 

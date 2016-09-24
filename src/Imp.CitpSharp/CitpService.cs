@@ -7,17 +7,17 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
-    /// <summary>
-    ///     Base class for CITP services implementing multicast UDP and CITP peer discovery services
-    /// </summary>
-    [PublicAPI]
-    public abstract class CitpService : IDisposable
-    {
-        private  static readonly TimeSpan PeerLocationPacketInterval = TimeSpan.FromSeconds(1);
+	/// <summary>
+	///     Base class for CITP services implementing multicast UDP and CITP peer discovery services
+	/// </summary>
+	[PublicAPI]
+	public abstract class CitpService : IDisposable
+	{
+		private  static readonly TimeSpan PeerLocationPacketInterval = TimeSpan.FromSeconds(1);
 
-        private readonly ICitpDevice _device;
+		private readonly ICitpDevice _device;
 		private readonly RegularTimer _peerLocationTimer;
-        private bool _isDisposed;
+		private bool _isDisposed;
 
 		/// <summary>
 		///		Constructs base <see cref="CitpServerService"/>
@@ -27,18 +27,18 @@ namespace Imp.CitpSharp
 		/// <param name="flags">Optional flags used to configure service behavior</param>
 		/// <param name="localIp">Address of network interface to start network services on</param>
 		protected CitpService(ICitpLogService logger, ICitpDevice device, CitpServiceFlags flags, IPAddress localIp = null)
-        {
-            Logger = logger;
-            _device = device;
+		{
+			Logger = logger;
+			_device = device;
 	        Flags = flags;
 
-            UdpService = new UdpService(logger, Flags.HasFlag(CitpServiceFlags.UseLegacyMulticastIp), localIp);
+			UdpService = new UdpService(logger, Flags.HasFlag(CitpServiceFlags.UseLegacyMulticastIp), localIp);
 			UdpService.PacketReceived += (s, e) => onUdpPacketReceived(e.Packet, e.Ip);
 
-            _peerLocationTimer = new RegularTimer(PeerLocationPacketInterval);
-            _peerLocationTimer.Elapsed += (s, e) => SendPeerLocationPacket();
-            _peerLocationTimer.Start();
-        }
+			_peerLocationTimer = new RegularTimer(PeerLocationPacketInterval);
+			_peerLocationTimer.Elapsed += (s, e) => SendPeerLocationPacket();
+			_peerLocationTimer.Start();
+		}
 
 		/// <summary>
 		///		Type of CITP device
@@ -53,29 +53,29 @@ namespace Imp.CitpSharp
 		/// <summary>
 		///		Dispose implementation
 		/// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 
 		/// <summary>
 		///		Dispose pattern implementation
 		/// </summary>
 		/// <param name="isDisposing"></param>
-        protected virtual void Dispose(bool isDisposing)
-        {
-            if (!_isDisposed)
-            {
-                if (isDisposing)
-                {
-                    _peerLocationTimer.Dispose();
-                    UdpService.Dispose();
-                }
-            }
+		protected virtual void Dispose(bool isDisposing)
+		{
+			if (!_isDisposed)
+			{
+				if (isDisposing)
+				{
+					_peerLocationTimer.Dispose();
+					UdpService.Dispose();
+				}
+			}
 
-            _isDisposed = true;
-        }
+			_isDisposed = true;
+		}
 
 
 		// TODO: Change accessors on these to 'private protected' when C#7 comes out
@@ -86,43 +86,43 @@ namespace Imp.CitpSharp
 		/// <summary>
 		///		Sends peer location packet via UDP
 		/// </summary>
-        protected virtual void SendPeerLocationPacket()
-        {
-            UdpService.SendPacket(new PeerLocationPacket(false, 0, DeviceType, _device.PeerName, _device.State));
-        }
+		protected virtual void SendPeerLocationPacket()
+		{
+			UdpService.SendPacket(new PeerLocationPacket(false, 0, DeviceType, _device.PeerName, _device.State));
+		}
 
-        internal virtual void OnPinfPacketReceived(PinfPacket packet, IPAddress ip)
-        {
-            switch (packet.MessageType)
-            {
-                case PinfMessageType.PeerLocationMessage:
-                    Logger.LogDebug($"PINF Peer Location packet received from {ip}");
+		internal virtual void OnPinfPacketReceived(PinfPacket packet, IPAddress ip)
+		{
+			switch (packet.MessageType)
+			{
+				case PinfMessageType.PeerLocationMessage:
+					Logger.LogDebug($"PINF Peer Location packet received from {ip}");
 					PeerRegistry.AddPeer((PeerLocationPacket)packet, ip);
-                    break;
+					break;
 
-                case PinfMessageType.PeerNameMessage:
+				case PinfMessageType.PeerNameMessage:
 					Logger.LogDebug($"PINF Peer Name packet received from {ip}");
 					PeerRegistry.AddPeer((PeerNamePacket)packet, ip);
-                    break;
-            }
-        }
+					break;
+			}
+		}
 
-        internal virtual void OnMsexPacketReceived(MsexPacket packet, IPAddress ip) { }
+		internal virtual void OnMsexPacketReceived(MsexPacket packet, IPAddress ip) { }
 
 
 
-        private void onUdpPacketReceived(CitpPacket packet, IPAddress ip)
-        {
-            switch (packet.LayerType)
-            {
-                case CitpLayerType.PeerInformationLayer:
-                    OnPinfPacketReceived((PinfPacket)packet, ip);
-                    break;
+		private void onUdpPacketReceived(CitpPacket packet, IPAddress ip)
+		{
+			switch (packet.LayerType)
+			{
+				case CitpLayerType.PeerInformationLayer:
+					OnPinfPacketReceived((PinfPacket)packet, ip);
+					break;
 
-                case CitpLayerType.MediaServerExtensionsLayer:
-                    OnMsexPacketReceived((MsexPacket)packet, ip);
-                    break;
-            }
-        }
-    }
+				case CitpLayerType.MediaServerExtensionsLayer:
+					OnMsexPacketReceived((MsexPacket)packet, ip);
+					break;
+			}
+		}
+	}
 }

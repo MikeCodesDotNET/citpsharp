@@ -2,12 +2,12 @@
 
 namespace Imp.CitpSharp
 {
-    /// <summary>
-    ///     Runs CITP services for a visualizer device.
-    /// </summary>
-    public class CitpVisualizerService : CitpServerService
-    {
-        private readonly ICitpVisualizerDevice _device;
+	/// <summary>
+	///     Runs CITP services for a visualizer device.
+	/// </summary>
+	public class CitpVisualizerService : CitpServerService
+	{
+		private readonly ICitpVisualizerDevice _device;
 
 		/// <summary>
 		///		Constructs <see cref="CitpVisualizerService"/>
@@ -17,16 +17,16 @@ namespace Imp.CitpSharp
 		/// <param name="flags">Optional flags used to configure service behavior</param>
 		/// <param name="preferredTcpListenPort">Service will attempt to start on this port if available, otherwise an available port will be used</param>
 		/// <param name="localIp">Address of network interface to start network services on</param>
-        public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags = CitpServiceFlags.None, 
+		public CitpVisualizerService(ICitpLogService logger, ICitpVisualizerDevice device, CitpServiceFlags flags = CitpServiceFlags.None, 
 			int preferredTcpListenPort = 0, IPAddress localIp = null)
-            : base(logger, device, flags, preferredTcpListenPort, localIp)
-        {
-            _device = device;
-        }
+			: base(logger, device, flags, preferredTcpListenPort, localIp)
+		{
+			_device = device;
+		}
 
 		/// <summary>
 		///		Type of CITP device
 		/// </summary>
-        public override CitpPeerType DeviceType => CitpPeerType.Visualizer;
-    }
+		public override CitpPeerType DeviceType => CitpPeerType.Visualizer;
+	}
 }

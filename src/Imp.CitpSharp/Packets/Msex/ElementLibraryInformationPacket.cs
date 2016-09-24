@@ -25,18 +25,18 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write((byte)LibraryType);
-            writer.Write(Elements, GetCollectionLengthType(), e => e.Serialize(writer, Version));
+			writer.Write((byte)LibraryType);
+			writer.Write(Elements, GetCollectionLengthType(), e => e.Serialize(writer, Version));
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-            LibraryType = (MsexLibraryType)reader.ReadByte();
-            Elements = reader.ReadCollection(GetCollectionLengthType(), 
-                () => ElementLibraryInformation.Deserialize(reader, Version))
-                .ToImmutableSortedSet();
+			LibraryType = (MsexLibraryType)reader.ReadByte();
+			Elements = reader.ReadCollection(GetCollectionLengthType(), 
+				() => ElementLibraryInformation.Deserialize(reader, Version))
+				.ToImmutableSortedSet();
 		}
 	}
 }

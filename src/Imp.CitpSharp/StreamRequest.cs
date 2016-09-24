@@ -3,8 +3,8 @@ using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
-    internal class StreamRequest : IEquatable<StreamRequest>
-    {
+	internal class StreamRequest : IEquatable<StreamRequest>
+	{
 		public StreamRequest(PeerInfo peer, MsexVersion version, MsexImageFormat format, ushort width, ushort height, byte fps)
 		{
 			Peer = peer;
@@ -53,5 +53,5 @@ namespace Imp.CitpSharp
 			    return hashCode;
 		    }
 	    }
-    }
+	}
 }

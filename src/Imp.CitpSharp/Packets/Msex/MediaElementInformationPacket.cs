@@ -24,17 +24,17 @@ namespace Imp.CitpSharp.Packets.Msex
 		{
 			base.SerializeToStream(writer);
 
-            writer.Write(LibraryId, Version);
-            writer.Write(Media, GetCollectionLengthType(), m => m.Serialize(writer, Version));
+			writer.Write(LibraryId, Version);
+			writer.Write(Media, GetCollectionLengthType(), m => m.Serialize(writer, Version));
 		}
 
 		protected override void DeserializeFromStream(CitpBinaryReader reader)
 		{
 			base.DeserializeFromStream(reader);
 
-            LibraryId = reader.ReadLibraryId(Version);
-            Media = reader.ReadCollection(GetCollectionLengthType(), () => MediaInformation.Deserialize(reader, Version))
-                    .ToImmutableSortedSet();
+			LibraryId = reader.ReadLibraryId(Version);
+			Media = reader.ReadCollection(GetCollectionLengthType(), () => MediaInformation.Deserialize(reader, Version))
+					.ToImmutableSortedSet();
 		}
 	}
 }
