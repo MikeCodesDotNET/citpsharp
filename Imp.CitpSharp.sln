@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Imp.CitpSharp", "src\Imp.CitpSharp\Imp.CitpSharp.xproj", "{796C6D10-3229-478C-993F-44054BB330A6}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Imp.CitpSharp.Tests", "tests\Imp.CitpSharp.Tests\Imp.CitpSharp.Tests.xproj", "{EBC2DD21-5304-40BC-BF97-915608CE540A}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Imp.CitpSharp.Tests", "test\Imp.CitpSharp.Tests\Imp.CitpSharp.Tests.xproj", "{EBC2DD21-5304-40BC-BF97-915608CE540A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{796C6D10-3229-478C-993F-44054BB330A6} = {796C6D10-3229-478C-993F-44054BB330A6}
 	EndProjectSection

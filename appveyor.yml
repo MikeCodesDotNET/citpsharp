@@ -38,7 +38,7 @@ after_build:
 - dotnet pack "src\Imp.CitpSharp" -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
 
 test_script:
-- dotnet test "tests\Imp.CitpSharp.Tests" -c %CONFIGURATION%
+- dotnet test "test\Imp.CitpSharp.Tests" -c %CONFIGURATION%
 
 artifacts:
 - path: artifacts\**\*.*
@@ -46,7 +46,7 @@ artifacts:
 #---------------------------------#
 #           build events          #
 #---------------------------------#
-  
+
 deploy:
   - provider: NuGet
     release: Imp.CitpSharp-v$(appveyor_build_version)
