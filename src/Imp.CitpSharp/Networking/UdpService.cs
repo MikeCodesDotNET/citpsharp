@@ -19,6 +19,8 @@ namespace Imp.CitpSharp.Networking
 	    private readonly UdpClient _client;
 		private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
+		private Task _listenTask;
+
 	    public UdpService(ICitpLogService logger, bool isUseLegacyMulticastIp, IPAddress localIp = null)
 	    {
 		    _logger = logger;
@@ -37,7 +39,7 @@ namespace Imp.CitpSharp.Networking
 			_client.Client.Bind(new IPEndPoint(localIp ?? IPAddress.Any, CitpUdpPort));
 			_client.JoinMulticastGroup(MulticastIp);
 
-			listen(_cancellationTokenSource.Token);
+			_listenTask = listenAsync(_cancellationTokenSource.Token);
 
 			_logger.LogInfo("Started UDP service");
 		}
@@ -51,8 +53,9 @@ namespace Imp.CitpSharp.Networking
 			_logger.LogInfo("Stopping UDP service...");
 
 			_cancellationTokenSource.Cancel();
-			_cancellationTokenSource.Dispose();
+			_listenTask.Wait();
 
+			_cancellationTokenSource.Dispose();
 #if !NET45
 			_client.Dispose();
 #endif
@@ -87,25 +90,30 @@ namespace Imp.CitpSharp.Networking
 			}
 		}
 
-		private async void listen(CancellationToken ct)
+		private async Task listenAsync(CancellationToken ct)
 		{
-			_logger.LogInfo("UDP listen thread started");
-
 			try
 			{
-				while (true)
+				while (!ct.IsCancellationRequested)
 				{
 					UdpReceiveResult result;
 
 					try
 					{
 						result = await Task.Run(_client.ReceiveAsync, ct).ConfigureAwait(false);
-
 					}
 					catch (SocketException ex)
 					{
 						_logger.LogError("Exception whilst receiving from UDP socket");
 						_logger.LogException(ex);
+						break;
+					}
+					catch (ObjectDisposedException)
+					{
+						break;
+					}
+					catch (TaskCanceledException)
+					{
 						break;
 					}
 

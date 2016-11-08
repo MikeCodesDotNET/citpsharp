@@ -55,7 +55,7 @@ namespace Imp.CitpSharp
 			_tcpServer.PacketReceived += OnTcpPacketReceived;
 
 			_streamTimer = new RegularTimer(StreamTimerInterval);
-			_streamTimer.Elapsed += (s, e) => ProcessStreamFrameRequests();
+			_streamTimer.Elapsed += (s, e) => processStreamFrameRequests();
 
 			if (!flags.HasFlag(CitpServiceFlags.DisableStreaming) && flags.HasFlag(CitpServiceFlags.RunStreamThread))
 				_streamTimer.Start();
@@ -80,10 +80,7 @@ namespace Imp.CitpSharp
 			if (Flags.HasFlag(CitpServiceFlags.RunStreamThread))
 				throw new InvalidOperationException("Configuration flags set to run stream requests through internal service thread");
 
-			var packets = _streamManager.GetPackets((ushort?)sourceId);
-
-			foreach(var p in packets)
-				UdpService.SendPacket(p);
+			processStreamFrameRequests(sourceId);
 		}
 
 		/// <summary>
@@ -221,6 +218,15 @@ namespace Imp.CitpSharp
 		{
 			Logger.LogInfo($"{client}: Nack sent for message type {packet.MessageType}");
 			client.SendPacket(new NegativeAcknowledgePacket(packet.Version, packet.MessageType, packet.RequestResponseIndex));
+		}
+
+
+		private void processStreamFrameRequests(int? sourceId = null)
+		{
+			var packets = _streamManager.GetPackets((ushort?)sourceId);
+
+			foreach (var p in packets)
+				UdpService.SendPacket(p);
 		}
 	}
 }
