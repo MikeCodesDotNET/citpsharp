@@ -75,13 +75,16 @@ namespace Imp.CitpSharp
 
 		private void onTimerElapsed(object state)
 		{
+			if (_isDisposed)
+				return;
+
 			_stopwatch.Restart();
 			Elapsed?.Invoke(this, EventArgs.Empty);
 
 			int processTime = (int)_stopwatch.ElapsedMilliseconds;
 
-			lock (_timer)
-				_timer.Change(Math.Max(_intervalMs - processTime, 0), Timeout.Infinite);
+			lock(_lock)
+				_timer?.Change(Math.Max(_intervalMs - processTime, 0), Timeout.Infinite);
 		}
 	}
 }

@@ -92,70 +92,76 @@ namespace Imp.CitpSharp.Networking
 
 		private async Task listenAsync(CancellationToken ct)
 		{
-			try
+			var tcs = new TaskCompletionSource<bool>();
+
+			using (ct.Register(s => tcs.TrySetResult(true), null))
 			{
-				while (!ct.IsCancellationRequested)
+				try
 				{
-					UdpReceiveResult result;
-
-					try
+					while (!ct.IsCancellationRequested)
 					{
-						result = await Task.Run(_client.ReceiveAsync, ct).ConfigureAwait(false);
-					}
-					catch (SocketException ex)
-					{
-						_logger.LogError("Exception whilst receiving from UDP socket");
-						_logger.LogException(ex);
-						break;
-					}
-					catch (ObjectDisposedException)
-					{
-						break;
-					}
-					catch (TaskCanceledException)
-					{
-						break;
-					}
+						UdpReceiveResult result;
 
-					if (result.Buffer.Length < CitpPacket.MinimumPacketLength
-						|| result.Buffer[0] != CitpPacket.CitpCookie[0]
-						|| result.Buffer[1] != CitpPacket.CitpCookie[1]
-						|| result.Buffer[2] != CitpPacket.CitpCookie[2]
-						|| result.Buffer[3] != CitpPacket.CitpCookie[3])
-	                {
-						_logger.LogInfo("Received non-CITP UDP packet");
-		                continue;
-	                }
+						try
+						{
+							var receiveTask = _client.ReceiveAsync();
 
-					CitpPacket packet;
+							if (receiveTask != await Task.WhenAny(receiveTask, tcs.Task).ConfigureAwait(false))
+								break;
 
-	                try
-	                {
-		                packet = CitpPacket.FromByteArray(result.Buffer);
-	                }
-	                catch (InvalidOperationException ex)
-	                {
-		                _logger.LogWarning($"Received malformed CITP packet: {ex.Message}");
-		                continue;
-	                }
-	                catch (NotSupportedException ex)
-	                {
-		                _logger.LogWarning($"Recieved unsupported CITP packet: {ex.Message}");
-		                continue;
-	                }
-	                catch (Exception ex)
-	                {
-		                _logger.LogError("Received unexpected exception type whilst deserializing CITP packet");
-						_logger.LogException(ex);
-		                continue;
-	                }
+							result = receiveTask.Result;
+						}
+						catch (SocketException ex)
+						{
+							_logger.LogError("Exception whilst receiving from UDP socket");
+							_logger.LogException(ex);
+							break;
+						}
+						catch (ObjectDisposedException)
+						{
+							break;
+						}
 
-					PacketReceived?.Invoke(this, new CitpUdpPacketReceivedEventArgs(packet, result.RemoteEndPoint.Address));
+						if (result.Buffer.Length < CitpPacket.MinimumPacketLength
+						    || result.Buffer[0] != CitpPacket.CitpCookie[0]
+						    || result.Buffer[1] != CitpPacket.CitpCookie[1]
+						    || result.Buffer[2] != CitpPacket.CitpCookie[2]
+						    || result.Buffer[3] != CitpPacket.CitpCookie[3])
+						{
+							_logger.LogInfo("Received non-CITP UDP packet");
+							continue;
+						}
+
+						CitpPacket packet;
+
+						try
+						{
+							packet = CitpPacket.FromByteArray(result.Buffer);
+						}
+						catch (InvalidOperationException ex)
+						{
+							_logger.LogWarning($"Received malformed CITP packet: {ex.Message}");
+							continue;
+						}
+						catch (NotSupportedException ex)
+						{
+							_logger.LogWarning($"Recieved unsupported CITP packet: {ex.Message}");
+							continue;
+						}
+						catch (Exception ex)
+						{
+							_logger.LogError("Received unexpected exception type whilst deserializing CITP packet");
+							_logger.LogException(ex);
+							continue;
+						}
+
+						PacketReceived?.Invoke(this, new CitpUdpPacketReceivedEventArgs(packet, result.RemoteEndPoint.Address));
+					}
 				}
-			}
-			finally
-			{
-				_client.DropMulticastGroup(MulticastIp);
+				finally
+				{
+					_client.DropMulticastGroup(MulticastIp);
+				}
 			}
 		}
 	}
