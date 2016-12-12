@@ -82,7 +82,11 @@ namespace Imp.CitpSharp
 		internal static ElementLibraryInformation Deserialize(CitpBinaryReader reader, MsexVersion version)
 		{
 			var id = reader.ReadLibraryId(version);
-			uint serialNumber = reader.ReadUInt32();
+
+			uint serialNumber = 0;
+			if (version == MsexVersion.Version1_2)
+				serialNumber = reader.ReadUInt32();
+
 			byte dmxRangeMin = reader.ReadByte();
 			byte dmxRangeMax = reader.ReadByte();
 			string name = reader.ReadString();
@@ -114,7 +118,10 @@ namespace Imp.CitpSharp
 		internal void Serialize(CitpBinaryWriter writer, MsexVersion version)
 		{
 			writer.Write(Id, version);
-			writer.Write(SerialNumber);
+
+			if (version == MsexVersion.Version1_2)
+				writer.Write(SerialNumber);
+
 			writer.Write(DmxRangeMin);
 			writer.Write(DmxRangeMax);
 			writer.Write(Name);
