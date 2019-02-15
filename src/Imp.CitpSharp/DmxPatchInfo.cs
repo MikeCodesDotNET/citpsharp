@@ -220,7 +220,6 @@ namespace Imp.CitpSharp
 		public Guid? PersonalityId { get; }
 
 
-	    [NotNull]
 	    public override string ToString()
 		{
 			string personalityId = PersonalityId.HasValue ? "/PersonalityID/" + PersonalityId.Value.ToString("B") : string.Empty;
@@ -246,7 +245,7 @@ namespace Imp.CitpSharp
 			       && Channel == other.Channel && PersonalityId.Equals(other.PersonalityId);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

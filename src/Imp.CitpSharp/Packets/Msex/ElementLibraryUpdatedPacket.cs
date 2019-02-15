@@ -43,14 +43,14 @@ namespace Imp.CitpSharp.Packets.Msex
 				foreach (byte a in AffectedElements)
 					affectedElements[a] = true;
 				var affectedElementsBytes = new byte[32];
-				((ICollection)affectedElements).CopyTo(affectedElementsBytes, 0);
+				affectedElements.CopyTo(affectedElementsBytes, 0);
 				writer.Write(affectedElementsBytes);
 
 				var affectedLibraries = new BitArray(256);
 				foreach (byte a in AffectedLibraries)
 					affectedLibraries[a] = true;
 				var affectedLibrariesBytes = new byte[32];
-				((ICollection)affectedLibraries).CopyTo(affectedLibrariesBytes, 0);
+				affectedLibraries.CopyTo(affectedLibrariesBytes, 0);
 				writer.Write(affectedLibrariesBytes);
 			}
 		}

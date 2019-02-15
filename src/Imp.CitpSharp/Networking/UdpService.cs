@@ -19,7 +19,7 @@ namespace Imp.CitpSharp.Networking
 	    private readonly UdpClient _client;
 		private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-		private Task _listenTask;
+		private readonly Task _listenTask;
 
 	    public UdpService(ICitpLogService logger, bool isUseLegacyMulticastIp, IPAddress localIp = null)
 	    {
@@ -56,9 +56,9 @@ namespace Imp.CitpSharp.Networking
 			_listenTask.Wait();
 
 			_cancellationTokenSource.Dispose();
-#if !NET45
+
 			_client.Dispose();
-#endif
+
 
 		    _isDisposed = true;
 
@@ -145,7 +145,7 @@ namespace Imp.CitpSharp.Networking
 						}
 						catch (NotSupportedException ex)
 						{
-							_logger.LogWarning($"Recieved unsupported CITP packet: {ex.Message}");
+							_logger.LogWarning($"Received unsupported CITP packet: {ex.Message}");
 							continue;
 						}
 						catch (Exception ex)

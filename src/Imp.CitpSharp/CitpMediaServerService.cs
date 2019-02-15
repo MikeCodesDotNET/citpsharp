@@ -119,9 +119,7 @@ namespace Imp.CitpSharp
 				
 				foreach (var id in idsToSelect)
 				{
-					ElementLibrary library;
-
-					if (filteredLibraries.TryGetValue(id, out library))
+                    if (filteredLibraries.TryGetValue(id, out var library))
 						elementInfo.Add(library.LibraryInformation);
 				}
 			}
@@ -143,8 +141,7 @@ namespace Imp.CitpSharp
 
 			Logger.LogInfo($"{client}: Get element information packet received");
 
-			ElementLibrary library;
-			if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out library))
+            if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out var library))
 			{
 				Logger.LogWarning($"{client}: Requested non-existant library - {packet.LibraryId}");
 				return;
@@ -205,8 +202,7 @@ namespace Imp.CitpSharp
 
 			foreach (var id in libraryIds)
 			{
-				ElementLibrary library;
-				if (!_device.ElementLibraries.TryGetValue(id, out library))
+                if (!_device.ElementLibraries.TryGetValue(id, out var library))
 				{
 					Logger.LogWarning($"{client}: Requested thumbnail for non-existant library {id}");
 					continue;
@@ -246,8 +242,7 @@ namespace Imp.CitpSharp
 
 			Logger.LogInfo($"{client}: Get element thumbnail packet received");
 
-			ElementLibrary library;
-			if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out library))
+            if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out var library))
 			{
 				Logger.LogWarning($"{client}: Requested thumbnails for elements in non-existant library {packet.LibraryId}");
 				return;
@@ -269,9 +264,7 @@ namespace Imp.CitpSharp
 
 			foreach (byte i in elementNumbers)
 			{
-				ElementInformation info;
-
-				if (!library.Elements.TryGetValue(i, out info))
+                if (!library.Elements.TryGetValue(i, out var info))
 				{
 					Logger.LogWarning($"{client}: Requested thumbnail for non-existant element {i} in library {packet.LibraryId}");
 					continue;

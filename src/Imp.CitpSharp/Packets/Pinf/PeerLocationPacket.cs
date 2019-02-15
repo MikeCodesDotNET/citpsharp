@@ -7,15 +7,15 @@ namespace Imp.CitpSharp.Packets.Pinf
 		public PeerLocationPacket()
 			: base(PinfMessageType.PeerLocationMessage) { }
 
-	    public PeerLocationPacket(bool isListeningForTcpConnection, ushort listeningTcpPort, CitpPeerType peerType, string name, string state)
-	        : base(PinfMessageType.PeerLocationMessage)
-	    {
-	        IsListeningForTcpConnection = isListeningForTcpConnection;
-	        ListeningTcpPort = listeningTcpPort;
-	        PeerType = peerType;
-	        Name = name;
-	        State = state;
-	    }
+		public PeerLocationPacket(bool isListeningForTcpConnection, ushort listeningTcpPort, CitpPeerType peerType, string name, string state)
+			: base(PinfMessageType.PeerLocationMessage)
+		{
+			IsListeningForTcpConnection = isListeningForTcpConnection;
+			ListeningTcpPort = listeningTcpPort;
+			PeerType = peerType;
+			Name = name;
+			State = state;
+		}
 
 		public bool IsListeningForTcpConnection { get; private set; }
 
@@ -49,8 +49,7 @@ namespace Imp.CitpSharp.Packets.Pinf
 			if (ListeningTcpPort == 0)
 				IsListeningForTcpConnection = false;
 
-			CitpPeerType citpPeerType;
-			PeerType = Enum.TryParse(reader.ReadString(true), out citpPeerType) ? citpPeerType : CitpPeerType.Unknown;
+			PeerType = Enum.TryParse(reader.ReadString(true), out CitpPeerType citpPeerType) ? citpPeerType : CitpPeerType.Unknown;
 
 			Name = reader.ReadString(true);
 			State = reader.ReadString(true);

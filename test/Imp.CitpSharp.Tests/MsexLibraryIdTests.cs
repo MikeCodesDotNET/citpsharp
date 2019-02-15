@@ -1,13 +1,13 @@
 ﻿using System.Linq;
 using FluentAssertions;
-using Imp.CitpSharp;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Imp.CitpSharp.Tests
 {
+	[TestClass]
 	public class MsexLibraryIdTests
 	{
-		[Fact]
+		[TestMethod]
 		public void CanSort()
 		{
 			var libraryIds = new[]
@@ -33,7 +33,7 @@ namespace Imp.CitpSharp.Tests
 			orderedLibraryIds.Should().ContainInOrder(libraryIds, "because this is the correct order");
 		}
 
-		[Fact]
+		[TestMethod]
 		public void CanIdentifyChild()
 		{
 			MsexLibraryId.Root.IsParentOf(new MsexLibraryId(1)).Should().BeTrue();

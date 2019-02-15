@@ -259,7 +259,7 @@ namespace Imp.CitpSharp
 			       && SubLevel3 == other.SubLevel3;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

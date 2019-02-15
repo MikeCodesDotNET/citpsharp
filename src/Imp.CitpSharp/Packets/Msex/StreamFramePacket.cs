@@ -132,7 +132,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write(FragmentByteOffset);
 			}
 
-			public bool Equals([CanBeNull] FragmentPreamble other)
+			public bool Equals(FragmentPreamble other)
 			{
 				if (ReferenceEquals(null, other))
 					return false;
@@ -142,7 +142,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					   && FragmentIndex == other.FragmentIndex && FragmentByteOffset == other.FragmentByteOffset;
 			}
 
-			public override bool Equals([CanBeNull] object obj)
+			public override bool Equals(object obj)
 			{
 				if (ReferenceEquals(null, obj))
 					return false;

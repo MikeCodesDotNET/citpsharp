@@ -27,11 +27,8 @@ namespace Imp.CitpSharp
 		/// <param name="actualHeight">Actual height of the image in <see cref="ImageBuffer"/></param>
 		public CitpImage(CitpImageRequest request, [NotNull] byte[] imageBuffer, int actualWidth, int actualHeight)
 		{
-			if (imageBuffer == null)
-				throw new ArgumentNullException(nameof(imageBuffer));
-
-			Request = request;
-			ImageBuffer = imageBuffer;
+            Request = request;
+			ImageBuffer = imageBuffer ?? throw new ArgumentNullException(nameof(imageBuffer));
 
 			if (actualWidth < 1 || actualWidth > ushort.MaxValue)
 				throw new ArgumentOutOfRangeException(nameof(actualWidth), actualWidth, $"Must be in range 1-{ushort.MaxValue}");
@@ -125,7 +122,7 @@ namespace Imp.CitpSharp
 			       && IsBgrOrder == other.IsBgrOrder;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

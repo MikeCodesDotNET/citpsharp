@@ -232,12 +232,9 @@ namespace Imp.CitpSharp
 
 	    public void AddRequest(PeerInfo peer, RequestStreamPacket packet)
 	    {
-		    StreamSource source;
-
-		    if (!_streams.TryGetValue(packet.SourceId, out source))
+            if (!_streams.TryGetValue(packet.SourceId, out var source))
 		    {
-			    VideoSourceInformation info;
-			    if (!_device.VideoSourceInformation.TryGetValue(packet.SourceId, out info))
+                if (!_device.VideoSourceInformation.TryGetValue(packet.SourceId, out var info))
 			    {
 				    _logger.LogError($"Peer '{peer}' requested stream whuch does not exist on this server");
 				    return;
@@ -259,8 +256,7 @@ namespace Imp.CitpSharp
 
 			if (sourceId.HasValue)
 			{
-				StreamSource source;
-				if (_streams.TryGetValue(sourceId.Value, out source))
+                if (_streams.TryGetValue(sourceId.Value, out var source))
 				{
 					source.RemoveExpiredRequests(timeNow);
 					packets.AddRange(source.GetPackets(timeNow));
@@ -282,8 +278,7 @@ namespace Imp.CitpSharp
 	    {
 			var requests = new HashSet<CitpImageRequest>();
 
-			StreamSource source;
-			if (_streams.TryGetValue(sourceId, out source))
+            if (_streams.TryGetValue(sourceId, out var source))
 			{
 				foreach (var request in source.ResolvedRequests)
 					requests.Add(request);

@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace Imp.CitpSharp
 {
@@ -22,7 +21,7 @@ namespace Imp.CitpSharp
 		public ushort Height { get; }
 		public byte Fps { get; }
 
-	    public bool Equals([CanBeNull] StreamRequest other)
+	    public bool Equals(StreamRequest other)
 	    {
 		    if (ReferenceEquals(null, other))
 			    return false;
@@ -31,13 +30,13 @@ namespace Imp.CitpSharp
 		    return Peer.Equals(other.Peer) && Version == other.Version && Format == other.Format && Width == other.Width && Height == other.Height && Fps == other.Fps;
 	    }
 
-	    public override bool Equals([CanBeNull] object obj)
+	    public override bool Equals(object obj)
 	    {
 		    if (ReferenceEquals(null, obj))
 			    return false;
 		    if (ReferenceEquals(this, obj))
 			    return true;
-		    return obj.GetType() == this.GetType() && Equals((StreamRequest)obj);
+		    return obj.GetType() == GetType() && Equals((StreamRequest)obj);
 	    }
 
 	    public override int GetHashCode()

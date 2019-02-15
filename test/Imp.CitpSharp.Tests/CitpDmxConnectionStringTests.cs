@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using Imp.CitpSharp;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 
 namespace Imp.CitpSharp.Tests
 {
+	[TestClass]
 	public class CitpDmxConnectionStringTests
 	{
-		[Theory, MemberData(nameof(PatchInfo))]
+		[TestMethod]
 		public void CanParse(DmxPatchInfo input)
 		{
 			var output = DmxPatchInfo.Parse(input.ToString());

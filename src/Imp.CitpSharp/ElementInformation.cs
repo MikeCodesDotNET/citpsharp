@@ -23,15 +23,12 @@ namespace Imp.CitpSharp
 		protected ElementInformation(ElementKind kind, byte elementNumber, byte dmxRangeMin,
 			byte dmxRangeMax, [NotNull] string name, uint serialNumber)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
 			Kind = kind;
 			ElementNumber = elementNumber;
 			SerialNumber = serialNumber;
 			DmxRangeMin = dmxRangeMin;
 			DmxRangeMax = dmxRangeMax;
-			Name = name;
+			Name = name ?? throw new ArgumentNullException(nameof(name));
 		}
 
 		/// <summary>
@@ -106,7 +103,7 @@ namespace Imp.CitpSharp
 			if (ReferenceEquals(this, other))
 				return true;
 			return Kind == other.Kind && ElementNumber == other.ElementNumber && SerialNumber == other.SerialNumber
-			       && DmxRangeMin == other.DmxRangeMin && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name);
+				   && DmxRangeMin == other.DmxRangeMin && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name);
 		}
 
 		internal abstract void Serialize(CitpBinaryWriter writer, MsexVersion version);
@@ -160,17 +157,17 @@ namespace Imp.CitpSharp
 		public byte MediaFps { get; }
 
 
-		public bool Equals([CanBeNull] MediaInformation other)
+		public bool Equals(MediaInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
 			return MediaVersionTimestamp.Equals(other.MediaVersionTimestamp) && MediaWidth == other.MediaWidth
-			       && MediaHeight == other.MediaHeight && MediaLength == other.MediaLength && MediaFps == other.MediaFps;
+				   && MediaHeight == other.MediaHeight && MediaLength == other.MediaLength && MediaFps == other.MediaFps;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -254,14 +251,14 @@ namespace Imp.CitpSharp
 
 		public ImmutableList<string> EffectParameterNames { get; }
 
-		public bool Equals([CanBeNull] EffectInformation other)
+		public bool Equals(EffectInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
 			return ReferenceEquals(this, other) || EffectParameterNames.Equals(other.EffectParameterNames);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -324,14 +321,14 @@ namespace Imp.CitpSharp
 
 		public DateTime VersionTimestamp { get; set; }
 
-		public bool Equals([CanBeNull] GenericInformation other)
+		public bool Equals(GenericInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
 			return ReferenceEquals(this, other) || VersionTimestamp.Equals(other.VersionTimestamp);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

@@ -117,7 +117,7 @@ namespace Imp.CitpSharp
 		/// </summary>
 		/// <param name="other"></param>
 		/// <returns></returns>
-		public bool Equals([CanBeNull] VideoSourceInformation other)
+		public bool Equals(VideoSourceInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -133,7 +133,7 @@ namespace Imp.CitpSharp
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

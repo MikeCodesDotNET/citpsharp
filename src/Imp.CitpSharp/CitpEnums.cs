@@ -46,9 +46,7 @@ namespace Imp.CitpSharp
 		{
 			var typeT = typeof(T);
 
-			Dictionary<string, Enum> map;
-
-			if (CitpIdMaps.TryGetValue(typeT, out map))
+            if (CitpIdMaps.TryGetValue(typeT, out var map))
 				return (T)(object)map[s];
 
 			var values = Enum.GetValues(typeT).Cast<Enum>();

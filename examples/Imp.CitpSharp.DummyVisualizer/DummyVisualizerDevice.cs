@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using JetBrains.Annotations;
 
 namespace Imp.CitpSharp.DummyVisualizer
 {
@@ -18,7 +17,6 @@ namespace Imp.CitpSharp.DummyVisualizer
 		public string PeerName { get; }
 		public string State { get; set; }
 
-		[CanBeNull]
 		public CitpImage GetVideoSourceFrame(int sourceId, CitpImageRequest request)
 		{
 			return null;

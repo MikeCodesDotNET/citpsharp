@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using JetBrains.Annotations;
 
 namespace Imp.CitpSharp.Packets.Msex
 {
@@ -113,7 +112,7 @@ namespace Imp.CitpSharp.Packets.Msex
 				writer.Write((uint)LayerStatusFlags);
 			}
 
-			public bool Equals([CanBeNull] LayerStatus other)
+			public bool Equals(LayerStatus other)
 			{
 				if (ReferenceEquals(null, other))
 					return false;
@@ -126,7 +125,7 @@ namespace Imp.CitpSharp.Packets.Msex
 					   && MediaFps == other.MediaFps && LayerStatusFlags == other.LayerStatusFlags;
 			}
 
-			public override bool Equals([CanBeNull] object obj)
+			public override bool Equals(object obj)
 			{
 				if (ReferenceEquals(null, obj))
 					return false;

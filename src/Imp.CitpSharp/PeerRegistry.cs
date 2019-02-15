@@ -11,18 +11,11 @@ namespace Imp.CitpSharp
 		public PeerInfo(CitpPeerType peerType, [NotNull] string name, [NotNull] string state, ushort listeningTcpPort,
 			[NotNull] IPAddress ip)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			if (state == null)
-				throw new ArgumentNullException(nameof(state));
-			if (ip == null)
-				throw new ArgumentNullException(nameof(ip));
-
 			PeerType = peerType;
-			Name = name;
-			State = state;
+			Name = name ?? throw new ArgumentNullException(nameof(name));
+			State = state ?? throw new ArgumentNullException(nameof(state));
 			ListeningTcpPort = listeningTcpPort;
-			Ip = ip;
+			Ip = ip ?? throw new ArgumentNullException(nameof(ip));
 		}
 
 		public PeerInfo([NotNull] string name, [NotNull] IPAddress ip)
@@ -38,7 +31,7 @@ namespace Imp.CitpSharp
 
 		public override string ToString() => $"{Name} ({Ip})";
 
-		public bool Equals([CanBeNull] PeerInfo other)
+		public bool Equals(PeerInfo other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -47,7 +40,7 @@ namespace Imp.CitpSharp
 			return string.Equals(Name, other.Name) && Ip.Equals(other.Ip);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
@@ -116,8 +109,7 @@ namespace Imp.CitpSharp
 		{
 			var peer = new PeerInfo(name, ip);
 
-			PeerInfo existingPeer;
-			if (!Peers.TryGetValue(peer, out existingPeer))
+			if (!Peers.TryGetValue(peer, out var existingPeer))
 				return null;
 
 			return existingPeer;

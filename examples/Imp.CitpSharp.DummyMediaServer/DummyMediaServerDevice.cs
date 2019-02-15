@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using JetBrains.Annotations;
 
 namespace Imp.CitpSharp.DummyVisualizer
 {
@@ -61,7 +60,6 @@ namespace Imp.CitpSharp.DummyVisualizer
 
 
 
-		[CanBeNull]
 		public CitpImage GetVideoSourceFrame(int sourceId, CitpImageRequest request)
 		{
 			var buffer = new byte[request.FrameWidth * request.FrameHeight * 3];

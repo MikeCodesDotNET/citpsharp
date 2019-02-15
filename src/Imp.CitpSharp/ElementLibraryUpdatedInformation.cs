@@ -34,7 +34,7 @@ namespace Imp.CitpSharp
 		public ImmutableSortedSet<byte> AffectedElements { get; }
 		public ImmutableSortedSet<byte> AffectedLibraries { get; }
 
-		public bool Equals([CanBeNull] ElementLibraryUpdatedInformation other)
+		public bool Equals(ElementLibraryUpdatedInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -48,7 +48,7 @@ namespace Imp.CitpSharp
 			       && SequenceComparison.SequenceEqual(AffectedLibraries, other.AffectedLibraries);
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;

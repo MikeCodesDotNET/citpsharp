@@ -13,14 +13,11 @@ namespace Imp.CitpSharp
 		public ElementLibraryInformation(MsexLibraryId id, byte dmxRangeMin, byte dmxRangeMax, [NotNull] string name,
 			ushort libraryCount, ushort elementCount, uint serialNumber)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-
-			Id = id;
+            Id = id;
 			SerialNumber = serialNumber;
 			DmxRangeMin = dmxRangeMin;
 			DmxRangeMax = dmxRangeMax;
-			Name = name;
+			Name = name ?? throw new ArgumentNullException(nameof(name));
 			LibraryCount = libraryCount;
 			ElementCount = elementCount;
 		}
@@ -44,7 +41,7 @@ namespace Imp.CitpSharp
 		}
 
 
-		public bool Equals([CanBeNull] ElementLibraryInformation other)
+		public bool Equals(ElementLibraryInformation other)
 		{
 			if (ReferenceEquals(null, other))
 				return false;
@@ -55,7 +52,7 @@ namespace Imp.CitpSharp
 			       && ElementCount == other.ElementCount;
 		}
 
-		public override bool Equals([CanBeNull] object obj)
+		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj))
 				return false;
