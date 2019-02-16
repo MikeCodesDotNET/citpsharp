@@ -119,7 +119,7 @@ namespace Imp.CitpSharp
 				
 				foreach (var id in idsToSelect)
 				{
-                    if (filteredLibraries.TryGetValue(id, out var library))
+					if (filteredLibraries.TryGetValue(id, out var library))
 						elementInfo.Add(library.LibraryInformation);
 				}
 			}
@@ -141,7 +141,7 @@ namespace Imp.CitpSharp
 
 			Logger.LogInfo($"{client}: Get element information packet received");
 
-            if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out var library))
+			if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out var library))
 			{
 				Logger.LogWarning($"{client}: Requested non-existant library - {packet.LibraryId}");
 				return;
@@ -202,7 +202,7 @@ namespace Imp.CitpSharp
 
 			foreach (var id in libraryIds)
 			{
-                if (!_device.ElementLibraries.TryGetValue(id, out var library))
+				if (!_device.ElementLibraries.TryGetValue(id, out var library))
 				{
 					Logger.LogWarning($"{client}: Requested thumbnail for non-existant library {id}");
 					continue;
@@ -242,7 +242,7 @@ namespace Imp.CitpSharp
 
 			Logger.LogInfo($"{client}: Get element thumbnail packet received");
 
-            if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out var library))
+			if (!_device.ElementLibraries.TryGetValue(packet.LibraryId, out var library))
 			{
 				Logger.LogWarning($"{client}: Requested thumbnails for elements in non-existant library {packet.LibraryId}");
 				return;
@@ -251,7 +251,7 @@ namespace Imp.CitpSharp
 			if (library.LibraryType != packet.LibraryType)
 			{
 				Logger.LogWarning($"{client}: Requested thumbnails for elements in library {packet.LibraryId} with expected type {packet.LibraryType}, "
-				                  + $"actual type is {library.LibraryType}");
+								  + $"actual type is {library.LibraryType}");
 				return;
 			}
 
@@ -264,7 +264,7 @@ namespace Imp.CitpSharp
 
 			foreach (byte i in elementNumbers)
 			{
-                if (!library.Elements.TryGetValue(i, out var info))
+				if (!library.Elements.TryGetValue(i, out var info))
 				{
 					Logger.LogWarning($"{client}: Requested thumbnail for non-existant element {i} in library {packet.LibraryId}");
 					continue;

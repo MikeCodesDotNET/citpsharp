@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imp.CitpSharp.DummyMediaSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imp.CitpSharp.DummyVisualizer", "examples\Imp.CitpSharp.DummyVisualizer\Imp.CitpSharp.DummyVisualizer.csproj", "{76D9DCD6-AFF3-4056-888F-A4E256970DA8}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imp.CitpSharp.FileSystemMediaServer", "examples\Imp.CitpSharp.FileSystemMediaServer\Imp.CitpSharp.FileSystemMediaServer.csproj", "{1F2391F3-A837-4316-8A66-61F1CE9B6DAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{76D9DCD6-AFF3-4056-888F-A4E256970DA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76D9DCD6-AFF3-4056-888F-A4E256970DA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{76D9DCD6-AFF3-4056-888F-A4E256970DA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F2391F3-A837-4316-8A66-61F1CE9B6DAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F2391F3-A837-4316-8A66-61F1CE9B6DAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F2391F3-A837-4316-8A66-61F1CE9B6DAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F2391F3-A837-4316-8A66-61F1CE9B6DAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

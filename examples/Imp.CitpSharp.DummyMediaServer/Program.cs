@@ -1,13 +1,13 @@
 ﻿using System;
 
-namespace Imp.CitpSharp.DummyVisualizer
+namespace Imp.CitpSharp.DummyMediaServer
 {
 	public class Program
 	{
 		public static void Main(string[] args)
 		{
 			Console.WriteLine("--------------------------------------------------------------------------");
-			Console.WriteLine("      CitpSharp - Copyright 2016 David Butler / The Impersonal Stereo     ");
+			Console.WriteLine("      CitpSharp - Copyright 2018 David Butler / The Impersonal Stereo     ");
 			Console.WriteLine("--------------------------------------------------------------------------");
 			Console.WriteLine("                       Dummy Media Server Test App                        ");
 			Console.WriteLine("--------------------------------------------------------------------------");

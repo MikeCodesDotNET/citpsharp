@@ -27,7 +27,7 @@ namespace Imp.CitpSharp
 		/// <param name="actualHeight">Actual height of the image in <see cref="ImageBuffer"/></param>
 		public CitpImage(CitpImageRequest request, [NotNull] byte[] imageBuffer, int actualWidth, int actualHeight)
 		{
-            Request = request;
+			Request = request;
 			ImageBuffer = imageBuffer ?? throw new ArgumentNullException(nameof(imageBuffer));
 
 			if (actualWidth < 1 || actualWidth > ushort.MaxValue)
@@ -119,7 +119,7 @@ namespace Imp.CitpSharp
 		public bool Equals(CitpImageRequest other)
 		{
 			return FrameWidth == other.FrameWidth && FrameHeight == other.FrameHeight && Format == other.Format
-			       && IsBgrOrder == other.IsBgrOrder;
+				   && IsBgrOrder == other.IsBgrOrder;
 		}
 
 		public override bool Equals(object obj)
@@ -154,9 +154,9 @@ namespace Imp.CitpSharp
 		public override string ToString()
 		{
 			return $"{FrameWidth} x {FrameHeight}"
-			       + (IsPreserveAspectRatio ? " (Preserve Aspect)" : string.Empty) +
-			       ", {Format}"
-			       + (IsBgrOrder ? " BGR Order" : string.Empty);
+				   + (IsPreserveAspectRatio ? " (Preserve Aspect)" : string.Empty) +
+				   ", {Format}"
+				   + (IsBgrOrder ? " BGR Order" : string.Empty);
 		}
 	}
 }

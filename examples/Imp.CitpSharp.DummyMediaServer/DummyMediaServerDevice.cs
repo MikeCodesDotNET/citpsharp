@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace Imp.CitpSharp.DummyVisualizer
+namespace Imp.CitpSharp.DummyMediaServer
 {
 	internal class DummyMediaServerDevice : ICitpMediaServerDevice
 	{
 		public DummyMediaServerDevice(Guid uuid, string peerName, string state, string productName,
-			int productVersionMajor, int productVersionMinor, int productversionBugfix)
+			int productVersionMajor, int productVersionMinor, int productVersionBugfix)
 		{
 			Uuid = uuid;
 			PeerName = peerName;
@@ -16,7 +16,7 @@ namespace Imp.CitpSharp.DummyVisualizer
 			ProductName = productName;
 			ProductVersionMajor = productVersionMajor;
 			ProductVersionMinor = productVersionMinor;
-			ProductVersionBugfix = productversionBugfix;
+			ProductVersionBugfix = productVersionBugfix;
 		}
 
 		public Guid Uuid { get; }

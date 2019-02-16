@@ -13,7 +13,7 @@ namespace Imp.CitpSharp
 		public ElementLibraryInformation(MsexLibraryId id, byte dmxRangeMin, byte dmxRangeMax, [NotNull] string name,
 			ushort libraryCount, ushort elementCount, uint serialNumber)
 		{
-            Id = id;
+			Id = id;
 			SerialNumber = serialNumber;
 			DmxRangeMin = dmxRangeMin;
 			DmxRangeMax = dmxRangeMax;
@@ -48,8 +48,8 @@ namespace Imp.CitpSharp
 			if (ReferenceEquals(this, other))
 				return true;
 			return Id.Equals(other.Id) && SerialNumber == other.SerialNumber && DmxRangeMin == other.DmxRangeMin
-			       && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name) && LibraryCount == other.LibraryCount
-			       && ElementCount == other.ElementCount;
+				   && DmxRangeMax == other.DmxRangeMax && string.Equals(Name, other.Name) && LibraryCount == other.LibraryCount
+				   && ElementCount == other.ElementCount;
 		}
 
 		public override bool Equals(object obj)
