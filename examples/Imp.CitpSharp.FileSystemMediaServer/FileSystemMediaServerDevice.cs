@@ -244,18 +244,20 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 
 		private void buildLibrary()
 		{
-			var pathRegex = new Regex("[0-9]{3}.+");
+			var pathRegex = new Regex(@"(\d{3}).+");
 
 			var directories = Directory.GetDirectories(LibraryRootPath, "", SearchOption.TopDirectoryOnly)
-				.Where(p => pathRegex.IsMatch(p))
-				.Select(p => Tuple.Create(int.Parse(Path.GetFileName(p).Substring(0, 3)), p))
+				.Select(p => new { m = pathRegex.Matches(p), p = p })
+				.Where(a => a.m.Any())
+				.Select(a => Tuple.Create(int.Parse(a.m[0].Groups[1].Value), a.p))
 				.Where(t => t.Item1 >= 0 && t.Item1 <= 255);
 
 			var updatedLibrary = new Dictionary<int, ImmutableDictionary<int, string>>();
 
 			foreach (var dir in directories)
 			{
-				var files = Directory.GetFiles(dir.Item2, "", SearchOption.TopDirectoryOnly);
+				var files = Directory.GetFiles(dir.Item2, "", SearchOption.TopDirectoryOnly)
+					.Where(p => pathRegex.IsMatch(p));
 
 				var libraryFiles = new Dictionary<int, string>();
 
@@ -281,9 +283,43 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 				p => new ElementLibrary(MsexLibraryType.Media,
 					new ElementLibraryInformation(MsexLibraryId.FromMsexV1LibraryNumber(p.Key),
 						(byte)p.Key, (byte)p.Key, p.Key.ToString(), 0, (ushort)p.Value.Count, 0),
-					p.Value.Select(e => new MediaInformation((byte)e.Key, (byte)e.Key, (byte)e.Key,
-						Path.GetFileNameWithoutExtension(e.Value), File.GetLastWriteTime(e.Value),
-						0, 0, 0, 0, 0))));
+					p.Value.Select(createMediaInformation)));
+		}
+
+		private MediaInformation createMediaInformation(KeyValuePair<int, string> e)
+		{
+			var versionRegex = new Regex(@"v(\d+)\.");
+
+			var matches = versionRegex.Matches(e.Value);
+
+			uint serialNumber = 0;
+
+			if (matches.Any())
+				serialNumber = uint.Parse(matches[0].Groups[1].Value);
+
+			ushort width = 0;
+			ushort height = 0;
+			uint length = 0;
+			byte fps = 0;
+
+
+			var infoTask = MediaInfo.Get(e.Value);
+			infoTask.Wait();
+
+			var mediaInfo = infoTask.Result;
+
+			if (mediaInfo != null && mediaInfo.VideoStreams.Any())
+			{
+				width = (ushort)mediaInfo.VideoStreams.First().Width;
+				height = (ushort)mediaInfo.VideoStreams.First().Height;
+				fps = (byte)mediaInfo.VideoStreams.First().FrameRate;
+				length = (uint)(mediaInfo.VideoStreams.First().Duration.Seconds * mediaInfo.VideoStreams.First().FrameRate);
+
+			}
+
+			return new MediaInformation((byte)e.Key, (byte)e.Key, (byte)e.Key,
+				Path.GetFileNameWithoutExtension(e.Value), File.GetLastWriteTime(e.Value),
+				width, height, length, fps, serialNumber);
 		}
 
 		public void Dispose()

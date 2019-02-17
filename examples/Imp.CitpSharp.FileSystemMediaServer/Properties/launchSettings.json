@@ -2,7 +2,7 @@
   "profiles": {
     "Imp.CitpSharp.FileSystemMediaServer": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\TestMedia 192.168.0.20"
+      "commandLineArgs": "C:\\TestMedia"
     }
   }
 }

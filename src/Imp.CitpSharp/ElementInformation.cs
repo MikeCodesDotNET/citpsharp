@@ -138,14 +138,14 @@ namespace Imp.CitpSharp
 	public sealed class MediaInformation : ElementInformation, IEquatable<MediaInformation>
 	{
 		public MediaInformation(byte elementNumber, byte dmxRangeMin, byte dmxRangeMax,
-			[NotNull] string name, DateTime mediaVersionTimestamp, ushort mediaWidth, ushort mediaHeight, uint mediaLength,
+			[NotNull] string name, DateTime mediaVersionTimestamp, ushort mediaWidth, ushort mediaHeight, uint mediaLengthFrames,
 			byte mediaFps, uint serialNumber)
 			: base(ElementKind.Media, elementNumber, dmxRangeMin, dmxRangeMax, name, serialNumber)
 		{
 			MediaVersionTimestamp = mediaVersionTimestamp;
 			MediaWidth = mediaWidth;
 			MediaHeight = mediaHeight;
-			MediaLength = mediaLength;
+			MediaLengthFrames = mediaLengthFrames;
 			MediaFps = mediaFps;
 		}
 
@@ -153,7 +153,7 @@ namespace Imp.CitpSharp
 		public DateTime MediaVersionTimestamp { get; }
 		public ushort MediaWidth { get; }
 		public ushort MediaHeight { get; }
-		public uint MediaLength { get; }
+		public uint MediaLengthFrames { get; }
 		public byte MediaFps { get; }
 
 
@@ -164,7 +164,7 @@ namespace Imp.CitpSharp
 			if (ReferenceEquals(this, other))
 				return true;
 			return MediaVersionTimestamp.Equals(other.MediaVersionTimestamp) && MediaWidth == other.MediaWidth
-				   && MediaHeight == other.MediaHeight && MediaLength == other.MediaLength && MediaFps == other.MediaFps;
+				   && MediaHeight == other.MediaHeight && MediaLengthFrames == other.MediaLengthFrames && MediaFps == other.MediaFps;
 		}
 
 		public override bool Equals(object obj)
@@ -184,7 +184,7 @@ namespace Imp.CitpSharp
 				hashCode = (hashCode * 397) ^ MediaVersionTimestamp.GetHashCode();
 				hashCode = (hashCode * 397) ^ MediaWidth.GetHashCode();
 				hashCode = (hashCode * 397) ^ MediaHeight.GetHashCode();
-				hashCode = (hashCode * 397) ^ (int)MediaLength;
+				hashCode = (hashCode * 397) ^ (int)MediaLengthFrames;
 				hashCode = (hashCode * 397) ^ MediaFps.GetHashCode();
 				return hashCode;
 			}
@@ -224,7 +224,7 @@ namespace Imp.CitpSharp
 			writer.Write(DateTimeHelpers.ConvertToUnixTimestamp(MediaVersionTimestamp));
 			writer.Write(MediaWidth);
 			writer.Write(MediaHeight);
-			writer.Write(MediaLength);
+			writer.Write(MediaLengthFrames);
 			writer.Write(MediaFps);
 		}
 	}
