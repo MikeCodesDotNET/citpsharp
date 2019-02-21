@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.IO.Enumeration;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Xabe.FFmpeg;
@@ -38,7 +35,9 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 
 		private ImmutableDictionary<int, ImmutableDictionary<int, string>> _library = ImmutableDictionary<int, ImmutableDictionary<int, string>>.Empty;
 		private ImmutableDictionary<MsexLibraryId, ElementLibrary> _citpLibrary = ImmutableDictionary<MsexLibraryId, ElementLibrary>.Empty;
+		private ImmutableDictionary<int, ImmutableDictionary<int, string>> _thumbnails = ImmutableDictionary<int, ImmutableDictionary<int, string>>.Empty;
 
+		private readonly string ThumbnailsPath = Path.Combine(Path.GetTempPath(), "CITPSharpThumbs");
 
 		public FileSystemMediaServerDevice(Guid uuid, string peerName, string state, string productName,
 			int productVersionMajor, int productVersionMinor, int productVersionBugfix, string libraryRootPath)
@@ -55,6 +54,17 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 			LibraryRootPath = libraryRootPath;
 
 
+			if (Directory.Exists(ThumbnailsPath))
+			{
+				var di = new DirectoryInfo(ThumbnailsPath);
+				foreach (var file in di.EnumerateFiles())
+					file.Delete();
+			}
+			else
+			{
+				Directory.CreateDirectory(ThumbnailsPath);
+			}
+			
 
 			_watcher = new FileSystemWatcher
 			{
@@ -150,47 +160,13 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 		public CitpImage GetElementThumbnail(CitpImageRequest request, ElementLibraryInformation elementLibrary,
 			ElementInformation element)
 		{
-			if (!_library.TryGetValue(elementLibrary.Id.LibraryNumber, out var localLibrary))
+			if (!_thumbnails.TryGetValue(elementLibrary.Id.LibraryNumber, out var localLibrary))
 				return null;
 
-			if (!localLibrary.TryGetValue(element.ElementNumber, out var filePath))
+			if (!localLibrary.TryGetValue(element.ElementNumber, out var thumbnailPath))
 				return null;
 
-			var extension = Path.GetExtension(filePath);
-
-			Image<Rgba32> image;
-
-			if (MovieFileExtensions.Contains(extension))
-			{
-				string outputPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + FileExtensions.Png);
-				var task = Conversion.Snapshot(filePath, outputPath, TimeSpan.Zero).Start();
-
-				task.Wait();
-
-				if (!task.Result.Success)
-					return null;
-
-				// TODO: Remove this step when the jpeg bug in ImageSharp is fixed
-				string outputPathNative = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + "native" + FileExtensions.Png);
-				System.Drawing.Image imageNative = System.Drawing.Image.FromFile(outputPath);
-				imageNative.Save(outputPathNative);
-				imageNative.Dispose();
-				
-				image = Image.Load(outputPathNative);
-
-				File.Delete(outputPath);
-				File.Delete(outputPathNative);
-
-			}
-			else if (ImageFileExtensions.Contains(extension))
-			{
-				image = Image.Load(filePath);
-			}
-			else
-			{
-				return null;
-			}
-
+			using (var image = Image.Load(thumbnailPath))
 			using (var ms = new MemoryStream())
 			{
 				image.Mutate(c => c.Resize(request.FrameWidth, request.FrameHeight));
@@ -235,8 +211,6 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 				}
 
 				var citpImage = new CitpImage(request, ms.ToArray(), image.Width, image.Height);
-
-				image.Dispose();
 
 				return citpImage;
 			}
@@ -284,6 +258,9 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 					new ElementLibraryInformation(MsexLibraryId.FromMsexV1LibraryNumber(p.Key),
 						(byte)p.Key, (byte)p.Key, p.Key.ToString(), 0, (ushort)p.Value.Count, 0),
 					p.Value.Select(createMediaInformation)));
+
+			_thumbnails = _library.ToImmutableDictionary(b => b.Key,
+				b => b.Value.ToImmutableDictionary(c => c.Key, c => cacheThumbnail(b.Key, c.Key, c.Value)));
 		}
 
 		private MediaInformation createMediaInformation(KeyValuePair<int, string> e)
@@ -322,9 +299,43 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 				width, height, length, fps, serialNumber);
 		}
 
+		private string cacheThumbnail(int libraryIndex, int mediaIndex, string mediaPath)
+		{
+			var extension = Path.GetExtension(mediaPath);
+
+			Image<Rgba32> image;
+
+			if (MovieFileExtensions.Contains(extension))
+			{
+				string outputPath = Path.Combine(ThumbnailsPath, $"temp{libraryIndex}-{mediaIndex}" + ".bmp");
+
+				var command = $"-i \"{mediaPath}\" -vf \"thumbnail\" -frames:v 1 \"{outputPath}\"";
+				command.RunFfmpeg();
+
+				image = Image.Load(outputPath);
+
+				File.Delete(outputPath);
+			}
+			else if (ImageFileExtensions.Contains(extension))
+			{
+				image = Image.Load(mediaPath);
+			}
+			else
+			{
+				return null;
+			}
+
+			string thumbnailPath = Path.Combine(ThumbnailsPath, $"citp{libraryIndex}-{mediaIndex}" + FileExtensions.Png);
+
+			image.Save(thumbnailPath, new PngEncoder());
+
+			return thumbnailPath;
+		}
+
 		public void Dispose()
 		{
 			_watcher.Dispose();
+			Directory.Delete(ThumbnailsPath, true);
 		}
 	}
 }

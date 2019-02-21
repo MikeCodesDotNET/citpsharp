@@ -65,15 +65,14 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 				1, 0, 0,
 				libraryRootPath);
 
-	        try
-	        {
-				var service = new CitpMediaServerService(new CitpDebugLogger(CitpLoggerLevel.Debug, true, true), device, 
+			try
+			{
+				var service = new CitpMediaServerService(new CitpDebugLogger(CitpLoggerLevel.Debug, true, true), device,
 					CitpServiceFlags.UseLegacyMulticastIp, preferredTcpListenPort: 56676, localIp: localIp);
 
-				if (localIp == null)
-					Console.WriteLine("Server started on any network adapter");
-				else
-					Console.WriteLine($"Server started on any local IP {localIp}");
+				Console.WriteLine(localIp == null
+					? "Server started on any network adapter"
+					: $"Server started on any local IP {localIp}");
 
 				Console.WriteLine("Press any key to stop...");
 				Console.WriteLine();
@@ -90,7 +89,7 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 				Environment.Exit(0);
 			}
 			catch (Exception ex)
-	        {
+			{
 				Console.WriteLine();
 				Console.WriteLine("UNHANDLED EXCEPTION");
 				Console.WriteLine(ex);
@@ -100,6 +99,10 @@ namespace Imp.CitpSharp.FileSystemMediaServer
 				Console.ReadKey();
 
 				Environment.Exit(2);
+			}
+			finally
+			{
+				device.Dispose();
 			}
 		}
 	}
